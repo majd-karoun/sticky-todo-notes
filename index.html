@@ -13,11 +13,13 @@
 		<h2>To Do List App</h2>
 		<p><em> Double click to mark an item off, click on "X" to delete an item, and drag items to reorder.</em></p>
        
+		
 		<form name="toDoList">
 			<input type="text" name="ListItem" id="input"/>
+			
+			<div onclick="newItem()" id="button">Add</div>
 		</form>
-    
-		<div onclick="newItem()" id="button">Add</div>
+	
 		<br/>
 		<ol id="list"></ol>
   </div>

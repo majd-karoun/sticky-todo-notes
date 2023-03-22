@@ -14,12 +14,18 @@ margin-top: 40px;
 background: white;
 border-radius: 5px;}
 
+
+
 form {
-display: inline-block;
+display: flex;
+justify-content: space-between;
 }
 
 input{
 padding: 4px 15px 4px 5px;
+width: 65%;
+border-radius: 5px;
+border: solid 1px;
 }
 
 #button{
@@ -30,6 +36,8 @@ border-radius: 5px;
 text-align:center;
 margin-top:2px;
 padding: 5px 15px;
+width: 15%;
+
 }
 
 #button:hover{
