@@ -408,7 +408,7 @@ body {
 .close-modal-btn {
     border: none;
     color: #fff;
-    font-size: 60px;
+    font-size: 500px;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -480,12 +480,14 @@ body {
     flex-grow: 1;
     margin-bottom: 20px;
     word-break: break-word;
+    color:#000;
 }
 
 .deleted-note-timestamp {
     font-size: 0.8rem;
     opacity: 0.7;
     margin-bottom: 15px;
+    color: black;
 }
 
 .deleted-note-actions {

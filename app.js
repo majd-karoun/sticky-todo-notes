@@ -327,7 +327,7 @@ function renderDeletedNotes() {
     container.innerHTML = deletedNotes.map((note, index) => `
         <div class="deleted-note" style="background-color: ${note.color}">
             <div class="deleted-note-content">${note.text}</div>
-            <div class="deleted-note-timestamp">Deleted: ${note.timestamp}</div>
+            
             <div class="deleted-note-actions">
                 <button class="restore-btn" onclick="restoreNote(${index})">Restore</button>
                 <button class="delete-btn" onclick="deleteNotePermanently(${index})">Delete</button>
