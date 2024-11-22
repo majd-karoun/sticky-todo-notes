@@ -17,6 +17,46 @@ let holdTimer;
 let activeNote = null;
 let activePalette = null;
 
+// Local Storage Keys
+const ACTIVE_NOTES_KEY = 'stickyNotes_active';
+const DELETED_NOTES_KEY = 'stickyNotes_deleted';
+
+// Load saved notes on startup
+function loadSavedNotes() {
+    // Load active notes
+    const savedNotes = localStorage.getItem(ACTIVE_NOTES_KEY);
+    if (savedNotes) {
+        JSON.parse(savedNotes).forEach(note => {
+            createNote(note.text, note.color, note.x, note.y, true, note.width, note.height);
+        });
+    }
+
+    // Load deleted notes
+    const savedDeletedNotes = localStorage.getItem(DELETED_NOTES_KEY);
+    if (savedDeletedNotes) {
+        deletedNotes = JSON.parse(savedDeletedNotes);
+        updateTrashCount();
+    }
+}
+
+// Save active notes to localStorage
+function saveActiveNotes() {
+    const notes = Array.from(document.querySelectorAll('.sticky-note')).map(note => ({
+        text: note.querySelector('.sticky-content').innerHTML,
+        color: note.style.backgroundColor,
+        x: note.style.left,
+        y: note.style.top,
+        width: note.style.width || '200px',
+        height: note.style.height || '150px'
+    }));
+    localStorage.setItem(ACTIVE_NOTES_KEY, JSON.stringify(notes));
+}
+
+// Save deleted notes to localStorage
+function saveDeletedNotes() {
+    localStorage.setItem(DELETED_NOTES_KEY, JSON.stringify(deletedNotes));
+}
+
 // Note Creation and Management
 function addNote() {
     const textarea = document.querySelector('.note-input textarea');
@@ -32,12 +72,14 @@ function addNote() {
     textarea.value = '';
 }
 
-function createNote(text, color, x, y, isRestored = false) {
+function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px') {
     const note = document.createElement('div');
     note.className = 'sticky-note';
     note.style.backgroundColor = color;
     note.style.left = `${x}px`;
     note.style.top = `${y}px`;
+    note.style.width = width;
+    note.style.height = height;
     
     note.innerHTML = `
         <div class="sticky-content" contenteditable="true">${text}</div>
@@ -60,6 +102,7 @@ function createNote(text, color, x, y, isRestored = false) {
 
     if (!isRestored) {
         note.style.animation = 'paperPop 0.3s ease-out forwards';
+        saveActiveNotes();
     }
 
     return note;
@@ -74,6 +117,14 @@ function setupNote(note) {
     const colorButton = note.querySelector('.color-button');
     const colorPalette = note.querySelector('.color-palette');
     const content = note.querySelector('.sticky-content');
+
+    // Content change handler
+    const saveContent = () => {
+        saveActiveNotes();
+    };
+
+    content.addEventListener('blur', saveContent);
+    content.addEventListener('input', saveContent);
 
     // Color picker toggle
     colorButton.addEventListener('click', (e) => {
@@ -91,14 +142,15 @@ function setupNote(note) {
 
     content.addEventListener('blur', () => {
         content.contentEditable = "false";
+        saveActiveNotes();
     });
 
     content.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && e.shiftKey) {
             e.preventDefault();
             content.contentEditable = "false";
+            saveActiveNotes();
         }
-        // Regular enter creates new line
     });
 
     // Mouse events
@@ -162,8 +214,11 @@ function setupNote(note) {
 
     function endHandler() {
         clearTimeout(holdTimer);
-        if (isDragging) {
-            checkTrashCollision(note);
+        if (isDragging || isResizing) {
+            saveActiveNotes();
+            if (isDragging) {
+                checkTrashCollision(note);
+            }
         }
         isDragging = false;
         isResizing = false;
@@ -185,6 +240,7 @@ function changeNoteColor(option, color) {
     note.style.backgroundColor = color;
     note.querySelector('.color-button').style.backgroundColor = color;
     hideAllColorPalettes();
+    saveActiveNotes();
 }
 
 // Trash Management
@@ -200,6 +256,7 @@ function markAsDone(note) {
     };
 
     deletedNotes.unshift(noteData);
+    saveDeletedNotes();
     updateTrashCount();
 
     const trashBin = document.querySelector('.trash-bin');
@@ -220,6 +277,7 @@ function markAsDone(note) {
     setTimeout(() => {
         note.remove();
         trashBin.style.animation = '';
+        saveActiveNotes();
     }, 500);
 }
 
@@ -272,13 +330,18 @@ function renderDeletedNotes() {
 
 function restoreNote(index) {
     const note = deletedNotes[index];
-    createNote(note.text, note.color, 
+    createNote(
+        note.text,
+        note.color,
         parseInt(note.x) || window.innerWidth/2 - 100,
         parseInt(note.y) || window.innerHeight/2 - 100,
-        true
+        true,
+        note.width,
+        note.height
     ).style.animation = 'paperPop 0.3s ease-out forwards';
     
     deletedNotes.splice(index, 1);
+    saveDeletedNotes();
     updateTrashCount();
     renderDeletedNotes();
 }
@@ -289,6 +352,7 @@ function deleteNotePermanently(index) {
     
     setTimeout(() => {
         deletedNotes.splice(index, 1);
+        saveDeletedNotes();
         updateTrashCount();
         renderDeletedNotes();
     }, 200);
@@ -304,6 +368,7 @@ function restoreAllNotes() {
 function clearTrash() {
     if (confirm('Are you sure you want to permanently delete all notes in the trash?')) {
         deletedNotes = [];
+        saveDeletedNotes();
         updateTrashCount();
         renderDeletedNotes();
     }
@@ -321,14 +386,14 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Initialize input textarea handling
 document.querySelector('.note-input textarea').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         addNote();
     }
-    // Regular enter creates new line
 });
 
 // Initialize
-updateTrashCount();
+document.addEventListener('DOMContentLoaded', () => {
+    loadSavedNotes();
+});
