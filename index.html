@@ -1,36 +1,39 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width">
-	<title>repl.it</title>
-	<link href="css/styles.css" rel="stylesheet" type="text/css" />
+    <title>Sticky Notes Board</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-	<div class="container">
-		<h2>To Do List App</h2>
-		<p><em> Double click to mark an item off, click on "X" to delete an item, and drag items to reorder.</em></p>
-       
-		
-		<form name="toDoList">
-			<input type="text" name="ListItem" id="input"/>
-			
-			<div onclick="newItem()" id="button">Add</div>
-		</form>
-	
-		<br/>
-		<ol id="list"></ol>
-  </div>
-  <script
-  src="https://code.jquery.com/jquery-3.5.1.js"
-  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
-  crossorigin="anonymous"></script>
-  <script
-  src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"
-  integrity="sha256-T0Vest3yCU7pafRw9r+settMBX6JkKN06dqBnpQ8d30="
-  crossorigin="anonymous"></script>
-  <script src="js/scripts.js"></script>
-  </body>
+    <div class="board"></div>
+
+    <div class="note-input">
+        <textarea placeholder="Write your note..."></textarea>
+        <button onclick="addNote()">Add Note</button>
+    </div>
+
+    <div class="trash-bin" onclick="toggleTrashModal()">
+        <div class="bin-lid"></div>
+        <div class="bin-body"></div>
+        <div class="trash-count">0</div>
+    </div>
+
+    <div class="trash-modal" id="trashModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Trash Bin</h2>
+                <div class="modal-controls">
+                    <button onclick="restoreAllNotes()" class="restore-all-btn">Restore All</button>
+                    <button onclick="clearTrash()" class="clear-trash-btn">Clear Trash</button>
+                    <button onclick="toggleTrashModal()" class="close-modal-btn">×</button>
+                </div>
+            </div>
+            <div class="deleted-notes-container">
+                <!-- Deleted notes will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
 </html>
