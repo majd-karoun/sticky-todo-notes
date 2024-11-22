@@ -21,13 +21,21 @@ let activePalette = null;
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
 const DELETED_NOTES_KEY = 'stickyNotes_deleted';
 
+// Helper function to parse position values
+function parsePosition(value) {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+}
+
 // Load saved notes on startup
 function loadSavedNotes() {
     // Load active notes
     const savedNotes = localStorage.getItem(ACTIVE_NOTES_KEY);
     if (savedNotes) {
         JSON.parse(savedNotes).forEach(note => {
-            createNote(note.text, note.color, note.x, note.y, true, note.width, note.height);
+            const parsedX = parsePosition(note.x);
+            const parsedY = parsePosition(note.y);
+            createNote(note.text, note.color, parsedX, parsedY, true, note.width, note.height);
         });
     }
 
@@ -76,8 +84,8 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     const note = document.createElement('div');
     note.className = 'sticky-note';
     note.style.backgroundColor = color;
-    note.style.left = `${x}px`;
-    note.style.top = `${y}px`;
+    note.style.left = typeof x === 'number' ? `${x}px` : x;
+    note.style.top = typeof y === 'number' ? `${y}px` : y;
     note.style.width = width;
     note.style.height = height;
     
@@ -176,8 +184,8 @@ function setupNote(note) {
             initialH = note.offsetHeight;
         } else {
             const rect = note.getBoundingClientRect();
-            initialX = rect.left;
-            initialY = rect.top;
+            initialX = parsePosition(note.style.left);
+            initialY = parsePosition(note.style.top);
             
             holdTimer = setTimeout(() => {
                 isDragging = true;
@@ -333,8 +341,8 @@ function restoreNote(index) {
     createNote(
         note.text,
         note.color,
-        parseInt(note.x) || window.innerWidth/2 - 100,
-        parseInt(note.y) || window.innerHeight/2 - 100,
+        parsePosition(note.x),
+        parsePosition(note.y),
         true,
         note.width,
         note.height
