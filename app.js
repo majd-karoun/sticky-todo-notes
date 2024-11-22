@@ -1,15 +1,15 @@
 // Global Variables
 const colors = [
-    '#ffd700', // Yellow
+    '#f0e68c', // Khaki
     '#98ff98', // Light green
     '#ff7eb9', // Pink
     '#7afcff', // Cyan
     '#ffb347', // Orange
-    '#afeeee', // Light blue
-    '#dda0dd', // Plum
-    '#f0e68c', // Khaki
+    '#ec0c39', // red
+    '#9156a3', // Purple
+    '#ffd700', // Yellow
     '#deb887', // Burlywood
-    '#90ee90'  // Another green shade
+    '#FFFFFF'  // White
 ];
 
 let deletedNotes = [];
