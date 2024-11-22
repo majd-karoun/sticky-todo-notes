@@ -23,7 +23,7 @@ function addNote() {
     if (!textarea.value.trim()) return;
 
     createNote(
-        textarea.value,
+        textarea.value.replace(/\n/g, '<br>'),
         colors[0],
         Math.random() * (window.innerWidth - 250) + 50,
         Math.random() * (window.innerHeight - 250) + 50
@@ -73,6 +73,7 @@ function setupNote(note) {
 
     const colorButton = note.querySelector('.color-button');
     const colorPalette = note.querySelector('.color-palette');
+    const content = note.querySelector('.sticky-content');
 
     // Color picker toggle
     colorButton.addEventListener('click', (e) => {
@@ -80,6 +81,24 @@ function setupNote(note) {
         hideAllColorPalettes();
         colorPalette.style.display = 'grid';
         activePalette = colorPalette;
+    });
+
+    // Content editing
+    content.addEventListener('dblclick', () => {
+        content.contentEditable = "true";
+        content.focus();
+    });
+
+    content.addEventListener('blur', () => {
+        content.contentEditable = "false";
+    });
+
+    content.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.shiftKey) {
+            e.preventDefault();
+            content.contentEditable = "false";
+        }
+        // Regular enter creates new line
     });
 
     // Mouse events
@@ -91,24 +110,6 @@ function setupNote(note) {
     note.addEventListener('touchstart', e => startHandler(e.touches[0]));
     document.addEventListener('touchmove', e => moveHandler(e.touches[0]));
     document.addEventListener('touchend', endHandler);
-
-    // Content editing
-    const content = note.querySelector('.sticky-content');
-    content.addEventListener('dblclick', () => {
-        content.contentEditable = "true";
-        content.focus();
-    });
-
-    content.addEventListener('blur', () => {
-        content.contentEditable = "false";
-    });
-
-    content.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            content.contentEditable = "false";
-        }
-    });
 
     function startHandler(e) {
         if (e.target.closest('.color-palette') || 
@@ -318,6 +319,15 @@ document.addEventListener('click', (e) => {
     if (activePalette && !e.target.closest('.color-button')) {
         hideAllColorPalettes();
     }
+});
+
+// Initialize input textarea handling
+document.querySelector('.note-input textarea').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        addNote();
+    }
+    // Regular enter creates new line
 });
 
 // Initialize
