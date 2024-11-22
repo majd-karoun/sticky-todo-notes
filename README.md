@@ -4,7 +4,6 @@ A modern, and intuitive sticky notes application built with vanilla JavaScript. 
 
 [Live Demo](https://sticky-todo-notes.netlify.app) 🚀
 
-![Sticky Notes Preview](placeholder-image.png)
 
 
 ### Note Management
