@@ -23,6 +23,7 @@ function addNote() {
     textarea.value = '';
 }
 
+
 function createNote(text, color, x, y, isRestored = false) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
@@ -45,25 +46,6 @@ function createNote(text, color, x, y, isRestored = false) {
         </div>
         <div class="resize-handle"></div>
     `;
-
-    // Make content editable with double click
-    const content = note.querySelector('.sticky-content');
-    content.addEventListener('dblclick', () => {
-        content.contentEditable = "true";
-        content.focus();
-    });
-
-    // Save on blur and enter
-    content.addEventListener('blur', () => {
-        content.contentEditable = "false";
-    });
-
-    content.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            content.contentEditable = "false";
-        }
-    });
 
     setupNote(note);
     document.querySelector('.board').appendChild(note);
@@ -174,7 +156,7 @@ function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
     note.style.backgroundColor = color;
     note.querySelector('.color-button').style.backgroundColor = color;
-    hideAllColorPalettes();
+    hideAllColorPalettes(); // Close all palettes after selection
 }
 
 // Trash Management
