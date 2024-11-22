@@ -21,7 +21,7 @@
     }
     40% { 
         transform: scale(0.8) 
-                   translate(calc(var(--throwX) * 0.4), calc(var(--throwY) * 0.4)) 
+                   translate(calc(var(--throwX) * 1), calc(var(--throwY) * 1)) 
                    rotate(5deg);
     }
     100% { 
@@ -30,7 +30,7 @@
                    rotate(0deg);
         opacity: 0;
     }
-}
+} 
 
 @keyframes binShake {
     0% { transform: rotate(0deg); }
