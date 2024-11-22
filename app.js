@@ -1,7 +1,7 @@
 // Global Variables
 const colors = [
-    '#98ff98', // Light green
     '#ffd700', // Yellow
+    '#98ff98', // Light green
     '#ff7eb9', // Pink
     '#7afcff', // Cyan
     '#ffb347', // Orange
