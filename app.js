@@ -1,12 +1,21 @@
 // Global Variables
 const colors = [
-    '#ffd700', '#ff7eb9', '#7afcff', '#98ff98', '#ffb347', 
-    '#afeeee', '#dda0dd', '#f0e68c', '#deb887', '#90ee90'
+    '#98ff98', // Light green
+    '#ffd700', // Yellow
+    '#ff7eb9', // Pink
+    '#7afcff', // Cyan
+    '#ffb347', // Orange
+    '#afeeee', // Light blue
+    '#dda0dd', // Plum
+    '#f0e68c', // Khaki
+    '#deb887', // Burlywood
+    '#90ee90'  // Another green shade
 ];
 
 let deletedNotes = [];
 let holdTimer;
 let activeNote = null;
+let activePalette = null;
 
 // Note Creation and Management
 function addNote() {
@@ -22,7 +31,6 @@ function addNote() {
 
     textarea.value = '';
 }
-
 
 function createNote(text, color, x, y, isRestored = false) {
     const note = document.createElement('div');
@@ -57,7 +65,6 @@ function createNote(text, color, x, y, isRestored = false) {
     return note;
 }
 
-
 // Note Interaction Setup
 function setupNote(note) {
     let isDragging = false;
@@ -66,6 +73,14 @@ function setupNote(note) {
 
     const colorButton = note.querySelector('.color-button');
     const colorPalette = note.querySelector('.color-palette');
+
+    // Color picker toggle
+    colorButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hideAllColorPalettes();
+        colorPalette.style.display = 'grid';
+        activePalette = colorPalette;
+    });
 
     // Mouse events
     note.addEventListener('mousedown', startHandler);
@@ -76,6 +91,24 @@ function setupNote(note) {
     note.addEventListener('touchstart', e => startHandler(e.touches[0]));
     document.addEventListener('touchmove', e => moveHandler(e.touches[0]));
     document.addEventListener('touchend', endHandler);
+
+    // Content editing
+    const content = note.querySelector('.sticky-content');
+    content.addEventListener('dblclick', () => {
+        content.contentEditable = "true";
+        content.focus();
+    });
+
+    content.addEventListener('blur', () => {
+        content.contentEditable = "false";
+    });
+
+    content.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            content.contentEditable = "false";
+        }
+    });
 
     function startHandler(e) {
         if (e.target.closest('.color-palette') || 
@@ -136,13 +169,6 @@ function setupNote(note) {
         note.style.zIndex = '';
         activeNote = null;
     }
-
-    colorButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isVisible = colorPalette.style.display === 'grid';
-        hideAllColorPalettes();
-        colorPalette.style.display = isVisible ? 'none' : 'grid';
-    });
 }
 
 // Color Management
@@ -150,16 +176,18 @@ function hideAllColorPalettes() {
     document.querySelectorAll('.color-palette').forEach(palette => {
         palette.style.display = 'none';
     });
+    activePalette = null;
 }
 
 function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
     note.style.backgroundColor = color;
     note.querySelector('.color-button').style.backgroundColor = color;
-    hideAllColorPalettes(); // Close all palettes after selection
+    hideAllColorPalettes();
 }
 
 // Trash Management
+function markAsDone(note) {
     const noteData = {
         text: note.querySelector('.sticky-content').innerHTML,
         color: note.style.backgroundColor,
@@ -182,60 +210,32 @@ function changeNoteColor(option, color) {
 
     note.style.setProperty('--throwX', `${throwX}px`);
     note.style.setProperty('--throwY', `${throwY}px`);
-    note.style.animation = 'paperCrumble 0.8s ease-in forwards';
+    note.style.animation = 'paperCrumble 0.5s ease-in forwards';
     
-    setTimeout(() => note.remove(), 800);
-    function markAsDone(note) {
-        const noteData = {
-            text: note.querySelector('.sticky-content').innerHTML,
-            color: note.style.backgroundColor,
-            x: note.style.left,
-            y: note.style.top,
-            width: note.style.width,
-            height: note.style.height,
-            timestamp: new Date().toLocaleString()
-        };
-    
-        deletedNotes.unshift(noteData);
-        updateTrashCount();
-    
-        const trashBin = document.querySelector('.trash-bin');
-        const trashRect = trashBin.getBoundingClientRect();
-        const noteRect = note.getBoundingClientRect();
-    
-        const throwX = trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2);
-        const throwY = trashRect.top - noteRect.top;
-    
-        note.style.setProperty('--throwX', `${throwX}px`);
-        note.style.setProperty('--throwY', `${throwY}px`);
-        note.style.animation = 'paperCrumble 0.5s ease-in forwards';
-        
-        // Add bin shake animation after note reaches bin
-        setTimeout(() => {
-            trashBin.style.animation = 'binShake 0.5s ease-in-out';
-        }, 400);
-    
-        setTimeout(() => {
-            note.remove();
-            trashBin.style.animation = '';
-        }, 500);
-    }
+    setTimeout(() => {
+        trashBin.style.animation = 'binShake 0.5s ease-in-out';
+    }, 400);
 
-    function checkTrashCollision(note) {
-        const trashBin = document.querySelector('.trash-bin');
-        const trashRect = trashBin.getBoundingClientRect();
-        const noteRect = note.getBoundingClientRect();
-    
-        if (noteRect.right > trashRect.left && 
-            noteRect.left < trashRect.right && 
-            noteRect.bottom > trashRect.top && 
-            noteRect.top < trashRect.bottom) {
-            
-            markAsDone(note);
-            return true;
-        }
-        return false;
+    setTimeout(() => {
+        note.remove();
+        trashBin.style.animation = '';
+    }, 500);
+}
+
+function checkTrashCollision(note) {
+    const trashBin = document.querySelector('.trash-bin');
+    const trashRect = trashBin.getBoundingClientRect();
+    const noteRect = note.getBoundingClientRect();
+
+    if (noteRect.right > trashRect.left && 
+        noteRect.left < trashRect.right && 
+        noteRect.bottom > trashRect.top && 
+        noteRect.top < trashRect.bottom) {
+        markAsDone(note);
+        return true;
     }
+    return false;
+}
 
 // Trash Modal Management
 function toggleTrashModal() {
@@ -244,8 +244,7 @@ function toggleTrashModal() {
     
     if (!isVisible) {
         modal.style.display = 'block';
-        // Force reflow
-        modal.offsetHeight;
+        modal.offsetHeight; // Force reflow
         modal.classList.add('visible');
         renderDeletedNotes();
     } else {
@@ -294,7 +293,6 @@ function deleteNotePermanently(index) {
     }, 200);
 }
 
-
 function restoreAllNotes() {
     while (deletedNotes.length > 0) {
         restoreNote(0);
@@ -317,7 +315,7 @@ function updateTrashCount() {
 
 // Event Listeners
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('.color-button')) {
+    if (activePalette && !e.target.closest('.color-button')) {
         hideAllColorPalettes();
     }
 });
