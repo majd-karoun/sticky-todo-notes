@@ -324,6 +324,21 @@ function toggleTrashModal() {
 
 function renderDeletedNotes() {
     const container = document.querySelector('.deleted-notes-container');
+    
+    if (deletedNotes.length === 0) {
+        container.innerHTML = `
+            <div style="
+                grid-column: 1 / -1; 
+                text-align: center; 
+                padding: 40px;
+                color: rgba(255,255,255,0.5);
+                font-size: 1.1em;
+            ">
+                (Empty)
+            </div>`;
+        return;
+    }
+    
     container.innerHTML = deletedNotes.map((note, index) => `
         <div class="deleted-note" style="background-color: ${note.color}">
             <div class="deleted-note-content">${note.text}</div>
