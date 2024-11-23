@@ -352,6 +352,7 @@ function restoreNote(index) {
     saveDeletedNotes();
     updateTrashCount();
     renderDeletedNotes();
+    saveActiveNotes(); // Add immediate save after restoration
 }
 
 function deleteNotePermanently(index) {
