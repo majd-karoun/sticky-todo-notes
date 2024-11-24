@@ -51,6 +51,21 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes noteDelete {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(0.8) rotate(5deg);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(0) rotate(15deg);
+        opacity: 0;
+    }
+}
+
 /* Base Styles */
 body {
     background: #1a1a1a;
@@ -80,6 +95,7 @@ body {
     box-shadow: var(--note-shadow);
     animation: paperPop 0.3s ease-out forwards;
     touch-action: none;
+    border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .sticky-note:hover { z-index: 100; }
@@ -464,16 +480,19 @@ body {
     min-height: 150px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.2); /* Add thin black border */
 }
+
+.deleted-note.removing {
+    animation: noteDelete 0.3s ease-out forwards;
+}
+
 .deleted-note:hover {
     transform: translateY(-2px);
 }
 
-.deleted-note.removing {
-    transform: scale(0.9);
-    opacity: 0;
-}
+
 
 
 .deleted-note-content {

@@ -352,49 +352,88 @@ function renderDeletedNotes() {
 }
 
 function restoreNote(index) {
-    const note = deletedNotes[index];
-    createNote(
-        note.text,
-        note.color,
-        parsePosition(note.x),
-        parsePosition(note.y),
-        true,
-        note.width,
-        note.height
-    ).style.animation = 'paperPop 0.3s ease-out forwards';
+    const noteElement = document.querySelectorAll('.deleted-note')[index];
+    noteElement.classList.add('removing');
+    noteElement.style.animation = 'noteDelete 0.2s ease-out forwards';
     
-    deletedNotes.splice(index, 1);
-    saveDeletedNotes();
-    updateTrashCount();
-    renderDeletedNotes();
-    saveActiveNotes(); // Add immediate save after restoration
+    setTimeout(() => {
+        const note = deletedNotes[index];
+        createNote(
+            note.text,
+            note.color,
+            parsePosition(note.x),
+            parsePosition(note.y),
+            true,
+            note.width,
+            note.height
+        ).style.animation = 'paperPop 0.3s ease-out forwards';
+        
+        deletedNotes.splice(index, 1);
+        saveDeletedNotes();
+        updateTrashCount();
+        renderDeletedNotes();
+        saveActiveNotes();
+    }, 300);
 }
 
 function deleteNotePermanently(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
     noteElement.classList.add('removing');
+    noteElement.style.animation = 'noteDelete 0.3s ease-out forwards';
     
     setTimeout(() => {
         deletedNotes.splice(index, 1);
         saveDeletedNotes();
         updateTrashCount();
         renderDeletedNotes();
-    }, 200);
+    }, 300);
 }
 
 function restoreAllNotes() {
-    while (deletedNotes.length > 0) {
-        restoreNote(0);
-    }
-    toggleTrashModal();
+    const notes = document.querySelectorAll('.deleted-note');
+    notes.forEach((note, index) => {
+        note.classList.add('removing');
+        note.style.animation = 'noteDelete 0.2s ease-out forwards';
+    });
+
+    // Wait for animations to complete before restoring
+    setTimeout(() => {
+        while (deletedNotes.length > 0) {
+            const note = deletedNotes[0];
+            createNote(
+                note.text,
+                note.color,
+                parsePosition(note.x),
+                parsePosition(note.y),
+                true,
+                note.width,
+                note.height
+            ).style.animation = 'paperPop 0.3s ease-out forwards';
+            
+            deletedNotes.splice(0, 1);
+            saveActiveNotes();
+        }
+        saveDeletedNotes();
+        updateTrashCount();
+        toggleTrashModal();
+    }, 300);
 }
 
 function clearTrash() {
     if (confirm('Are you sure you want to permanently delete all notes in the trash?')) {
-        deletedNotes = [];
-        saveDeletedNotes();
-        updateTrashCount();
-        renderDeletedNotes();
+        const notes = document.querySelectorAll('.deleted-note');
+        notes.forEach(note => {
+            note.classList.add('removing');
+        });
+        
+        // Wait for animation to complete before clearing
+        setTimeout(() => {
+            deletedNotes = [];
+            saveDeletedNotes();
+            updateTrashCount();
+            renderDeletedNotes();
+            toggleTrashModal(); // Close the modal
+        }, 300);
     }
 }
 
