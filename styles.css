@@ -346,10 +346,12 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
+    background: rgba(0,0,0,0.85);
     z-index: 1000;
     opacity: 0;
-    transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: opacity 0.3s ease;
 }
+
 
 .trash-modal.visible {
     opacity: 1;
@@ -436,9 +438,7 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.restore-all-btn:hover, .clear-trash-btn:hover, .close-modal-btn:hover {
-    transform: translateY(-1px);
-}
+
 
 .restore-all-btn:hover {
     background: rgba(76, 175, 80, 0.2);
@@ -507,7 +507,6 @@ body {
 
 /* deleted note styles */
 .deleted-note:hover {
-    transform: translateY(-2px) scale(1.02);
     box-shadow: 
         0 8px 12px rgba(0,0,0,0.1),
         0 0 1px rgba(0,0,0,0.2);
@@ -548,7 +547,7 @@ body {
 
 .restore-btn:hover {
     background: rgba(76, 175, 80, 0.2);
-    transform: translateY(-1px);
+    
 }
 
 .delete-btn {
@@ -559,5 +558,5 @@ body {
 
 .delete-btn:hover {
     background: rgba(255, 68, 68, 0.2);
-    transform: translateY(-1px);
+   
 }
