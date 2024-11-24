@@ -20,35 +20,31 @@
         opacity: 1;
     }
     40% { 
-        transform: scale(0.8) 
+        transform: scale(0.5) 
                    translate(calc(var(--throwX) * 1), calc(var(--throwY) * 1)) 
                    rotate(5deg);
+                   opacity: 1;           
     }
     100% { 
-        transform: scale(0.2) 
+        transform: scale(0.1) 
                    translate(var(--throwX), var(--throwY)) 
                    rotate(0deg);
         opacity: 0;
     }
-} 
+}
+
 
 @keyframes binShake {
     0% { transform: rotate(0deg); }
-    20% { transform: rotate(-8deg); }
-    40% { transform: rotate(8deg); }
-    60% { transform: rotate(-4deg); }
-    80% { transform: rotate(4deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
     100% { transform: rotate(0deg); }
 }
+
 
 @keyframes colorPopup {
     0% { transform: scale(0); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes modalFadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes noteDelete {
@@ -96,9 +92,19 @@ body {
     animation: paperPop 0.3s ease-out forwards;
     touch-action: none;
     border: 1px solid rgba(0, 0, 0, 0.2);
+    transform: scale(1) translateZ(0);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform, box-shadow;
 }
 
-.sticky-note:hover { z-index: 100; }
+.sticky-note:hover {
+    transform: scale(1.02) translateZ(1px);
+    box-shadow: 0 2px 2px rgba(0,0,0,0.15),
+                0 4px 4px rgba(0,0,0,0.15),
+                0 8px 8px rgba(0,0,0,0.15),
+                0 16px 16px rgba(0,0,0,0.15);
+    z-index: 1000;
+}
 
 .sticky-content {
     width: 100%;
@@ -135,10 +141,9 @@ body {
     bottom: 10px;
     left: 10px;
     display: flex;
-    gap: 8px; /* Space between color picker and done button */
+    gap: 8px;
     align-items: center;
 }
-
 
 .color-button {
     width: 24px;
@@ -150,7 +155,6 @@ body {
     position: relative;
 }
 
-
 .color-button:hover, .done-button:hover {
     transform: scale(1.1);
 }
@@ -161,7 +165,7 @@ body {
 
 .color-palette {
     position: absolute;
-    bottom: 28px; /* Adjusted to properly position above both buttons */
+    bottom: 28px;
     left: -5px;
     background: rgba(0,0,0,0.8);
     border-radius: 10px;
@@ -198,7 +202,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1; /* Ensure it's above the controls */
+    z-index: 1;
 }
 
 .resize-handle::before {
@@ -229,42 +233,41 @@ body {
     transition: all 0.2s;
 }
 
-
 /* Note Input Area */
 .note-input {
     position: fixed;
     bottom: 20px;
     left: 20px;
-    width: 280px; /* Increased from 200px */
+    width: 280px;
     background: rgba(255,255,255,0.1);
-    padding: 20px; /* Increased padding */
-    border-radius: 12px; /* Enhanced radius */
+    padding: 20px;
+    border-radius: 12px;
     backdrop-filter: blur(5px);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .note-input textarea {
     width: 100%;
-    height: 100px; /* Increased from 80px */
+    height: 100px;
     background: rgba(255,255,255,0.9);
     border: none;
     border-radius: 8px;
-    padding: 12px; /* Increased padding */
+    padding: 12px;
     resize: none;
     margin-bottom: 12px;
-    font-size: 16px; /* Explicit font size */
+    font-size: 16px;
     line-height: 1.4;
 }
 
 .note-input button {
     width: 100%;
-    padding: 12px; /* Increased padding */
+    padding: 12px;
     background: rgba(255,255,255,0.2);
     border: none;
     border-radius: 8px;
     color: white;
     cursor: pointer;
-    font-size: 16px; /* Larger font */
+    font-size: 16px;
     font-weight: 500;
     transition: all 0.2s ease;
 }
@@ -286,6 +289,10 @@ body {
     width: 60px;
     height: 80px;
     cursor: pointer;
+    z-index: 900;
+}
+.trash-bin:hover .bin-lid {
+    transform: rotate(-10deg);
 }
 
 .trash-count {
@@ -315,6 +322,7 @@ body {
     transition: transform 0.3s;
 }
 
+
 .bin-body {
     position: absolute;
     bottom: 0;
@@ -330,7 +338,7 @@ body {
             #444 12px);
 }
 
-/* Trash Modal */
+/* Modal Styles */
 .trash-modal {
     display: none;
     position: fixed;
@@ -338,39 +346,44 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.85);
     z-index: 1000;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .trash-modal.visible {
     opacity: 1;
+    backdrop-filter: blur(10px);
+    background: rgba(0,0,0,0.5);
 }
 
 .modal-content {
-    
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, calc(-50% + 30px));
-    background: #222;
+    transform: translate(-50%, calc(-50% + 40px)) scale(0.95);
+    background: rgba(28, 28, 30, 0.85);
     padding: 25px;
-    border-radius: 12px;
+    border-radius: 16px;
     width: 90%;
     max-width: 1000px;
     max-height: 85vh;
     opacity: 0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    box-shadow: 
+        0 10px 30px rgba(0,0,0,0.3),
+        0 0 0 1px rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .trash-modal.visible .modal-content {
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
 }
 
+/* Modal Header & Controls */
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -384,71 +397,66 @@ body {
     font-size: 1.5rem;
     font-weight: 500;
     color: #fff;
+    margin: 0;
 }
-
 
 .modal-controls {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     align-items: center;
 }
 
-
-.modal-controls button {
+/* Modal Buttons */
+.restore-all-btn, .clear-trash-btn, .close-modal-btn {
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     background: transparent;
+    transform: scale(1);
+    will-change: transform;
 }
 
 .restore-all-btn {
     color: #4CAF50;
-    border: 2px solid #4CAF50;
-}
-
-.restore-all-btn:hover {
+    border: 1.5px solid #4CAF50;
     background: rgba(76, 175, 80, 0.1);
 }
 
 .clear-trash-btn {
     color: #ff4444;
-    border: 2px solid #ff4444;
-}
-
-.clear-trash-btn:hover {
+    border: 1.5px solid #ff4444;
     background: rgba(255, 68, 68, 0.1);
 }
 
 .close-modal-btn {
-    border: none;
     color: #fff;
-    font-size: 500px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,0.1);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: 15px;
-    padding-bottom: 5px; /* Optical centering for the × symbol */
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.restore-all-btn:hover, .clear-trash-btn:hover, .close-modal-btn:hover {
+    transform: translateY(-1px);
+}
+
+.restore-all-btn:hover {
+    background: rgba(76, 175, 80, 0.2);
+}
+
+.clear-trash-btn:hover {
+    background: rgba(255, 68, 68, 0.2);
 }
 
 .close-modal-btn:hover {
-    background: rgba(255,255,255,0.2);
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.2);
 }
 
-.close-modal-btn:active {
+.restore-all-btn:active, .clear-trash-btn:active, .close-modal-btn:active {
     transform: scale(0.95);
 }
 
-
-
+/* Deleted Notes Container */
 .deleted-notes-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -463,84 +471,93 @@ body {
 }
 
 .deleted-notes-container::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
 }
 
 .deleted-notes-container::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.2);
-    border-radius: 4px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
 }
 
+.deleted-notes-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+/* Deleted Note Styles */
 .deleted-note {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.95);
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 12px;
     position: relative;
     min-height: 150px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease;
-    border: 1px solid rgba(0, 0, 0, 0.2); /* Add thin black border */
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        0 4px 6px rgba(0,0,0,0.1),
+        0 0 1px rgba(0,0,0,0.2);
+}
+
+/* deleted note styles */
+.deleted-note:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 12px rgba(0,0,0,0.1),
+        0 0 1px rgba(0,0,0,0.2);
 }
 
 .deleted-note.removing {
-    animation: noteDelete 0.3s ease-out forwards;
+    animation: noteDelete 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
-
-.deleted-note:hover {
-    transform: translateY(-2px);
-}
-
-
-
 
 .deleted-note-content {
     flex-grow: 1;
-    margin-bottom: 20px;
-    word-break: break-word;
-    color:#000;
-}
-
-.deleted-note-timestamp {
-    font-size: 0.8rem;
-    opacity: 0.7;
     margin-bottom: 15px;
-    color: black;
+    word-break: break-word;
+    color: #000;
 }
 
 .deleted-note-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
 }
 
-
-.restore-btn, .delete-btn {
+.deleted-note-actions button {
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.8rem;
-    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     background: transparent;
+    font-weight: 500;
 }
 
 .restore-btn {
     color: #4CAF50;
     border: 1.5px solid #4CAF50;
-}
-
-.restore-btn:hover {
     background: rgba(76, 175, 80, 0.1);
 }
 
+.restore-btn:hover {
+    background: rgba(76, 175, 80, 0.2);
+    transform: translateY(-1px);
+}
 
 .delete-btn {
     color: #ff4444;
     border: 1.5px solid #ff4444;
-}
-
-.delete-btn:hover {
     background: rgba(255, 68, 68, 0.1);
 }
 
+.delete-btn:hover {
+    background: rgba(255, 68, 68, 0.2);
+    transform: translateY(-1px);
+}

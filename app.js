@@ -235,6 +235,7 @@ function setupNote(note) {
     }
 }
 
+
 // Color Management
 function hideAllColorPalettes() {
     document.querySelectorAll('.color-palette').forEach(palette => {
@@ -251,7 +252,7 @@ function changeNoteColor(option, color) {
     saveActiveNotes();
 }
 
-// Trash Management
+// Bin Management
 function markAsDone(note) {
     const noteData = {
         text: note.querySelector('.sticky-content').innerHTML,
