@@ -4,11 +4,11 @@ const colors = [
     '#98ff98', // Light green
     '#ff7eb9', // Pink
     '#7afcff', // Cyan
-    '#ffb347', // Orange
+    '#FE8801', // Orange
     '#ec0c39', // red
-    '#9156a3', // Purple
+    '#AF65EF', // Purple
     '#ffd700', // Yellow
-    '#deb887', // Burlywood
+    '#C1C1C1', // Grey
     '#FFFFFF'  // White
 ];
 
