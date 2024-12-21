@@ -12,14 +12,17 @@ const colors = [
     '#FFFFFF'  // White
 ];
 
+
 let deletedNotes = [];
 let holdTimer;
 let activeNote = null;
 let activePalette = null;
 
+
 // Local Storage Keys
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
 const DELETED_NOTES_KEY = 'stickyNotes_deleted';
+
 
 // Helper function to parse position values
 function parsePosition(value) {
@@ -27,15 +30,25 @@ function parsePosition(value) {
     return parseInt(value.replace('px', '')) || 0;
 }
 
+
+
 // Load saved notes on startup
 function loadSavedNotes() {
-    // Load active notes
     const savedNotes = localStorage.getItem(ACTIVE_NOTES_KEY);
     if (savedNotes) {
         JSON.parse(savedNotes).forEach(note => {
             const parsedX = parsePosition(note.x);
             const parsedY = parsePosition(note.y);
-            createNote(note.text, note.color, parsedX, parsedY, true, note.width, note.height);
+            createNote(
+                note.text, 
+                note.color, 
+                parsedX, 
+                parsedY, 
+                true, 
+                note.width, 
+                note.height,
+                note.isBold
+            );
         });
     }
 
@@ -55,7 +68,8 @@ function saveActiveNotes() {
         x: note.style.left,
         y: note.style.top,
         width: note.style.width || '200px',
-        height: note.style.height || '150px'
+        height: note.style.height || '150px',
+        isBold: note.querySelector('.sticky-content').classList.contains('bold')
     }));
     localStorage.setItem(ACTIVE_NOTES_KEY, JSON.stringify(notes));
 }
@@ -64,6 +78,11 @@ function saveActiveNotes() {
 function saveDeletedNotes() {
     localStorage.setItem(DELETED_NOTES_KEY, JSON.stringify(deletedNotes));
 }
+
+
+
+
+
 
 // Note Creation and Management
 function addNote() {
@@ -79,8 +98,7 @@ function addNote() {
 
     textarea.value = '';
 }
-
-function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px') {
+function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
     note.style.backgroundColor = color;
@@ -90,7 +108,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     note.style.height = height;
     
     note.innerHTML = `
-        <div class="sticky-content" contenteditable="true">${text}</div>
+        <div class="sticky-content ${isBold ? 'bold' : ''}" contenteditable="true">${text}</div>
         <div class="note-controls">
             <div class="color-button" style="background-color: ${color}">
                 <div class="color-palette">
@@ -100,6 +118,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
                     `).join('')}
                 </div>
             </div>
+            <button class="done-button bold-toggle ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</button>
             <button class="done-button" onclick="markAsDone(this.closest('.sticky-note'))">✓</button>
         </div>
         <div class="resize-handle"></div>
@@ -252,16 +271,28 @@ function changeNoteColor(option, color) {
     saveActiveNotes();
 }
 
+function toggleBold(button) {
+    const note = button.closest('.sticky-note');
+    const content = note.querySelector('.sticky-content');
+    const isBold = content.classList.toggle('bold');
+    button.classList.toggle('active');
+    saveActiveNotes();
+}
+
 // Bin Management
 function markAsDone(note) {
+    const content = note.querySelector('.sticky-content');
+    const isBold = content.classList.contains('bold');
+    
     const noteData = {
-        text: note.querySelector('.sticky-content').innerHTML,
+        text: content.innerHTML,
         color: note.style.backgroundColor,
         x: note.style.left,
         y: note.style.top,
         width: note.style.width,
         height: note.style.height,
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toLocaleString(),
+        isBold: isBold // Save the bold state
     };
 
     deletedNotes.unshift(noteData);
@@ -342,8 +373,7 @@ function renderDeletedNotes() {
     
     container.innerHTML = deletedNotes.map((note, index) => `
         <div class="deleted-note" style="background-color: ${note.color}">
-            <div class="deleted-note-content">${note.text}</div>
-            
+            <div class="deleted-note-content ${note.isBold ? 'bold' : ''}">${note.text}</div>
             <div class="deleted-note-actions">
                 <button class="restore-btn" onclick="restoreNote(${index})">Restore</button>
                 <button class="delete-btn" onclick="deleteNotePermanently(${index})">Delete</button>
@@ -359,15 +389,20 @@ function restoreNote(index) {
     
     setTimeout(() => {
         const note = deletedNotes[index];
-        createNote(
+        
+        // Create the note with its bold state
+        const restoredNote = createNote(
             note.text,
             note.color,
             parsePosition(note.x),
             parsePosition(note.y),
             true,
             note.width,
-            note.height
-        ).style.animation = 'paperPop 0.3s ease-out forwards';
+            note.height,
+            note.isBold  // Pass the bold state
+        );
+
+        restoredNote.style.animation = 'paperPop 0.3s ease-out forwards';
         
         deletedNotes.splice(index, 1);
         saveDeletedNotes();
@@ -376,6 +411,7 @@ function restoreNote(index) {
         saveActiveNotes();
     }, 300);
 }
+
 
 function deleteNotePermanently(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
@@ -397,7 +433,6 @@ function restoreAllNotes() {
         note.style.animation = 'noteDelete 0.2s ease-out forwards';
     });
 
-    // Wait for animations to complete before restoring
     setTimeout(() => {
         while (deletedNotes.length > 0) {
             const note = deletedNotes[0];
@@ -408,7 +443,8 @@ function restoreAllNotes() {
                 parsePosition(note.y),
                 true,
                 note.width,
-                note.height
+                note.height,
+                note.isBold  // Pass the bold state
             ).style.animation = 'paperPop 0.3s ease-out forwards';
             
             deletedNotes.splice(0, 1);
