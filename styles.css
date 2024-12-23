@@ -136,7 +136,7 @@ body {
     outline: none;
     background: transparent;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1.5rem;  /* Restored to original size */
     color: inherit;
     resize: none;
     padding: 0;
@@ -146,7 +146,6 @@ body {
     font-weight: 400;
     letter-spacing: 0.01em;
 }
-
 /* Scrollbar styling for sticky notes */
 .sticky-content::-webkit-scrollbar {
     width: 6px;
