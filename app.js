@@ -506,6 +506,16 @@ function updateTrashCount() {
     countElement.textContent = deletedNotes.length;
 }
 
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('trashModal');
+    const modalContent = modal.querySelector('.modal-content');
+    
+    // Check if modal is visible and click is on the backdrop
+    if (modal.classList.contains('visible') && 
+        e.target === modal) {  // Click is on the modal backdrop
+        toggleTrashModal();
+    }
+});
 // Event Listeners
 document.addEventListener('click', (e) => {
     if (activePalette && !e.target.closest('.color-button')) {
