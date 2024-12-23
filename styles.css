@@ -46,6 +46,11 @@
     100% { transform: scale(1); opacity: 1; }
 }
 
+@keyframes colorPopdown {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+
 @keyframes modalFadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -240,6 +245,8 @@ body {
 
 
 
+
+
 .color-palette {
     position: absolute;
     bottom: 28px;
@@ -250,10 +257,16 @@ body {
     display: none;
     grid-template-columns: repeat(5, 1fr);
     gap: 3px;
-    animation: colorPopup 0.2s ease-out forwards;
     z-index: 10;
 }
 
+.color-palette {
+    animation: colorPopup 0.25s ease-out forwards;
+}
+
+.color-palette.closing {
+    animation: colorPopdown 0.25s ease-out forwards;
+}
 .color-option {
     width: 15px;
     height: 15px;

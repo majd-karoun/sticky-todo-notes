@@ -135,7 +135,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     return note;
 }
 
-// Note Interaction Setup
+
 function setupNote(note) {
     let isDragging = false;
     let isResizing = false;
@@ -156,9 +156,18 @@ function setupNote(note) {
     // Color picker toggle
     colorButton.addEventListener('click', (e) => {
         e.stopPropagation();
-        hideAllColorPalettes();
-        colorPalette.style.display = 'grid';
-        activePalette = colorPalette;
+        
+        // If this palette is already active, don't do anything
+        if (activePalette === colorPalette) {
+            return;
+        }
+        
+        // Hide other palettes if any are open
+        if (activePalette) {
+            hideAllColorPalettes();
+        }
+        
+        showColorPalette(colorPalette);
     });
 
     // Content editing
@@ -258,16 +267,41 @@ function setupNote(note) {
 // Color Management
 function hideAllColorPalettes() {
     document.querySelectorAll('.color-palette').forEach(palette => {
-        palette.style.display = 'none';
+        if (palette.style.display !== 'none') {
+            palette.classList.add('closing');
+            setTimeout(() => {
+                palette.style.display = 'none';
+                palette.classList.remove('closing');
+            }, 200);
+        }
     });
     activePalette = null;
 }
+
+function showColorPalette(palette) {
+    // First remove any existing classes to ensure clean state
+    palette.classList.remove('closing', 'opening');
+    
+    // Force a reflow
+    void palette.offsetWidth;
+    
+    palette.style.display = 'grid';
+    palette.classList.add('opening');
+    activePalette = palette;
+}
+
+
+document.addEventListener('click', (e) => {
+    if (activePalette && !e.target.closest('.color-button')) {
+        hideAllColorPalettes();
+    }
+});
+
 
 function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
     note.style.backgroundColor = color;
     note.querySelector('.color-button').style.backgroundColor = color;
-    hideAllColorPalettes();
     saveActiveNotes();
 }
 
