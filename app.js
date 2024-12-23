@@ -393,13 +393,7 @@ function renderDeletedNotes() {
     
     if (deletedNotes.length === 0) {
         container.innerHTML = `
-            <div style="
-                grid-column: 1 / -1; 
-                text-align: center; 
-                padding: 40px;
-                color: rgba(255,255,255,0.5);
-                font-size: 1.1em;
-            ">
+            <div class="empty-state">
                 (Empty)
             </div>`;
         return;
@@ -415,7 +409,6 @@ function renderDeletedNotes() {
         </div>
     `).join('');
 }
-
 function restoreNote(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
     noteElement.classList.add('removing');
