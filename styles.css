@@ -5,6 +5,11 @@
     padding: 0; 
     box-sizing: border-box; 
     font-family: 'Roboto', sans-serif;
+    
+}
+
+body{
+    background-color: red;
 }
 
 :root {
@@ -92,6 +97,7 @@ body {
     height: 100vh;
     position: relative;
     overflow: hidden;
+    background-color: #1a1a1a;
 }
 
 
