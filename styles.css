@@ -127,9 +127,7 @@ body {
 
 
 .sticky-content {
-
-    
-    transition: font-weight 0.2s ease;
+    transition: all 0.2s ease;
     width: 100%;
     height: calc(100% - 40px);
     overflow-y: auto;
@@ -138,13 +136,30 @@ body {
     outline: none;
     background: transparent;
     border: none;
-    font-family: inherit;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: inherit;
     resize: none;
     padding: 0;
+    padding-right: 8px; /* Space for scrollbar */
     line-height: 1.4;
-    white-space: pre-wrap; /* Preserve whitespace */
+    white-space: pre-wrap;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+
+/* Scrollbar styling for sticky notes */
+.sticky-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sticky-content::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
+}
+
+.sticky-content::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
 }
 
 .sticky-content[contenteditable="true"] {
