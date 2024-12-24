@@ -10,9 +10,9 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 - 🖱️ Double-click to edit note content
 - 🎨 Customizable colors with the circle color picker
 - 🖐️ Hold-to-drag notes around
--    click (B) for bolder text 
+- 🖊️   click (B) for bolder text 
 - ↘️ Resize Notes from the corner
-- 🗑️ Drag to trash or use checkmark to delete
+- 🗑️ Drag to Bin or use checkmark to delete
 
 
 
