@@ -484,7 +484,7 @@ function restoreAllNotes() {
 }
 
 function clearTrash() {
-    if (confirm('Are you sure you want to permanently delete all notes in the trash?')) {
+    if (confirm('Are you sure you want to permanently delete all notes in the Bin?')) {
         const notes = document.querySelectorAll('.deleted-note');
         notes.forEach(note => {
             note.classList.add('removing');
