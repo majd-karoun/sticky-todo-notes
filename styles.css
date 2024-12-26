@@ -118,6 +118,7 @@ body {
     touch-action: none;
     border: #5a5a5a 1px solid;
     transition: background-color 0.3s ease;
+    z-index: 1;
 }
 
 
@@ -371,7 +372,7 @@ body {
     border-radius: 12px;
     backdrop-filter: blur(5px);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    z-index: 10000;  /* Increased z-index to be on top */
+    z-index: 0;  /* Increased z-index to be on top */
 }
 
 .note-input textarea {
