@@ -718,23 +718,24 @@ body {
 
    
 .sticky-note {
-width: 250px;
-min-width: 180px;
-min-height: 180px;
-padding: 18px;
+width: 200px;
+min-width: 150px;
+min-height: 70px;
+padding: 10px;
 }
 .sticky-content {
-font-size: 1.6rem;
-height: calc(100% - 45px);
+font-size: 1.23rem;
+
 line-height: 1.45;
 }
 .sticky-content.bold {
-font-size: 2.1rem;
+font-size: 1.8rem;
 }
 .note-controls {
 bottom: 12px;
 left: 12px;
 gap: 10px;
+
 }
 .color-button,
 .done-button,
@@ -742,6 +743,11 @@ gap: 10px;
 width: 28px;
 height: 28px;
 font-size: 1.3rem;
+}
+
+.bold-toggle.active {
+  
+    font-size: 1rem  !important;
 }
 .color-palette {
 bottom: 32px;
@@ -812,6 +818,8 @@ width: 44px;
 height: 44px;
 font-size: 2rem;
 }
+
+
 
 .modal-content{
     height: 80vh;
