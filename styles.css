@@ -711,3 +711,112 @@ body {
 .delete-btn:hover {
     background: rgba(255, 68, 68, 0.1);
 }
+
+
+
+@media screen and (max-width: 400px) {
+
+   
+.sticky-note {
+width: 250px;
+min-width: 180px;
+min-height: 180px;
+padding: 18px;
+}
+.sticky-content {
+font-size: 1.6rem;
+height: calc(100% - 45px);
+line-height: 1.45;
+}
+.sticky-content.bold {
+font-size: 2.1rem;
+}
+.note-controls {
+bottom: 12px;
+left: 12px;
+gap: 10px;
+}
+.color-button,
+.done-button,
+.bold-toggle {
+width: 28px;
+height: 28px;
+font-size: 1.3rem;
+}
+.color-palette {
+bottom: 32px;
+padding: 6px;
+gap: 4px;
+}
+.color-option {
+width: 17px;
+height: 17px;
+}
+.note-input {
+width: 280px;
+padding: 22px;
+}
+.note-input textarea {
+height: 110px;
+padding: 13px;
+font-size: 1.6rem;
+line-height: 1.45;
+}
+.note-input button {
+padding: 13px;
+font-size: 1.3rem;
+}
+.trash-bin {
+width: 65px;
+height: 85px;
+}
+.trash-count {
+width: 26px;
+height: 26px;
+font-size: 1.3rem;
+}
+.bin-lid {
+height: 16px;
+}
+.bin-body {
+height: 65px;
+}
+.modal-content {
+width: 95%;
+height: 90vh;
+padding: 22px;
+}
+.deleted-note {
+height: 220px;
+}
+.deleted-note-content {
+font-size: 1.6rem;
+}
+.deleted-note-content.bold {
+font-size: 2.1rem;
+}
+.restore-btn,
+.delete-btn {
+padding: 7px 14px;
+font-size: 1.3rem;
+}
+.modal-header h2 {
+font-size: 1rem;
+}
+.modal-controls button {
+font-size: 1rem;
+padding: 9px 18px;
+}
+.close-modal-btn {
+width: 44px;
+height: 44px;
+font-size: 2rem;
+}
+
+.modal-content{
+    height: 80vh;
+   
+
+}
+
+}
