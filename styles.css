@@ -54,6 +54,25 @@ body{
     }
 } 
 
+
+@keyframes smoothBold {
+    0% {
+        font-weight: 400;
+        transform: scale(1);
+        letter-spacing: 0.01em;
+    }
+    50% {
+        font-weight: 700;
+        transform: scale(1);
+     
+    }
+    100% {
+        font-weight: 900;
+        transform: scale(1);
+        letter-spacing: 0.2px;
+    }
+}
+
 @keyframes binShake {
     0% { transform: rotate(0deg); }
     20% { transform: rotate(-8deg); }
@@ -178,10 +197,11 @@ body {
 
 
 .sticky-content.bold {
-    font-weight: 900;  
-    text-shadow: 0 0 0.5px rgba(0,0,0,0.3);  
-    letter-spacing: 0.2px;  
+    animation: smoothBold 0.3s ease-in-out forwards;
+    text-shadow: 0 0 0.5px rgba(0,0,0,0.3);
+    font-size: 2rem;
 }
+
 
 /* Note Controls */
 .note-controls {
@@ -194,8 +214,8 @@ body {
 }
 
 .bold-button {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     border: none;
     background: rgba(0,0,0,0.1);
@@ -305,9 +325,10 @@ body {
 .color-palette.closing {
     animation: colorPopdown 0.25s ease-out forwards;
 }
+
 .color-option {
-    width: 15px;
-    height: 15px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     cursor: pointer;
     border: 1px solid rgba(255,255,255,0.3);
@@ -368,8 +389,8 @@ body {
     left: 20px;
     width: 260px;
     background: rgba(255,255,255,0.1);
-    padding: 20px;
-    border-radius: 12px;
+    padding: 12px;
+    border-radius: 20px;
     backdrop-filter: blur(5px);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     z-index: 0;  /* Increased z-index to be on top */
@@ -380,7 +401,7 @@ body {
     height: 100px;
     background: rgba(255,255,255,0.9);
     border: none;
-    border-radius: 8px;
+    border-radius: 15px;
     padding: 12px;
     resize: none;
     margin-bottom: 12px;
@@ -393,7 +414,7 @@ body {
     padding: 12px;
     background: rgba(255,255,255,0.2);
     border: none;
-    border-radius: 8px;
+    border-radius: 15px;
     color: rgb(151, 151, 151);
     cursor: pointer;
     font-size: 1.2rem;
@@ -464,7 +485,7 @@ body {
         repeating-linear-gradient(45deg, 
             transparent 0, 
             transparent 10px, 
-            #444 10px, 
+            #444 3px, 
             #444 12px);
 }
 
@@ -755,12 +776,12 @@ padding: 6px;
 gap: 4px;
 }
 .color-option {
-width: 17px;
-height: 17px;
+width: 22px;
+height: 22px;
 }
 .note-input {
-width: 280px;
-padding: 22px;
+width: 270px;
+padding: 12px;
 }
 .note-input textarea {
 height: 110px;
@@ -773,7 +794,7 @@ padding: 13px;
 font-size: 1.3rem;
 }
 .trash-bin {
-width: 55px;
+width: 65px;
 height: 85px;
 
 }

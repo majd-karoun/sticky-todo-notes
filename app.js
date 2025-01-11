@@ -118,7 +118,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
                     `).join('')}
                 </div>
             </div>
-            <button class="done-button bold-toggle ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</button>
+            <button class="bold-toggle ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</button>
             <button class="done-button" onclick="markAsDone(this.closest('.sticky-note'))">✓</button>
         </div>
         <div class="resize-handle"></div>
