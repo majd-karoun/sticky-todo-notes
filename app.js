@@ -93,7 +93,7 @@ function saveActiveNotes() {
     localStorage.setItem(ACTIVE_NOTES_KEY, JSON.stringify(notes));
 }
 
-// Save deleted notes to localStorage
+// Save deleted notes to localStorage.
 function saveDeletedNotes() {
     localStorage.setItem(DELETED_NOTES_KEY, JSON.stringify(deletedNotes));
 }
