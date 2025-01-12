@@ -36,15 +36,14 @@ function parsePosition(value) {
 }
 
 function getRandomPositionAround(x, y) {
-    // Random offset between -100 and 100 pixels
     const offset = 200;
     let newX = x + (Math.random() - 0.5) * offset;
     let newY = y + (Math.random() - 0.5) * offset;
     
-    // Ensure the note stays within viewport bounds with padding
-    const padding = 20;
-    newX = Math.min(Math.max(newX, padding), window.innerWidth - 250);
-    newY = Math.min(Math.max(newY, padding), window.innerHeight - 200);
+    // Reduce padding to allow closer edge placement
+    const padding = 5;  // Reduced from 20
+    newX = Math.min(Math.max(newX, -padding), window.innerWidth - 150);  // Allow slight overflow
+    newY = Math.min(Math.max(newY, -padding), window.innerHeight - 100); // Allow slight overflow
     
     return { x: newX, y: newY };
 }
@@ -256,11 +255,11 @@ function setupNote(note) {
 
     function moveHandler(e) {
         if (!activeNote || activeNote !== note) return;
-
+    
         if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) {
             clearTimeout(holdTimer);
         }
-
+    
         if (isDragging) {
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
@@ -269,20 +268,25 @@ function setupNote(note) {
             let newX = initialX + dx;
             let newY = initialY + dy;
             
-            // Add boundary checks to keep note within viewport
-            const padding = 20;
-            newX = Math.min(Math.max(newX, padding), window.innerWidth - note.offsetWidth - padding);
-            newY = Math.min(Math.max(newY, padding), window.innerHeight - note.offsetHeight - padding);
+            // Reduced padding and allow partial overflow
+            const padding = 5;  // Reduced from 20
+            const minX = -padding;
+            const minY = -padding;
+            const maxX = window.innerWidth - (note.offsetWidth / 4);  // Allow 3/4 of note to go off-screen
+            const maxY = window.innerHeight - (note.offsetHeight / 4); // Allow 3/4 of note to go off-screen
+            
+            newX = Math.min(Math.max(newX, minX), maxX);
+            newY = Math.min(Math.max(newY, minY), maxY);
             
             note.style.left = `${newX}px`;
             note.style.top = `${newY}px`;
         }
-
+    
         if (isResizing) {
             const minWidth = 150;
             const minHeight = 150;
-            const maxWidth = window.innerWidth - parsePosition(note.style.left) - 20;
-            const maxHeight = window.innerHeight - parsePosition(note.style.top) - 20;
+            const maxWidth = window.innerWidth - parsePosition(note.style.left) + 50;  // Allow overflow
+            const maxHeight = window.innerHeight - parsePosition(note.style.top) + 50; // Allow overflow
             
             const newWidth = Math.min(Math.max(initialW + e.clientX - startX, minWidth), maxWidth);
             const newHeight = Math.min(Math.max(initialH + e.clientY - startY, minHeight), maxHeight);
