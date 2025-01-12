@@ -35,18 +35,30 @@ function parsePosition(value) {
     return parseInt(value.replace('px', '')) || 0;
 }
 
-function getRandomPositionAround(x, y) {
-    const offset = 200;
-    let newX = x + (Math.random() - 0.5) * offset;
-    let newY = y + (Math.random() - 0.5) * offset;
+function getNextNotePosition(lastX, lastY) {
+    // Add slight random horizontal offset (-5 to +5 pixels)
+    const horizontalOffset = Math.random() * 10 - 5;
+    let newX = lastX + horizontalOffset;
+    let newY = lastY + 55;  // Move 20px down
     
-    // Reduce padding to allow closer edge placement
-    const padding = 5;  // Reduced from 20
-    newX = Math.min(Math.max(newX, -padding), window.innerWidth - 150);  // Allow slight overflow
-    newY = Math.min(Math.max(newY, -padding), window.innerHeight - 100); // Allow slight overflow
+    // Screen boundaries (with 5px padding)
+    const padding = 5;
+    const maxX = window.innerWidth - 150;  // Note width is ~150px
+    const maxY = window.innerHeight - 100;  // Note height is ~100px
+    
+    // Reset to top if note would go off bottom of screen
+    if (newY > maxY) {
+        newY = padding;
+        newX = padding + Math.random() * (maxX - padding);  // Random x position at top
+    }
+    
+    // Ensure within bounds
+    newX = Math.min(Math.max(newX, -padding), maxX);
+    newY = Math.min(Math.max(newY, -padding), maxY);
     
     return { x: newX, y: newY };
 }
+
 
 
 
@@ -105,17 +117,25 @@ function saveDeletedNotes() {
 // Note Creation and Management
 function addNote() {
     const textarea = document.querySelector('.note-input textarea');
-    if (!textarea.value.trim()) return;
-
-    const position = getRandomPositionAround(lastNotePosition.x, lastNotePosition.y);
+    const text = textarea.value.trim();
     
+    if (!text) return;  // Don't create empty notes
+    
+    // Get next position based on last note position
+    const nextPosition = getNextNotePosition(lastNotePosition.x, lastNotePosition.y);
+    
+    // Create the note
     createNote(
-        textarea.value.replace(/\n/g, '<br>'),
+        text.replace(/\n/g, '<br>'),
         lastSelectedColor,
-        position.x,
-        position.y
+        nextPosition.x,
+        nextPosition.y
     );
-
+    
+    // Update the last position
+    lastNotePosition = nextPosition;
+    
+    // Clear the input
     textarea.value = '';
 }
 
