@@ -18,6 +18,11 @@ let holdTimer;
 let activeNote = null;
 let activePalette = null;
 
+let lastSelectedColor = colors[0];
+let lastNotePosition = {
+    x: window.innerWidth / 2 - 100,  // Default center position
+    y: window.innerHeight / 2 - 75
+};
 
 // Local Storage Keys
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
@@ -28,6 +33,20 @@ const DELETED_NOTES_KEY = 'stickyNotes_deleted';
 function parsePosition(value) {
     if (!value) return 0;
     return parseInt(value.replace('px', '')) || 0;
+}
+
+function getRandomPositionAround(x, y) {
+    // Random offset between -100 and 100 pixels
+    const offset = 200;
+    let newX = x + (Math.random() - 0.5) * offset;
+    let newY = y + (Math.random() - 0.5) * offset;
+    
+    // Ensure the note stays within viewport bounds with padding
+    const padding = 20;
+    newX = Math.min(Math.max(newX, padding), window.innerWidth - 250);
+    newY = Math.min(Math.max(newY, padding), window.innerHeight - 200);
+    
+    return { x: newX, y: newY };
 }
 
 
@@ -89,15 +108,19 @@ function addNote() {
     const textarea = document.querySelector('.note-input textarea');
     if (!textarea.value.trim()) return;
 
+    const position = getRandomPositionAround(lastNotePosition.x, lastNotePosition.y);
+    
     createNote(
         textarea.value.replace(/\n/g, '<br>'),
-        colors[0],
-        Math.random() * (window.innerWidth - 250) + 50,
-        Math.random() * (window.innerHeight - 250) + 50
+        lastSelectedColor,
+        position.x,
+        position.y
     );
 
     textarea.value = '';
 }
+
+
 function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
@@ -118,7 +141,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
                     `).join('')}
                 </div>
             </div>
-            <button class="bold-toggle ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</button>
+            <button  class="bold-toggle ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</button>
             <button class="done-button" onclick="markAsDone(this.closest('.sticky-note'))">✓</button>
         </div>
         <div class="resize-handle"></div>
@@ -153,6 +176,13 @@ function setupNote(note) {
     content.addEventListener('blur', saveContent);
     content.addEventListener('input', saveContent);
 
+    // Track position after movement ends
+    function updateLastPosition() {
+        const rect = note.getBoundingClientRect();
+        lastNotePosition.x = rect.left;
+        lastNotePosition.y = rect.top;
+    }
+
     // Color picker toggle
     colorButton.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -170,7 +200,7 @@ function setupNote(note) {
         showColorPalette(colorPalette);
     });
 
-    // Content editing
+    // Content editing events
     content.addEventListener('dblclick', () => {
         content.contentEditable = "true";
         content.focus();
@@ -189,12 +219,12 @@ function setupNote(note) {
         }
     });
 
-    // Mouse events
+    // Mouse events setup
     note.addEventListener('mousedown', startHandler);
     document.addEventListener('mousemove', moveHandler);
     document.addEventListener('mouseup', endHandler);
 
-    // Touch events
+    // Touch events setup
     note.addEventListener('touchstart', e => startHandler(e.touches[0]));
     document.addEventListener('touchmove', e => moveHandler(e.touches[0]));
     document.addEventListener('touchend', endHandler);
@@ -234,15 +264,29 @@ function setupNote(note) {
         if (isDragging) {
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
-            note.style.left = `${initialX + dx}px`;
-            note.style.top = `${initialY + dy}px`;
+            
+            // Calculate new position
+            let newX = initialX + dx;
+            let newY = initialY + dy;
+            
+            // Add boundary checks to keep note within viewport
+            const padding = 20;
+            newX = Math.min(Math.max(newX, padding), window.innerWidth - note.offsetWidth - padding);
+            newY = Math.min(Math.max(newY, padding), window.innerHeight - note.offsetHeight - padding);
+            
+            note.style.left = `${newX}px`;
+            note.style.top = `${newY}px`;
         }
 
         if (isResizing) {
             const minWidth = 150;
             const minHeight = 150;
-            const newWidth = Math.max(initialW + e.clientX - startX, minWidth);
-            const newHeight = Math.max(initialH + e.clientY - startY, minHeight);
+            const maxWidth = window.innerWidth - parsePosition(note.style.left) - 20;
+            const maxHeight = window.innerHeight - parsePosition(note.style.top) - 20;
+            
+            const newWidth = Math.min(Math.max(initialW + e.clientX - startX, minWidth), maxWidth);
+            const newHeight = Math.min(Math.max(initialH + e.clientY - startY, minHeight), maxHeight);
+            
             note.style.width = `${newWidth}px`;
             note.style.height = `${newHeight}px`;
         }
@@ -253,6 +297,7 @@ function setupNote(note) {
         if (isDragging || isResizing) {
             saveActiveNotes();
             if (isDragging) {
+                updateLastPosition();
                 checkTrashCollision(note);
             }
         }
@@ -302,6 +347,7 @@ function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
     note.style.backgroundColor = color;
     note.querySelector('.color-button').style.backgroundColor = color;
+    lastSelectedColor = color;
     saveActiveNotes();
 }
 
