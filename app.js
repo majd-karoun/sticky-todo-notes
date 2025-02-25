@@ -20,7 +20,7 @@ let activePalette = null;
 
 let lastSelectedColor = colors[0];
 let lastNotePosition = {
-    x: window.innerWidth / 2 - 100,  // Default center position
+    x: window.innerWidth / 2 - 100, // Default center position
     y: window.innerHeight / 2 - 75
 };
 
@@ -36,15 +36,15 @@ function parsePosition(value) {
 }
 
 function getNextNotePosition(lastX, lastY) {
-    // Add slight random horizontal offset (-5 to +5 pixels)
+    // Add slight random horizontal offset 
     const horizontalOffset = Math.random() * 10 - 5;
     let newX = lastX + horizontalOffset;
-    let newY = lastY + 55;  // Move 20px down
+    let newY = lastY + 55;  // Move 55px down
     
     // Screen boundaries (with 5px padding)
     const padding = 5;
-    const maxX = window.innerWidth - 150;  // Note width is ~150px
-    const maxY = window.innerHeight - 100;  // Note height is ~100px
+    const maxX = window.innerWidth - 150; 
+    const maxY = window.innerHeight - 100;
     
     // Reset to top if note would go off bottom of screen
     if (newY > maxY) {

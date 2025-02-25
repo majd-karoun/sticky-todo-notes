@@ -156,11 +156,11 @@ body {
     outline: none;
     background: transparent;
     border: none;
-    font-size: 1.5rem;  /* Restored to original size */
+    font-size: 1.2rem;  
     color: inherit;
     resize: none;
     padding: 0;
-    padding-right: 8px; /* Space for scrollbar */
+    padding-right: 8px; 
     line-height: 1.4;
     white-space: pre-wrap;
     font-weight: 400;
@@ -199,7 +199,7 @@ body {
 .sticky-content.bold {
     animation: smoothBold 0.3s ease-in-out forwards;
     text-shadow: 0 0 0.5px rgba(0,0,0,0.3);
-    font-size: 2rem;
+    font-size: 1.6rem;
 }
 
 
@@ -224,7 +224,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+
     transition: all 0.2s;
     font-weight: bold;
 }
@@ -243,20 +243,18 @@ body {
     transition: font-size 0.3s ease;
 }
 
-.sticky-content.bold {
-    font-size: 2rem 
-}
+
 
 .bold-toggle {
     font-weight: 900 !important;
-    font-size: 1rem !important;  
+    font-size: 0.8rem !important;  
 }
 
 .bold-toggle.active {
     background: rgba(0,0,0,0.3) !important; 
     color: rgba(0,0,0,1) !important;  
     transform: scale(1.1);
-    font-size: 1.3rem  !important;
+    font-size: 1rem  !important;
 }
 
 .bold-toggle:hover {
@@ -378,7 +376,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1rem;
     transition: all 0.2s;
 }
 
@@ -405,7 +403,7 @@ body {
     padding: 12px;
     resize: none;
     margin-bottom: 12px;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     line-height: 1.4;
 }
 
@@ -417,7 +415,7 @@ body {
     border-radius: 15px;
     color: rgb(151, 151, 151);
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 500;
     transition: all 0.2s ease;
 }
@@ -540,7 +538,7 @@ body {
     justify-content: center;
     height: 500px;  
     color: rgba(255,255,255,0.5);
-    font-size: 2.5rem; 
+    font-size: 2rem; 
     font-weight: 300;
     letter-spacing: 0.05em;
     animation: fadeIn 0.8s ease-out;
@@ -572,7 +570,7 @@ body {
     padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1rem;
     transition: all 0.2s ease;
     background: transparent;
 }
@@ -671,7 +669,7 @@ body {
     margin-bottom: 15px;
     word-break: break-word;
     color: #000;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     overflow-y: auto;
     padding-right: 8px; /* Space for scrollbar */
 }
@@ -694,7 +692,7 @@ body {
     font-weight: 900;  
     text-shadow: 0 0 0.5px rgba(0,0,0,0.3);  
     letter-spacing: 0.2px;
-    font-size: 2rem;
+    font-size: 1.5rem;
 }
 
 .deleted-note-actions {
@@ -710,7 +708,7 @@ body {
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1rem;
     transition: all 0.2s ease;
     background: transparent;
 }
@@ -732,6 +730,8 @@ body {
 .delete-btn:hover {
     background: rgba(255, 68, 68, 0.1);
 }
+
+
 
 
 
@@ -850,3 +850,69 @@ font-size: 2rem;
 }
 
 }
+/* Safari-specific font size for note input textarea */
+@media not all and (max-width: 400px) and (min-resolution: 0.001dpcm) {
+    @supports (-webkit-appearance:none) and (stroke-color:transparent) {
+      .note-input textarea {
+        font-size: 1.5rem;
+        
+      }
+
+      .sticky-content {
+        font-size: 1.5rem;
+      }
+
+      .sticky-content.bold {
+        font-size: 2rem;
+      }
+
+      .bold-toggle {
+        font-size: 1rem !important;  
+    }
+    
+    .bold-toggle.active {
+  
+        font-size: 1.3rem  !important;
+    }
+
+    .note-input button {
+      
+        font-size: 1.2rem;
+        
+    }
+
+    .note-input button {
+        font-size: 1.2rem;
+       
+    }
+
+    .empty-state {
+       
+        font-size: 2.5rem; 
+        
+    }
+    .restore-btn, .delete-btn {
+        
+        font-size: 1.2rem;
+    
+    }
+
+    .deleted-note-content {
+        
+        font-size: 1.5rem;
+     
+    }
+
+    .deleted-note-content.bold {
+        
+        font-size: 2rem;
+        
+    }
+
+    .done-button {
+        
+        font-size: 1.2rem;
+        
+    }
+    }
+  }
