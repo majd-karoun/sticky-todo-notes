@@ -414,9 +414,8 @@ function markAsDone(note) {
     note.style.setProperty('--throwY', `${throwY}px`);
     note.style.animation = 'paperCrumble 0.5s ease-in forwards';
     
-    setTimeout(() => {
-        trashBin.style.animation = 'binShake 0.5s ease-in-out';
-    }, 400);
+    // Start bin shake animation immediately instead of after delay
+    trashBin.style.animation = 'binShake 0.5s ease-in-out';
 
     setTimeout(() => {
         note.remove();
