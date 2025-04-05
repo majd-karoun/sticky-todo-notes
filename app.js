@@ -28,6 +28,7 @@ let lastNotePosition = {
 let currentBoardId = 1;
 let boardCount = 1;
 let isMobileView = false;
+const MAX_BOARDS = 10;
 
 // Local Storage Keys
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
@@ -83,12 +84,20 @@ function loadSavedNotes() {
     const savedBoardCount = localStorage.getItem(BOARDS_COUNT_KEY);
     if (savedBoardCount) {
         boardCount = parseInt(savedBoardCount);
+        // Ensure board count doesn't exceed maximum
+        if (boardCount > MAX_BOARDS) {
+            boardCount = MAX_BOARDS;
+            saveBoardCount();
+        }
         
         // Create the saved boards in the UI
         for (let i = 2; i <= boardCount; i++) {
             createBoardUI(i);
         }
     }
+
+    // Update add button state
+    updateAddButtonState();
 
     // Load notes for all boards
     for (let i = 1; i <= boardCount; i++) {
@@ -216,8 +225,10 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
     boardElement.appendChild(note);
 
+    // Apply paperPop animation to all notes, even when restored
+    note.style.animation = 'paperPop 0.3s ease-out forwards';
+    
     if (!isRestored) {
-        note.style.animation = 'paperPop 0.3s ease-out forwards';
         saveActiveNotes();
     }
 
@@ -383,10 +394,21 @@ function createNewBoard() {
     // Don't allow creating new boards on mobile
     if (isMobileView) return;
     
+    // Check if maximum boards limit reached
+    if (boardCount >= MAX_BOARDS) {
+        alert(`Maximum number of boards (${MAX_BOARDS}) reached.`);
+        return;
+    }
+    
     boardCount++;
     createBoardUI(boardCount);
     saveBoardCount();
-    switchToBoard(boardCount);
+    
+    // Remove auto-switching to the new board
+    // switchToBoard(boardCount);
+    
+    // Update add button visibility based on board count
+    updateAddButtonState();
 }
 
 function createBoardUI(boardId) {
@@ -497,51 +519,67 @@ function continueWithBoardDeletion(boardId) {
         boardElement.remove();
     }
     
-    // Remove board button from DOM
+    // Animate board button removal
     const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
     if (buttonElement) {
-        buttonElement.remove();
+        buttonElement.classList.add('removing');
+    }
+    
+    // Collect all buttons that need to be renumbered
+    const buttonsToRenumber = [];
+    for (let i = boardId + 1; i <= boardCount; i++) {
+        const button = document.querySelector(`.board-button[data-board-id="${i}"]`);
+        if (button) {
+            button.classList.add('removing');
+            buttonsToRenumber.push(i);
+        }
     }
     
     // Remove board notes from localStorage
     const boardKey = `${ACTIVE_NOTES_KEY}_board_${boardId}`;
     localStorage.removeItem(boardKey);
     
-    // Renumber remaining boards if this wasn't the last board
-    if (boardId < boardCount) {
-        for (let i = boardId + 1; i <= boardCount; i++) {
-            // Update board element
-            const board = document.querySelector(`.board[data-board-id="${i}"]`);
-            if (board) {
-                board.dataset.boardId = i - 1;
-            }
-            
-            // Remove the old button completely
-            const oldButton = document.querySelector(`.board-button[data-board-id="${i}"]`);
+    // Wait for all removal animations to complete before creating new buttons
+    setTimeout(() => {
+        // Remove the deleted button
+        if (buttonElement) {
+            buttonElement.remove();
+        }
+        
+        // Renumber boards and create new buttons one by one
+        buttonsToRenumber.forEach((oldId, index) => {
+            // First, remove the old button
+            const oldButton = document.querySelector(`.board-button[data-board-id="${oldId}"]`);
             if (oldButton) {
                 oldButton.remove();
             }
             
-            // Create a completely new button instead of cloning
-            const newBoardId = i - 1;
+            // Update board element
+            const board = document.querySelector(`.board[data-board-id="${oldId}"]`);
+            const newId = oldId - 1;
+            
+            if (board) {
+                board.dataset.boardId = newId;
+            }
+            
+            // Create a new button
             const navigationContainer = document.querySelector('.boards-navigation');
             const addButton = document.querySelector('.add-board-button');
             
-            // Create a new button from scratch
             const newButton = document.createElement('div');
-            newButton.className = 'board-button';
-            newButton.dataset.boardId = newBoardId;
-            newButton.textContent = newBoardId;
-            newButton.addEventListener('click', () => switchToBoard(newBoardId));
+            newButton.className = 'board-button new-button';
+            newButton.dataset.boardId = newId;
+            newButton.textContent = newId;
+            newButton.addEventListener('click', () => switchToBoard(newId));
             
             // Add delete button for any board other than board 1
-            if (newBoardId > 1) {
+            if (newId > 1) {
                 const deleteButton = document.createElement('div');
                 deleteButton.className = 'delete-board';
                 deleteButton.textContent = '×';
                 deleteButton.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    deleteBoard(newBoardId);
+                    deleteBoard(newId);
                 });
                 newButton.appendChild(deleteButton);
             }
@@ -550,39 +588,49 @@ function continueWithBoardDeletion(boardId) {
             navigationContainer.insertBefore(newButton, addButton);
             
             // Move board data in localStorage
-            const oldKey = `${ACTIVE_NOTES_KEY}_board_${i}`;
-            const newKey = `${ACTIVE_NOTES_KEY}_board_${newBoardId}`;
+            const oldKey = `${ACTIVE_NOTES_KEY}_board_${oldId}`;
+            const newKey = `${ACTIVE_NOTES_KEY}_board_${newId}`;
             const boardData = localStorage.getItem(oldKey);
             
             if (boardData) {
                 localStorage.setItem(newKey, boardData);
                 localStorage.removeItem(oldKey);
             }
+        });
+        
+        // Remove animation classes after a delay
+        setTimeout(() => {
+            document.querySelectorAll('.board-button.new-button').forEach(button => {
+                button.classList.remove('new-button');
+            });
+        }, 500);
+        
+        // Update board count
+        boardCount--;
+        saveBoardCount();
+        
+        // Update add button state after deleting a board
+        updateAddButtonState();
+        
+        // If we deleted the current board, switch to another board
+        if (currentBoardId === boardId) {
+            // If there are boards with lower numbers, go to the previous board
+            if (boardId > 1) {
+                switchToBoard(boardId - 1);
+            } else if (boardCount >= 1) {
+                // Otherwise go to the next board (now renumbered)
+                switchToBoard(1);
+            }
+        } else if (currentBoardId > boardId) {
+            // If we're on a board with a higher number, adjust the current board ID
+            // since the boards have been renumbered
+            currentBoardId--;
+            switchToBoard(currentBoardId);
         }
-    }
-    
-    // Update board count
-    boardCount--;
-    saveBoardCount();
-    
-    // If we deleted the current board, switch to another board
-    if (currentBoardId === boardId) {
-        // If there are boards with lower numbers, go to the previous board
-        if (boardId > 1) {
-            switchToBoard(boardId - 1);
-        } else if (boardCount >= 1) {
-            // Otherwise go to the next board (now renumbered)
-            switchToBoard(1);
-        }
-    } else if (currentBoardId > boardId) {
-        // If we're on a board with a higher number, adjust the current board ID
-        // since the boards have been renumbered
-        currentBoardId--;
-        switchToBoard(currentBoardId);
-    }
-    
-    // Reset trash bin animation after all is done
-    document.querySelector('.trash-bin').style.animation = '';
+        
+        // Reset trash bin animation
+        document.querySelector('.trash-bin').style.animation = '';
+    }, 350); // Wait a bit longer than the animation duration
 }
 
 function switchToBoard(boardId) {
@@ -1016,3 +1064,15 @@ document.querySelector('.note-input textarea').addEventListener('keydown', (e) =
         addNote();
     }
 });
+
+// Add a function to update add button state
+function updateAddButtonState() {
+    const addButton = document.querySelector('.add-board-button');
+    if (boardCount >= MAX_BOARDS) {
+        addButton.classList.add('disabled');
+        addButton.title = `Maximum number of boards (${MAX_BOARDS}) reached`;
+    } else {
+        addButton.classList.remove('disabled');
+        addButton.title = "Add new board";
+    }
+}
