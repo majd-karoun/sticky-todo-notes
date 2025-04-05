@@ -393,12 +393,12 @@ body {
     bottom: 20px;
     left: 20px;
     width: 260px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.3);
     padding: 12px;
     border-radius: 20px;
     backdrop-filter: blur(5px);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    z-index: 0;  /* Increased z-index to be on top */
+    z-index: 0;
 }
 
 .note-input textarea {
@@ -412,6 +412,8 @@ body {
     margin-bottom: 12px;
     font-size: 1.2rem;
     line-height: 1.4;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
 }
 
 .note-input button {
@@ -423,7 +425,8 @@ body {
     color: rgb(151, 151, 151);
     cursor: pointer;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 300;
+    font-family: 'Poppins', sans-serif;
     transition: all 0.2s ease;
 }
 
@@ -444,7 +447,7 @@ body {
     width: 60px;
     height: 80px;
     cursor: pointer;
-    z-index: 10000;  /* Increased z-index to be on top */
+    z-index: 10000;
 }
 
 .trash-count {
@@ -461,7 +464,9 @@ body {
     justify-content: center;
     font-size: 1.2rem;
     font-family: 'Poppins', sans-serif;
-    font-weight: 200;
+    font-weight: 300;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .bin-lid {
@@ -469,10 +474,12 @@ body {
     top: 0;
     width: 100%;
     height: 15px;
-    background: #444;
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 3px;
     transform-origin: top center;
     transition: transform 0.3s ease;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .trash-bin:hover .bin-lid,
@@ -485,14 +492,10 @@ body {
     bottom: 0;
     width: 100%;
     height: 60px;
-    background: #333;
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 3px;
-    background-image: 
-        repeating-linear-gradient(45deg, 
-            transparent 0, 
-            transparent 10px, 
-            #444 3px, 
-            #444 12px);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Trash Modal */
@@ -503,8 +506,8 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(2px);
     z-index: 100000;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -515,17 +518,18 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, calc(-50% + 30px));
-    background: #222;
+    background: rgba(0, 0, 0, 0.1);
     padding: 25px;
     border-radius: 12px;
-    width: 800px;  /* Fixed width */
-    height: 600px; /* Fixed height */
+    width: 800px;
+    height: 600px;
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(255,255,255,0.1);
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
+    backdrop-filter: blur(3px);
 }
 
 
@@ -545,12 +549,13 @@ body {
     align-items: center;
     justify-content: center;
     height: 500px;  
-    color: rgba(255,255,255,0.5);
+    color: rgb(151, 151, 151);
     font-size: 2rem; 
     font-weight: 300;
     letter-spacing: 0.05em;
     animation: fadeIn 0.8s ease-out;
     text-align: center;
+    font-family: 'Poppins', sans-serif;
 }
 
 .modal-header {
@@ -564,8 +569,9 @@ body {
 
 .modal-header h2 {
     font-size: 1.5rem;
-    font-weight: 500;
-    color: #fff;
+    font-weight: 300;
+    color: rgb(151, 151, 151);
+    font-family: 'Poppins', sans-serif;
 }
 
 .modal-controls {
@@ -586,6 +592,10 @@ body {
 .restore-all-btn {
     color: #4CAF50;
     border: 2px solid #4CAF50;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
 }
 
 .restore-all-btn:hover {
@@ -595,6 +605,10 @@ body {
 .clear-trash-btn {
     color: #ff4444;
     border: 2px solid #ff4444;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
 }
 
 .clear-trash-btn:hover {
@@ -603,23 +617,25 @@ body {
 
 .close-modal-btn {
     border: none;
-    color: #fff;
-    width: 40px;
-    height: 40px;
+    color: rgb(200, 198, 198);
+    width: 43px;
+    height: 43px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.3);
     cursor: pointer;
     transition: all 0.2s ease;
     margin-left: 15px;
     font-size: 1.5rem;
+    backdrop-filter: blur(5px);
+    border: 2px solid rgb(200, 198, 198);
 }
 
 .close-modal-btn:hover {
     background: rgba(255,255,255,0.2);
-    transform: scale(1.1);
+    
 }
 
 .close-modal-btn:active {
@@ -652,15 +668,17 @@ body {
 }
 
 .deleted-note {
-    background: rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.3);
     padding: 20px;
     border-radius: 8px;
     position: relative;
-    height: 200px;  /* Fixed height */
-    width: 100%;    /* Full width of grid cell */
+    height: 200px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     transition: transform 0.2s ease, opacity 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(3px);
 }
 
 
@@ -676,10 +694,12 @@ body {
     flex-grow: 1;
     margin-bottom: 15px;
     word-break: break-word;
-    color: #000;
+    color: black;
     font-size: 1.2rem;
     overflow-y: auto;
-    padding-right: 8px; /* Space for scrollbar */
+    padding-right: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
 }
 
 .deleted-note-content::-webkit-scrollbar {
@@ -709,30 +729,42 @@ body {
     justify-content: flex-end;
     flex-shrink: 0; 
     padding-top: 10px;
-    border-top: 1px solid rgba(0,0,0,0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.restore-btn, .delete-btn {
+.restore-btn {
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
     transition: all 0.2s ease;
-    background: transparent;
-}
-
-.restore-btn {
+    background: rgba(76, 175, 80, 0.15);
     color: #4CAF50;
-    border: 1.5px solid #4CAF50;
+    border: 2px solid #4CAF50;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    backdrop-filter: blur(5px);
+    text-shadow: 0 0 1px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .restore-btn:hover {
-    background: rgba(76, 175, 80, 0.1);
+    background: rgba(76, 175, 80, 0.25);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .delete-btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: rgba(0, 0, 0, 0.1);
     color: #ff4444;
     border: 1.5px solid #ff4444;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    backdrop-filter: blur(5px);
 }
 
 .delete-btn:hover {
@@ -1152,8 +1184,8 @@ font-size: 2rem;
 /* Board Style Button and Menu */
 .board-style-button {
     position: fixed;
-    top: 10px;
-    right: 10px;
+    bottom: 20px;
+    left: 290px;
     z-index: 1000;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
@@ -1161,14 +1193,16 @@ font-size: 2rem;
 .board-style-icon {
     width: 40px;
     height: 40px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.3);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: transform 0.3s ease, background-color 0.3s ease;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgb(151, 151, 151);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .board-style-icon svg {
@@ -1178,13 +1212,13 @@ font-size: 2rem;
 
 .board-style-icon:hover {
     transform: scale(1.1);
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .board-style-menu {
     position: absolute;
-    top: 50px;
-    right: 0;
+    top: -280px;
+    left: 0;
     width: 220px;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
@@ -1192,7 +1226,7 @@ font-size: 2rem;
     display: none;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(5px);
-    transform-origin: top right;
+    transform-origin: bottom left;
     opacity: 0;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
     will-change: transform, opacity;
@@ -1313,14 +1347,15 @@ font-size: 2rem;
 @media screen and (max-width: 768px) {
     .board-style-button {
         top: auto;
-        bottom: 70px;
-        right: 10px;
+        bottom: 85px;
+        left: 20px;
     }
     
     .board-style-menu {
         top: auto;
-        bottom: 60px;
-        right: 0;
+        bottom: 130px;
+        left: 0;
+        right: auto;
     }
 }
 
