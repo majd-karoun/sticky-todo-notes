@@ -398,7 +398,7 @@ function createBoardUI(boardId) {
     
     // Create navigation button
     const buttonElement = document.createElement('div');
-    buttonElement.className = 'board-button';
+    buttonElement.className = 'board-button new-button';
     buttonElement.dataset.boardId = boardId;
     buttonElement.textContent = boardId;
     buttonElement.addEventListener('click', () => switchToBoard(boardId));
@@ -418,6 +418,11 @@ function createBoardUI(boardId) {
     // Insert before the add button
     const addButton = document.querySelector('.add-board-button');
     document.querySelector('.boards-navigation').insertBefore(buttonElement, addButton);
+    
+    // Remove animation class after animation completes
+    setTimeout(() => {
+        buttonElement.classList.remove('new-button');
+    }, 500);
 }
 
 function deleteBoard(boardId) {
@@ -505,37 +510,48 @@ function continueWithBoardDeletion(boardId) {
     // Renumber remaining boards if this wasn't the last board
     if (boardId < boardCount) {
         for (let i = boardId + 1; i <= boardCount; i++) {
+            // Update board element
             const board = document.querySelector(`.board[data-board-id="${i}"]`);
-            const button = document.querySelector(`.board-button[data-board-id="${i}"]`);
-            
             if (board) {
                 board.dataset.boardId = i - 1;
             }
             
-            if (button) {
-                button.dataset.boardId = i - 1;
-                button.textContent = i - 1;
-                
-                // Reset click handler to use new ID
-                const oldClone = button.cloneNode(true);
-                oldClone.addEventListener('click', () => switchToBoard(i - 1));
-                button.parentNode.replaceChild(oldClone, button);
-                
-                // Add delete button again
-                if (i - 1 > 1) {
-                    const deleteButton = oldClone.querySelector('.delete-board');
-                    if (deleteButton) {
-                        deleteButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            deleteBoard(i - 1);
-                        });
-                    }
-                }
+            // Remove the old button completely
+            const oldButton = document.querySelector(`.board-button[data-board-id="${i}"]`);
+            if (oldButton) {
+                oldButton.remove();
             }
+            
+            // Create a completely new button instead of cloning
+            const newBoardId = i - 1;
+            const navigationContainer = document.querySelector('.boards-navigation');
+            const addButton = document.querySelector('.add-board-button');
+            
+            // Create a new button from scratch
+            const newButton = document.createElement('div');
+            newButton.className = 'board-button';
+            newButton.dataset.boardId = newBoardId;
+            newButton.textContent = newBoardId;
+            newButton.addEventListener('click', () => switchToBoard(newBoardId));
+            
+            // Add delete button for any board other than board 1
+            if (newBoardId > 1) {
+                const deleteButton = document.createElement('div');
+                deleteButton.className = 'delete-board';
+                deleteButton.textContent = '×';
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteBoard(newBoardId);
+                });
+                newButton.appendChild(deleteButton);
+            }
+            
+            // Insert the new button before the add button
+            navigationContainer.insertBefore(newButton, addButton);
             
             // Move board data in localStorage
             const oldKey = `${ACTIVE_NOTES_KEY}_board_${i}`;
-            const newKey = `${ACTIVE_NOTES_KEY}_board_${i - 1}`;
+            const newKey = `${ACTIVE_NOTES_KEY}_board_${newBoardId}`;
             const boardData = localStorage.getItem(oldKey);
             
             if (boardData) {
