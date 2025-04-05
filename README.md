@@ -25,7 +25,7 @@ git clone https://github.com/majd-karoun/sticky-todo-notes.git
 
 2. Open in your preferred browser:
 ```bash
-cd sticky-notes-board
+cd sticky-todo-notes
 open index.html
 ```
 
