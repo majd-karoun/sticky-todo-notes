@@ -25,6 +25,43 @@
         <div class="add-board-button">+</div>
     </div>
 
+    <div class="board-style-button" onclick="toggleBoardStyleMenu()">
+        <div class="board-style-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="8" r="2" fill="currentColor"></circle>
+                <circle cx="8" cy="14" r="2" fill="currentColor"></circle>
+                <circle cx="16" cy="14" r="2" fill="currentColor"></circle>
+            </svg>
+        </div>
+        <div class="board-style-menu">
+            <div class="style-option-label">Board Color</div>
+            <div class="board-style-colors">
+                <div class="board-color-option" data-color="#1a1a1a" style="background-color: #1a1a1a;"></div>
+                <div class="board-color-option" data-color="#500000" style="background-color: #500000;"></div>
+                <div class="board-color-option" data-color="#004000" style="background-color: #004000;"></div>
+                <div class="board-color-option" data-color="#000050" style="background-color: #000050;"></div>
+                <div class="board-color-option" data-color="#10253F" style="background-color: #10253F;"></div>
+                <div class="board-color-option" data-color="#400040" style="background-color: #400040;"></div>
+            </div>
+            <div class="style-option-label">Board Pattern</div>
+            <div class="board-style-patterns">
+                <div class="board-pattern-option" data-pattern="none">
+                    <div class="pattern-preview pattern-none"></div>
+                </div>
+                <div class="board-pattern-option" data-pattern="dots">
+                    <div class="pattern-preview pattern-dots"></div>
+                </div>
+                <div class="board-pattern-option" data-pattern="grid">
+                    <div class="pattern-preview pattern-grid"></div>
+                </div>
+                <div class="board-pattern-option" data-pattern="lines">
+                    <div class="pattern-preview pattern-lines"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="note-input">
         <textarea placeholder="Write your note..."></textarea>
         <button onclick="addNote()">Add Note</button>

@@ -12,6 +12,16 @@ const colors = [
     '#FFFFFF'  // White
 ];
 
+const boardStyles = {
+    colors: {
+        default: '#1a1a1a',
+        current: '#1a1a1a'
+    },
+    patterns: {
+        default: 'none',
+        current: 'none'
+    }
+};
 
 let deletedNotes = [];
 let holdTimer;
@@ -121,6 +131,11 @@ function loadSavedNotes() {
                 );
             });
         }
+    }
+
+    // Load board styles for all boards
+    for (let i = 1; i <= boardCount; i++) {
+        loadBoardStyles(i);
     }
 
     // Show the first board
@@ -445,6 +460,9 @@ function createBoardUI(boardId) {
     setTimeout(() => {
         buttonElement.classList.remove('new-button');
     }, 500);
+
+    // Initialize board styles
+    loadBoardStyles(boardId);
 }
 
 function deleteBoard(boardId) {
@@ -692,6 +710,12 @@ function switchToBoard(boardId) {
             button.classList.remove('active');
         }
     });
+
+    // Load board styles for the new active board
+    loadBoardStyles(currentBoardId);
+    
+    // Update style indicators in the menu if it's open
+    setActiveStyle();
 }
 
 // Setup event listeners for board navigation
@@ -1076,3 +1100,212 @@ function updateAddButtonState() {
         addButton.title = "Add new board";
     }
 }
+
+// Add these board style functions to the file
+function toggleBoardStyleMenu() {
+    const styleMenu = document.querySelector('.board-style-menu');
+    
+    if (!styleMenu.classList.contains('visible')) {
+        // Prepare menu before showing
+        setActiveStyle();
+        setupStyleOptions();
+        
+        // Force a layout reflow before adding the visible class
+        void styleMenu.offsetWidth;
+        
+        // Show the menu
+        styleMenu.classList.add('visible');
+    } else {
+        // Hide the menu
+        styleMenu.classList.remove('visible');
+    }
+}
+
+function setupStyleOptions() {
+    // Setup only once
+    if (document.querySelector('.board-color-option.initialized')) return;
+    
+    // Setup color options
+    const colorOptions = document.querySelectorAll('.board-color-option');
+    colorOptions.forEach(option => {
+        option.classList.add('initialized');
+        option.addEventListener('click', () => {
+            const color = option.getAttribute('data-color');
+            changeBoardColor(color);
+            
+            // Update active state
+            colorOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+        });
+    });
+    
+    // Setup pattern options
+    const patternOptions = document.querySelectorAll('.board-pattern-option');
+    patternOptions.forEach(option => {
+        option.classList.add('initialized');
+        option.addEventListener('click', () => {
+            const pattern = option.getAttribute('data-pattern');
+            changeBoardPattern(pattern);
+            
+            // Update active state
+            patternOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+        });
+    });
+}
+
+function setActiveStyle() {
+    // Set active color
+    const colorOptions = document.querySelectorAll('.board-color-option');
+    colorOptions.forEach(option => {
+        if (option.getAttribute('data-color') === boardStyles.colors.current) {
+            option.classList.add('active');
+        } else {
+            option.classList.remove('active');
+        }
+    });
+    
+    // Set active pattern
+    const patternOptions = document.querySelectorAll('.board-pattern-option');
+    patternOptions.forEach(option => {
+        if (option.getAttribute('data-pattern') === boardStyles.patterns.current) {
+            option.classList.add('active');
+        } else {
+            option.classList.remove('active');
+        }
+    });
+}
+
+function changeBoardColor(color) {
+    // Store current color
+    boardStyles.colors.current = color;
+    
+    // Apply to active board
+    const activeBoard = document.querySelector('.board.active');
+    activeBoard.style.backgroundColor = color;
+    
+    // Save to localStorage
+    saveBoardStyles();
+    
+    // Apply animation
+    activeBoard.style.transition = 'background-color 0.5s ease';
+    setTimeout(() => {
+        activeBoard.style.transition = '';
+    }, 500);
+}
+
+function changeBoardPattern(pattern) {
+    // Store current pattern
+    boardStyles.patterns.current = pattern;
+    
+    // Apply to active board
+    const activeBoard = document.querySelector('.board.active');
+    
+    // Create an overlay element for the transition
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.zIndex = '0';
+    overlay.style.transition = 'opacity 0.5s ease';
+    
+    // Set the background pattern on the overlay instead of directly on the board
+    if (pattern !== 'none') {
+        if (pattern === 'dots') {
+            overlay.style.backgroundImage = 'radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)';
+            overlay.style.backgroundSize = '20px 20px';
+        } else if (pattern === 'grid') {
+            overlay.style.backgroundImage = 'linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px)';
+            overlay.style.backgroundSize = '20px 20px';
+        } else if (pattern === 'lines') {
+            overlay.style.backgroundImage = 'linear-gradient(0deg, transparent 19px, rgba(255, 255, 255, 0.4) 20px)';
+            overlay.style.backgroundSize = '20px 20px';
+        }
+    }
+    
+    // Start with opacity 0
+    overlay.style.opacity = '0';
+    
+    // Remove all pattern classes from the board
+    activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
+    
+    // Add the overlay to the board
+    activeBoard.appendChild(overlay);
+    
+    // Force a reflow to ensure the transition works
+    void overlay.offsetWidth;
+    
+    // Fade in the pattern
+    overlay.style.opacity = '1';
+    
+    // After the transition completes, apply the pattern directly to the board
+    setTimeout(() => {
+        // Remove the overlay
+        overlay.remove();
+        
+        // Apply the pattern class to the board
+        if (pattern !== 'none') {
+            activeBoard.classList.add(`board-pattern-${pattern}`);
+        }
+    }, 500);
+    
+    // Save to localStorage
+    saveBoardStyles();
+}
+
+function saveBoardStyles() {
+    // Save board styles to localStorage, specific to current board
+    const boardStylesKey = `boardStyles_board_${currentBoardId}`;
+    localStorage.setItem(boardStylesKey, JSON.stringify({
+        color: boardStyles.colors.current,
+        pattern: boardStyles.patterns.current
+    }));
+}
+
+function loadBoardStyles(boardId) {
+    // Load board styles from localStorage
+    const boardStylesKey = `boardStyles_board_${boardId}`;
+    const savedStyles = localStorage.getItem(boardStylesKey);
+    
+    if (savedStyles) {
+        const styles = JSON.parse(savedStyles);
+        boardStyles.colors.current = styles.color;
+        boardStyles.patterns.current = styles.pattern;
+        
+        // Apply to the board
+        const board = document.querySelector(`.board[data-board-id="${boardId}"]`);
+        if (board) {
+            // Apply color
+            board.style.backgroundColor = styles.color;
+            
+            // Apply pattern
+            board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
+            if (styles.pattern !== 'none') {
+                board.classList.add(`board-pattern-${styles.pattern}`);
+            }
+        }
+    } else {
+        // Reset to defaults
+        boardStyles.colors.current = boardStyles.colors.default;
+        boardStyles.patterns.current = boardStyles.patterns.default;
+    }
+}
+
+// Close board style menu when clicking outside
+document.addEventListener('click', function(event) {
+    const styleButton = document.querySelector('.board-style-button');
+    const styleMenu = document.querySelector('.board-style-menu');
+    
+    if (styleMenu.classList.contains('visible') && 
+        !styleButton.contains(event.target)) {
+        styleMenu.classList.remove('visible');
+    }
+});
+
+// Prevent menu from closing when clicking inside it
+document.querySelector('.board-style-menu').addEventListener('click', function(event) {
+    event.stopPropagation();
+});
