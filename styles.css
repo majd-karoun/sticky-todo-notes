@@ -916,3 +916,157 @@ font-size: 2rem;
     }
     }
   }
+
+/* Board Navigation Styles */
+.boards-navigation {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 9000;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 25px;
+    backdrop-filter: blur(5px);
+}
+
+.board-button, .add-board-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.board-button {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.board-button.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid white;
+    transform: scale(1.1);
+}
+
+.add-board-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 24px;
+}
+
+.add-board-button:hover {
+    transform: scale(1.1);
+}
+
+.board-button .delete-board {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 18px;
+    height: 18px;
+    background-color: rgba(255, 68, 68, 0.8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1;
+    cursor: pointer;
+    border: 1px solid white;
+}
+
+.board-button:hover .delete-board {
+    opacity: 1;
+}
+
+.board-button:first-child .delete-board {
+    display: none;
+}
+
+.boards-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.board {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s ease-in-out, visibility 0s 0.5s;
+    transform: translateX(100%);
+    visibility: hidden;
+}
+
+.board.active {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.5s ease-in-out, visibility 0s 0s;
+}
+
+.board.prev {
+    transform: translateX(-100%);
+}
+
+.board.next {
+    transform: translateX(100%);
+}
+
+/* Animation for notes when board changes */
+.board.prev .sticky-note,
+.board.next .sticky-note {
+    animation: paperCrumble 0.5s ease-in forwards;
+    --throwX: 100px;
+    --throwY: 0px;
+}
+
+.board.prev .sticky-note {
+    --throwX: -100px;
+}
+
+.board.active .sticky-note {
+    animation: paperPop 0.3s ease-out forwards;
+}
+
+/* Special animation for notes when board activates */
+@keyframes boardNoteReveal {
+    0% { opacity: 0; transform: scale(0.3) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.board.active .sticky-note {
+    animation: boardNoteReveal 0.4s ease-out forwards;
+    animation-delay: calc(var(--note-index, 0) * 0.05s); /* Stagger effect */
+}
+
+/* Media Queries for Responsive Design */
+@media screen and (max-width: 768px) {
+    .boards-navigation {
+        display: none; /* Hide board navigation on mobile screens */
+    }
+    
+    /* Make sure there's only one board visible on mobile */
+    .board {
+        visibility: hidden;
+        transform: translateX(0); /* No sliding animation on mobile */
+    }
+    
+    .board.active {
+        visibility: visible;
+    }
+}

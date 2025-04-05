@@ -24,10 +24,25 @@ let lastNotePosition = {
     y: window.innerHeight / 2 - 75
 };
 
+// Boards related variables
+let currentBoardId = 1;
+let boardCount = 1;
+let isMobileView = false;
+
 // Local Storage Keys
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
 const DELETED_NOTES_KEY = 'stickyNotes_deleted';
+const BOARDS_COUNT_KEY = 'stickyNotes_boardCount';
 
+// Helper function to check if we're on a mobile device
+function checkMobileView() {
+    isMobileView = window.innerWidth <= 768;
+    
+    // On mobile, always show board 1
+    if (isMobileView && currentBoardId !== 1) {
+        switchToBoard(1);
+    }
+}
 
 // Helper function to parse position values
 function parsePosition(value) {
@@ -59,28 +74,48 @@ function getNextNotePosition(lastX, lastY) {
     return { x: newX, y: newY };
 }
 
-
-
-
 // Load saved notes on startup
 function loadSavedNotes() {
-    const savedNotes = localStorage.getItem(ACTIVE_NOTES_KEY);
-    if (savedNotes) {
-        JSON.parse(savedNotes).forEach(note => {
-            const parsedX = parsePosition(note.x);
-            const parsedY = parsePosition(note.y);
-            createNote(
-                note.text, 
-                note.color, 
-                parsedX, 
-                parsedY, 
-                true, 
-                note.width, 
-                note.height,
-                note.isBold
-            );
-        });
+    // Check for mobile view
+    checkMobileView();
+    
+    // Load board count
+    const savedBoardCount = localStorage.getItem(BOARDS_COUNT_KEY);
+    if (savedBoardCount) {
+        boardCount = parseInt(savedBoardCount);
+        
+        // Create the saved boards in the UI
+        for (let i = 2; i <= boardCount; i++) {
+            createBoardUI(i);
+        }
     }
+
+    // Load notes for all boards
+    for (let i = 1; i <= boardCount; i++) {
+        const boardKey = `${ACTIVE_NOTES_KEY}_board_${i}`;
+        const savedNotes = localStorage.getItem(boardKey);
+        
+        if (savedNotes) {
+            JSON.parse(savedNotes).forEach(note => {
+                const parsedX = parsePosition(note.x);
+                const parsedY = parsePosition(note.y);
+                createNote(
+                    note.text, 
+                    note.color, 
+                    parsedX, 
+                    parsedY, 
+                    true, 
+                    note.width, 
+                    note.height,
+                    note.isBold,
+                    i
+                );
+            });
+        }
+    }
+
+    // Show the first board
+    switchToBoard(1);
 
     // Load deleted notes
     const savedDeletedNotes = localStorage.getItem(DELETED_NOTES_KEY);
@@ -92,7 +127,11 @@ function loadSavedNotes() {
 
 // Save active notes to localStorage
 function saveActiveNotes() {
-    const notes = Array.from(document.querySelectorAll('.sticky-note')).map(note => ({
+    // Save notes for the current board
+    const boardKey = `${ACTIVE_NOTES_KEY}_board_${currentBoardId}`;
+    const boardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+    
+    const notes = Array.from(boardElement.querySelectorAll('.sticky-note')).map(note => ({
         text: note.querySelector('.sticky-content').innerHTML,
         color: note.style.backgroundColor,
         x: note.style.left,
@@ -101,7 +140,8 @@ function saveActiveNotes() {
         height: note.style.height || '150px',
         isBold: note.querySelector('.sticky-content').classList.contains('bold')
     }));
-    localStorage.setItem(ACTIVE_NOTES_KEY, JSON.stringify(notes));
+    
+    localStorage.setItem(boardKey, JSON.stringify(notes));
 }
 
 // Save deleted notes to localStorage.
@@ -109,10 +149,10 @@ function saveDeletedNotes() {
     localStorage.setItem(DELETED_NOTES_KEY, JSON.stringify(deletedNotes));
 }
 
-
-
-
-
+// Save board count to localStorage
+function saveBoardCount() {
+    localStorage.setItem(BOARDS_COUNT_KEY, boardCount.toString());
+}
 
 // Note Creation and Management
 function addNote() {
@@ -124,12 +164,17 @@ function addNote() {
     // Get next position based on last note position
     const nextPosition = getNextNotePosition(lastNotePosition.x, lastNotePosition.y);
     
-    // Create the note
+    // Create the note on the current board
     createNote(
         text.replace(/\n/g, '<br>'),
         lastSelectedColor,
         nextPosition.x,
-        nextPosition.y
+        nextPosition.y,
+        false,
+        '200px',
+        '150px',
+        false,
+        currentBoardId
     );
     
     // Update the last position
@@ -139,8 +184,7 @@ function addNote() {
     textarea.value = '';
 }
 
-
-function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false) {
+function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
     note.style.backgroundColor = color;
@@ -167,7 +211,10 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     `;
 
     setupNote(note);
-    document.querySelector('.board').appendChild(note);
+    
+    // Add the note to the correct board
+    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    boardElement.appendChild(note);
 
     if (!isRestored) {
         note.style.animation = 'paperPop 0.3s ease-out forwards';
@@ -176,7 +223,6 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
 
     return note;
 }
-
 
 function setupNote(note) {
     let isDragging = false;
@@ -332,6 +378,362 @@ function setupNote(note) {
     }
 }
 
+// Board Management Functions
+function createNewBoard() {
+    // Don't allow creating new boards on mobile
+    if (isMobileView) return;
+    
+    boardCount++;
+    createBoardUI(boardCount);
+    saveBoardCount();
+    switchToBoard(boardCount);
+}
+
+function createBoardUI(boardId) {
+    // Create board element
+    const boardElement = document.createElement('div');
+    boardElement.className = 'board';
+    boardElement.dataset.boardId = boardId;
+    document.querySelector('.boards-container').appendChild(boardElement);
+    
+    // Create navigation button
+    const buttonElement = document.createElement('div');
+    buttonElement.className = 'board-button';
+    buttonElement.dataset.boardId = boardId;
+    buttonElement.textContent = boardId;
+    buttonElement.addEventListener('click', () => switchToBoard(boardId));
+    
+    // Add delete button (except for board 1)
+    if (boardId > 1) {
+        const deleteButton = document.createElement('div');
+        deleteButton.className = 'delete-board';
+        deleteButton.textContent = '×';
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering board switch
+            deleteBoard(boardId);
+        });
+        buttonElement.appendChild(deleteButton);
+    }
+    
+    // Insert before the add button
+    const addButton = document.querySelector('.add-board-button');
+    document.querySelector('.boards-navigation').insertBefore(buttonElement, addButton);
+}
+
+function deleteBoard(boardId) {
+    if (confirm(`Are you sure you want to delete board ${boardId}?`)) {
+        // Get board element
+        const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+        
+        if (boardElement) {
+            // Get all notes on this board
+            const notes = boardElement.querySelectorAll('.sticky-note');
+            
+            if (notes.length > 0) {
+                // Mark all notes as done with animation
+                const trashBin = document.querySelector('.trash-bin');
+                const trashRect = trashBin.getBoundingClientRect();
+                
+                // Start trash bin shake animation
+                trashBin.style.animation = 'binShake 0.5s ease-in-out';
+                
+                // Process each note
+                notes.forEach(note => {
+                    const content = note.querySelector('.sticky-content');
+                    const isBold = content.classList.contains('bold');
+                    
+                    // Save note data to deleted notes
+                    const noteData = {
+                        text: content.innerHTML,
+                        color: note.style.backgroundColor,
+                        x: note.style.left,
+                        y: note.style.top,
+                        width: note.style.width,
+                        height: note.style.height,
+                        timestamp: new Date().toLocaleString(),
+                        isBold: isBold
+                    };
+                    
+                    deletedNotes.unshift(noteData);
+                    
+                    // Calculate animation path to trash
+                    const noteRect = note.getBoundingClientRect();
+                    const throwX = trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2);
+                    const throwY = trashRect.top - noteRect.top;
+                    
+                    note.style.setProperty('--throwX', `${throwX}px`);
+                    note.style.setProperty('--throwY', `${throwY}px`);
+                    note.style.animation = 'paperCrumble 0.5s ease-in forwards';
+                });
+                
+                // Save deleted notes
+                saveDeletedNotes();
+                updateTrashCount();
+                
+                // Wait for animations to finish before removing board
+                setTimeout(() => {
+                    continueWithBoardDeletion(boardId);
+                }, 600);
+            } else {
+                // No notes to animate, delete immediately
+                continueWithBoardDeletion(boardId);
+            }
+        } else {
+            // Board element not found, delete anyway
+            continueWithBoardDeletion(boardId);
+        }
+    }
+}
+
+function continueWithBoardDeletion(boardId) {
+    // Remove board from DOM
+    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    if (boardElement) {
+        boardElement.remove();
+    }
+    
+    // Remove board button from DOM
+    const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
+    if (buttonElement) {
+        buttonElement.remove();
+    }
+    
+    // Remove board notes from localStorage
+    const boardKey = `${ACTIVE_NOTES_KEY}_board_${boardId}`;
+    localStorage.removeItem(boardKey);
+    
+    // Renumber remaining boards if this wasn't the last board
+    if (boardId < boardCount) {
+        for (let i = boardId + 1; i <= boardCount; i++) {
+            const board = document.querySelector(`.board[data-board-id="${i}"]`);
+            const button = document.querySelector(`.board-button[data-board-id="${i}"]`);
+            
+            if (board) {
+                board.dataset.boardId = i - 1;
+            }
+            
+            if (button) {
+                button.dataset.boardId = i - 1;
+                button.textContent = i - 1;
+                
+                // Reset click handler to use new ID
+                const oldClone = button.cloneNode(true);
+                oldClone.addEventListener('click', () => switchToBoard(i - 1));
+                button.parentNode.replaceChild(oldClone, button);
+                
+                // Add delete button again
+                if (i - 1 > 1) {
+                    const deleteButton = oldClone.querySelector('.delete-board');
+                    if (deleteButton) {
+                        deleteButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteBoard(i - 1);
+                        });
+                    }
+                }
+            }
+            
+            // Move board data in localStorage
+            const oldKey = `${ACTIVE_NOTES_KEY}_board_${i}`;
+            const newKey = `${ACTIVE_NOTES_KEY}_board_${i - 1}`;
+            const boardData = localStorage.getItem(oldKey);
+            
+            if (boardData) {
+                localStorage.setItem(newKey, boardData);
+                localStorage.removeItem(oldKey);
+            }
+        }
+    }
+    
+    // Update board count
+    boardCount--;
+    saveBoardCount();
+    
+    // If we deleted the current board, switch to another board
+    if (currentBoardId === boardId) {
+        // If there are boards with lower numbers, go to the previous board
+        if (boardId > 1) {
+            switchToBoard(boardId - 1);
+        } else if (boardCount >= 1) {
+            // Otherwise go to the next board (now renumbered)
+            switchToBoard(1);
+        }
+    } else if (currentBoardId > boardId) {
+        // If we're on a board with a higher number, adjust the current board ID
+        // since the boards have been renumbered
+        currentBoardId--;
+        switchToBoard(currentBoardId);
+    }
+    
+    // Reset trash bin animation after all is done
+    document.querySelector('.trash-bin').style.animation = '';
+}
+
+function switchToBoard(boardId) {
+    // On mobile devices, only allow board 1
+    if (isMobileView && boardId !== 1) {
+        return;
+    }
+    
+    const targetBoardId = parseInt(boardId);
+    const previousBoardId = currentBoardId;
+    
+    // If we're already on this board, do nothing
+    if (targetBoardId === previousBoardId) return;
+    
+    // Calculate direction for animation
+    const isMovingForward = targetBoardId > previousBoardId;
+    
+    // Update current board ID
+    currentBoardId = targetBoardId;
+    
+    // Update board display
+    document.querySelectorAll('.board').forEach(board => {
+        const id = parseInt(board.dataset.boardId);
+        
+        // Clear all classes first
+        board.classList.remove('active', 'prev', 'next');
+        
+        if (id === currentBoardId) {
+            board.classList.add('active');
+            board.style.visibility = 'visible';
+            
+            // Apply staggered animation to notes
+            const notes = board.querySelectorAll('.sticky-note');
+            notes.forEach((note, index) => {
+                note.style.setProperty('--note-index', index);
+            });
+        } else if (id < currentBoardId) {
+            board.classList.add('prev');
+            setTimeout(() => {
+                if (board.classList.contains('prev')) {
+                    board.style.visibility = 'hidden';
+                }
+            }, 500); // Match transition duration
+        } else {
+            board.classList.add('next');
+            setTimeout(() => {
+                if (board.classList.contains('next')) {
+                    board.style.visibility = 'hidden';
+                }
+            }, 500); // Match transition duration
+        }
+    });
+    
+    // Update navigation buttons
+    document.querySelectorAll('.board-button').forEach(button => {
+        if (parseInt(button.dataset.boardId) === currentBoardId) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+}
+
+// Setup event listeners for board navigation
+function setupBoardNavigation() {
+    // Add click handler to add board button
+    document.querySelector('.add-board-button').addEventListener('click', createNewBoard);
+    
+    // Add click handlers to all existing board buttons, including board 1
+    document.querySelectorAll('.board-button').forEach(button => {
+        const boardId = parseInt(button.dataset.boardId);
+        // Remove any existing listeners first (to avoid duplicates)
+        const newButton = button.cloneNode(true);
+        newButton.addEventListener('click', () => switchToBoard(boardId));
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Re-add delete button handler if this button has one
+        const deleteButton = newButton.querySelector('.delete-board');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteBoard(boardId);
+            });
+        }
+    });
+    
+    // Add touch swiping for mobile
+    let startX, startY;
+    
+    document.querySelector('.boards-container').addEventListener('touchstart', (e) => {
+        // Don't track swipes if in mobile view
+        if (isMobileView) return;
+        
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    });
+    
+    document.querySelector('.boards-container').addEventListener('touchend', (e) => {
+        // Don't process swipes if in mobile view
+        if (isMobileView) return;
+        
+        if (!startX) return;
+        
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+        
+        // Only register horizontal swipes if they're more horizontal than vertical
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+            if (diffX > 0 && currentBoardId < boardCount) {
+                // Swipe left - go to next board
+                switchToBoard(currentBoardId + 1);
+            } else if (diffX < 0 && currentBoardId > 1) {
+                // Swipe right - go to previous board
+                switchToBoard(currentBoardId - 1);
+            }
+        }
+        
+        startX = null;
+        startY = null;
+    });
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        // Don't handle board navigation keyboard shortcuts on mobile
+        if (isMobileView) return;
+        
+        // Avoid capturing keyboard events when focused on text areas or editable content
+        if (e.target.tagName === 'TEXTAREA' || e.target.getAttribute('contenteditable') === 'true') {
+            return;
+        }
+        
+        // Arrow left/right for navigation
+        if (e.key === 'ArrowLeft' && currentBoardId > 1) {
+            switchToBoard(currentBoardId - 1);
+        } else if (e.key === 'ArrowRight' && currentBoardId < boardCount) {
+            switchToBoard(currentBoardId + 1);
+        } else if (e.key === 'n' && e.ctrlKey) {
+            // Ctrl+N for new board
+            e.preventDefault();
+            createNewBoard();
+        } else if (e.key === 'd' && e.ctrlKey && currentBoardId > 1) {
+            // Ctrl+D to delete current board (except board 1)
+            e.preventDefault();
+            deleteBoard(currentBoardId);
+        }
+        
+        // Number keys 1-9 for direct board access
+        const keyNum = parseInt(e.key);
+        if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= 9 && keyNum <= boardCount) {
+            switchToBoard(keyNum);
+        }
+    });
+    
+    // Add resize listener to handle switching between mobile and desktop
+    window.addEventListener('resize', () => {
+        checkMobileView();
+    });
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSavedNotes();
+    setupBoardNavigation();
+});
 
 // Color Management
 function hideAllColorPalettes() {
@@ -597,9 +999,4 @@ document.querySelector('.note-input textarea').addEventListener('keydown', (e) =
         e.preventDefault();
         addNote();
     }
-});
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    loadSavedNotes();
 });
