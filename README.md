@@ -20,7 +20,7 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/sticky-notes-board.git
+git clone https://github.com/majd-karoun/sticky-todo-notes.git
 ```
 
 2. Open in your preferred browser:
