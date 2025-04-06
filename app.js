@@ -1297,7 +1297,7 @@ function changeBoardPattern(pattern) {
         fadeOutOverlay.style.backgroundColor = boardStyles.colors.current;
         fadeOutOverlay.style.pointerEvents = 'none';
         fadeOutOverlay.style.zIndex = '-1'; // Place behind notes
-        fadeOutOverlay.style.transition = 'opacity 0.3s ease';
+        fadeOutOverlay.style.transition = 'opacity 0.2s ease';
         fadeOutOverlay.style.opacity = '0';
         
         // Add the fade-out overlay
@@ -1319,7 +1319,7 @@ function changeBoardPattern(pattern) {
             
             // Apply the new pattern with fade-in
             applyNewPattern();
-        }, 300);
+        }, 200);
     } else {
         // No previous pattern or same pattern, just apply the new one directly
         activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
@@ -1336,7 +1336,7 @@ function changeBoardPattern(pattern) {
         overlay.style.height = '100%';
         overlay.style.pointerEvents = 'none';
         overlay.style.zIndex = '-1'; // Place behind notes
-        overlay.style.transition = 'opacity 0.5s ease';
+        overlay.style.transition = 'opacity 0.3s ease';
         overlay.style.backgroundColor = boardStyles.colors.current;
         
         // Set the background pattern on the overlay instead of directly on the board
@@ -1374,7 +1374,7 @@ function changeBoardPattern(pattern) {
             if (pattern !== 'none') {
                 activeBoard.classList.add(`board-pattern-${pattern}`);
             }
-        }, 500);
+        }, 300);
     }
     
     // Save to localStorage
