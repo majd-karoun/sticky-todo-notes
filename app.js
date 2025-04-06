@@ -554,8 +554,12 @@ function continueWithBoardDeletion(boardId) {
     }
     
     // Remove board notes from localStorage
-    const boardKey = `${ACTIVE_NOTES_KEY}_board_${boardId}`;
-    localStorage.removeItem(boardKey);
+    const boardNotesKey = `${ACTIVE_NOTES_KEY}_board_${boardId}`;
+    localStorage.removeItem(boardNotesKey);
+
+    // Remove board styles from localStorage
+    const boardStylesKey = `boardStyles_board_${boardId}`;
+    localStorage.removeItem(boardStylesKey);
     
     // Wait for all removal animations to complete before creating new buttons
     setTimeout(() => {
@@ -606,13 +610,24 @@ function continueWithBoardDeletion(boardId) {
             navigationContainer.insertBefore(newButton, addButton);
             
             // Move board data in localStorage
-            const oldKey = `${ACTIVE_NOTES_KEY}_board_${oldId}`;
-            const newKey = `${ACTIVE_NOTES_KEY}_board_${newId}`;
-            const boardData = localStorage.getItem(oldKey);
+            // Move board notes data in localStorage
+            const oldNotesKey = `${ACTIVE_NOTES_KEY}_board_${oldId}`;
+            const newNotesKey = `${ACTIVE_NOTES_KEY}_board_${newId}`;
+            const boardNotesData = localStorage.getItem(oldNotesKey);
             
-            if (boardData) {
-                localStorage.setItem(newKey, boardData);
-                localStorage.removeItem(oldKey);
+            if (boardNotesData) {
+                localStorage.setItem(newNotesKey, boardNotesData);
+                localStorage.removeItem(oldNotesKey);
+            }
+
+            // Move board styles data in localStorage
+            const oldStylesKey = `boardStyles_board_${oldId}`;
+            const newStylesKey = `boardStyles_board_${newId}`;
+            const boardStylesData = localStorage.getItem(oldStylesKey);
+
+            if (boardStylesData) {
+                localStorage.setItem(newStylesKey, boardStylesData);
+                localStorage.removeItem(oldStylesKey);
             }
         });
         
