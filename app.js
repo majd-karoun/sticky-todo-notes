@@ -195,16 +195,29 @@ function addNote() {
     
     if (!text) return;  // Don't create empty notes
     
-    // Get next position based on last note position for this board
-    const nextPosition = getNextNotePosition(
-        lastNotePositions[currentBoardId].x,
-        lastNotePositions[currentBoardId].y
-    );
+    // Get the last added note's position and color for this board
+    const boardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+    const notes = Array.from(boardElement.querySelectorAll('.sticky-note'));
+    const lastAddedNote = notes[notes.length - 1];
+    
+    let lastX = lastNotePositions[currentBoardId].x;
+    let lastY = lastNotePositions[currentBoardId].y;
+    let lastColor = lastNoteColors[currentBoardId];
+    
+    if (lastAddedNote) {
+        // Use the last added note's position and color
+        lastX = parsePosition(lastAddedNote.style.left);
+        lastY = parsePosition(lastAddedNote.style.top);
+        lastColor = lastAddedNote.style.backgroundColor;
+    }
+    
+    // Get next position based on the last added note's position
+    const nextPosition = getNextNotePosition(lastX, lastY);
     
     // Create the note on the current board
     createNote(
         text.replace(/\n/g, '<br>'),
-        lastNoteColors[currentBoardId],
+        lastColor,
         nextPosition.x,
         nextPosition.y,
         false,
@@ -216,7 +229,7 @@ function addNote() {
     
     // Update the last position and color for this board
     lastNotePositions[currentBoardId] = nextPosition;
-    lastNoteColors[currentBoardId] = lastNoteColors[currentBoardId];
+    lastNoteColors[currentBoardId] = lastColor;
     
     // Clear the input
     textarea.value = '';
