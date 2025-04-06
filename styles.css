@@ -389,7 +389,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 1rem;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 /* Note Input Area */
@@ -967,7 +967,7 @@ font-size: 2rem;
 .boards-navigation {
     position: fixed;
     bottom: 20px;
-    left: 50%;
+    left: 55%;
     transform: translateX(-50%);
     display: flex;
     gap: 10px;
