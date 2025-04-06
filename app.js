@@ -765,10 +765,11 @@ function setupBoardNavigation() {
         const boardId = parseInt(button.dataset.boardId);
         // Remove any existing listeners first (to avoid duplicates)
         const newButton = button.cloneNode(true);
-        newButton.addEventListener('click', () => switchToBoard(boardId));
-        button.parentNode.replaceChild(newButton, button);
         
-        // Re-add delete button handler if this button has one
+        // Set up click handler for the board button
+        newButton.addEventListener('click', () => switchToBoard(boardId));
+        
+        // Set up click handler for the delete button if it exists
         const deleteButton = newButton.querySelector('.delete-board');
         if (deleteButton) {
             deleteButton.addEventListener('click', (e) => {
@@ -776,6 +777,8 @@ function setupBoardNavigation() {
                 deleteBoard(boardId);
             });
         }
+        
+        button.parentNode.replaceChild(newButton, button);
     });
     
     // Add touch swiping for mobile
