@@ -1,4 +1,4 @@
-t// Global Variables
+// Global Variables
 const colors = [
     '#f0e68c', // Khaki
     '#98ff98', // Light green
@@ -531,30 +531,6 @@ function deleteBoard(boardId) {
 }
 
 function continueWithBoardDeletion(boardId) {
-    // --- Start: Determine target board and switch BEFORE removing elements ---
-    let needsSwitch = false;
-    let targetBoardId = currentBoardId;
-    let adjustCurrentId = false;
-
-    if (currentBoardId === boardId) {
-        needsSwitch = true;
-        // Switch to previous board if possible, otherwise switch to board 1 if it exists
-        targetBoardId = (boardId > 1) ? boardId - 1 : (boardCount > 1 ? 1 : null);
-    } else if (currentBoardId > boardId) {
-        needsSwitch = true;
-        targetBoardId = currentBoardId - 1; // Target will be the renumbered current board
-        adjustCurrentId = true; // Flag that currentBoardId variable needs decrementing
-    }
-
-    // Perform the switch if needed and a target board exists
-    if (needsSwitch && targetBoardId !== null) {
-        if (adjustCurrentId) {
-            currentBoardId--; // Adjust the global variable before switching
-        }
-        switchToBoard(targetBoardId);
-    }
-    // --- End: Determine target board and switch ---
-
     // Remove board from DOM
     const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
     if (boardElement) {
@@ -654,23 +630,21 @@ function continueWithBoardDeletion(boardId) {
         // Update add button state after deleting a board
         updateAddButtonState();
         
-        // --- Start: Remove original switch logic ---
-        // // If we deleted the current board, switch to another board
-        // if (currentBoardId === boardId) { // This condition is handled earlier now
-        //     // If there are boards with lower numbers, go to the previous board
-        //     if (boardId > 1) {
-        //         // switchToBoard(boardId - 1); // Handled earlier
-        //     } else if (boardCount >= 1) {
-        //         // Otherwise go to the next board (now renumbered)
-        //         // switchToBoard(1); // Handled earlier
-        //     }
-        // } else if (currentBoardId > boardId) { // This condition is handled earlier now
-        //     // If we're on a board with a higher number, adjust the current board ID
-        //     // since the boards have been renumbered
-        //     // currentBoardId--; // Handled earlier
-        //     // switchToBoard(currentBoardId); // Handled earlier
-        // }
-        // --- End: Remove original switch logic ---
+        // If we deleted the current board, switch to another board
+        if (currentBoardId === boardId) {
+            // If there are boards with lower numbers, go to the previous board
+            if (boardId > 1) {
+                switchToBoard(boardId - 1);
+            } else if (boardCount >= 1) {
+                // Otherwise go to the next board (now renumbered)
+                switchToBoard(1);
+            }
+        } else if (currentBoardId > boardId) {
+            // If we're on a board with a higher number, adjust the current board ID
+            // since the boards have been renumbered
+            currentBoardId--;
+            switchToBoard(currentBoardId);
+        }
         
         // Reset trash bin animation
         document.querySelector('.trash-bin').style.animation = '';
