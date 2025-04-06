@@ -28,11 +28,16 @@ let holdTimer;
 let activeNote = null;
 let activePalette = null;
 
-let lastSelectedColor = colors[0];
-let lastNotePosition = {
+// Store last note position and color for each board
+const lastNotePositions = {};
+const lastNoteColors = {};
+
+// Initialize default values for board 1
+lastNotePositions[1] = {
     x: window.innerWidth / 2 - 100, // Default center position
     y: window.innerHeight / 2 - 75
 };
+lastNoteColors[1] = colors[0];
 
 // Boards related variables
 let currentBoardId = 1;
@@ -116,13 +121,18 @@ function loadSavedNotes() {
         
         if (savedNotes) {
             JSON.parse(savedNotes).forEach(note => {
-                const parsedX = parsePosition(note.x);
-                const parsedY = parsePosition(note.y);
+                // Update last note position and color for this board
+                lastNotePositions[i] = {
+                    x: parsePosition(note.x),
+                    y: parsePosition(note.y)
+                };
+                lastNoteColors[i] = note.color;
+                
                 createNote(
                     note.text, 
                     note.color, 
-                    parsedX, 
-                    parsedY, 
+                    parsePosition(note.x), 
+                    parsePosition(note.y), 
                     true, 
                     note.width, 
                     note.height,
@@ -185,13 +195,16 @@ function addNote() {
     
     if (!text) return;  // Don't create empty notes
     
-    // Get next position based on last note position
-    const nextPosition = getNextNotePosition(lastNotePosition.x, lastNotePosition.y);
+    // Get next position based on last note position for this board
+    const nextPosition = getNextNotePosition(
+        lastNotePositions[currentBoardId].x,
+        lastNotePositions[currentBoardId].y
+    );
     
     // Create the note on the current board
     createNote(
         text.replace(/\n/g, '<br>'),
-        lastSelectedColor,
+        lastNoteColors[currentBoardId],
         nextPosition.x,
         nextPosition.y,
         false,
@@ -201,8 +214,9 @@ function addNote() {
         currentBoardId
     );
     
-    // Update the last position
-    lastNotePosition = nextPosition;
+    // Update the last position and color for this board
+    lastNotePositions[currentBoardId] = nextPosition;
+    lastNoteColors[currentBoardId] = lastNoteColors[currentBoardId];
     
     // Clear the input
     textarea.value = '';
@@ -270,8 +284,8 @@ function setupNote(note) {
     // Track position after movement ends
     function updateLastPosition() {
         const rect = note.getBoundingClientRect();
-        lastNotePosition.x = rect.left;
-        lastNotePosition.y = rect.top;
+        lastNotePositions[currentBoardId].x = rect.left;
+        lastNotePositions[currentBoardId].y = rect.top;
     }
 
     // Color picker toggle
@@ -669,6 +683,17 @@ function switchToBoard(boardId) {
     // Update current board ID
     currentBoardId = targetBoardId;
     
+    // Update last note position and color for the new board
+    if (!lastNotePositions[boardId]) {
+        lastNotePositions[boardId] = {
+            x: window.innerWidth / 2 - 100,
+            y: window.innerHeight / 2 - 75
+        };
+    }
+    if (!lastNoteColors[boardId]) {
+        lastNoteColors[boardId] = colors[0];
+    }
+    
     // Update board display
     document.querySelectorAll('.board').forEach(board => {
         const id = parseInt(board.dataset.boardId);
@@ -873,7 +898,7 @@ function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
     note.style.backgroundColor = color;
     note.querySelector('.color-button').style.backgroundColor = color;
-    lastSelectedColor = color;
+    lastNoteColors[currentBoardId] = color;
     saveActiveNotes();
 }
 
