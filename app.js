@@ -716,6 +716,18 @@ function switchToBoard(boardId) {
     
     // Update style indicators in the menu if it's open
     setActiveStyle();
+    
+    // Update pattern option buttons to match the new board color
+    const patternOptions = document.querySelectorAll('.board-pattern-option');
+    patternOptions.forEach(option => {
+        option.style.backgroundColor = boardStyles.colors.current;
+    });
+    
+    // Update pattern previews to match the new board color
+    const patternPreviews = document.querySelectorAll('.pattern-preview');
+    patternPreviews.forEach(preview => {
+        preview.style.backgroundColor = boardStyles.colors.current;
+    });
 }
 
 // Setup event listeners for board navigation
@@ -1110,6 +1122,18 @@ function toggleBoardStyleMenu() {
         setActiveStyle();
         setupStyleOptions();
         
+        // Update pattern option buttons to match current board color
+        const patternOptions = document.querySelectorAll('.board-pattern-option');
+        patternOptions.forEach(option => {
+            option.style.backgroundColor = boardStyles.colors.current;
+        });
+        
+        // Update pattern previews to match current board color
+        const patternPreviews = document.querySelectorAll('.pattern-preview');
+        patternPreviews.forEach(preview => {
+            preview.style.backgroundColor = boardStyles.colors.current;
+        });
+        
         // Force a layout reflow before adding the visible class
         void styleMenu.offsetWidth;
         
@@ -1183,6 +1207,18 @@ function changeBoardColor(color) {
     // Apply to active board
     const activeBoard = document.querySelector('.board.active');
     activeBoard.style.backgroundColor = color;
+    
+    // Update pattern option buttons background color
+    const patternOptions = document.querySelectorAll('.board-pattern-option');
+    patternOptions.forEach(option => {
+        option.style.backgroundColor = color;
+    });
+    
+    // Update pattern previews background color
+    const patternPreviews = document.querySelectorAll('.pattern-preview');
+    patternPreviews.forEach(preview => {
+        preview.style.backgroundColor = color;
+    });
     
     // Save to localStorage
     saveBoardStyles();
@@ -1285,6 +1321,21 @@ function loadBoardStyles(boardId) {
             board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
             if (styles.pattern !== 'none') {
                 board.classList.add(`board-pattern-${styles.pattern}`);
+            }
+            
+            // If this is the current board, update pattern option buttons color
+            if (boardId === currentBoardId) {
+                // Update pattern option buttons background color
+                const patternOptions = document.querySelectorAll('.board-pattern-option');
+                patternOptions.forEach(option => {
+                    option.style.backgroundColor = styles.color;
+                });
+                
+                // Update pattern previews background color
+                const patternPreviews = document.querySelectorAll('.pattern-preview');
+                patternPreviews.forEach(preview => {
+                    preview.style.backgroundColor = styles.color;
+                });
             }
         }
     } else {
