@@ -129,6 +129,8 @@ body {
     position: relative;
     overflow: hidden;
     background-color: #1a1a1a;
+    background-image: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.3);
 }
 
 
@@ -452,8 +454,31 @@ body {
     width: 60px;
     height: 80px;
     cursor: pointer;
-    z-index: 10000;
+    z-index: 1000;
     border-radius: 5px;
+}
+
+.trash-shortcut-hint {
+    position: absolute;
+    top: 20px;
+    left: -180px;
+    transform: translateX(0);
+    background: rgba(0, 0, 0, 0.3);
+    color: rgba(255, 255, 255, 0.5);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    width: max-content;
+    backdrop-filter: blur(2px);
+    display: none;
+}
+
+.trash-bin:hover .trash-shortcut-hint {
+    opacity: 1;
 }
 
 .trash-count {
@@ -502,6 +527,16 @@ body {
     border-radius: 5px;
     backdrop-filter: blur(5px);
     border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bin-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
 }
 
 /* Trash Modal */
@@ -967,15 +1002,39 @@ font-size: 2rem;
 .boards-navigation {
     position: fixed;
     bottom: 20px;
-    left: 55%;
+    left: 50%;
     transform: translateX(-50%);
     display: flex;
+    flex-direction: row;
     gap: 10px;
-    z-index: 9000;
+    z-index: 1000;
     padding: 5px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 25px;
     backdrop-filter: blur(5px);
+}
+
+.shortcut-hint {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 8px;
+    border-radius: 4px;
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+    display: none;
+}
+
+.boards-navigation:hover .shortcut-hint {
+    opacity: 1;
 }
 
 .board-button, .add-board-button {
@@ -1078,6 +1137,8 @@ font-size: 2rem;
     transition: transform 0.5s ease-in-out, visibility 0s 0.5s;
     transform: translateX(100%);
     visibility: hidden;
+    background-image: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.3);
 }
 
 .board.active {
@@ -1135,6 +1196,13 @@ font-size: 2rem;
     
     .board.active {
         visibility: visible;
+    }
+    
+    /* Adjust trash hint position on mobile */
+    .trash-shortcut-hint {
+        left: -170px;
+        top: 10px;
+        display: none;
     }
 }
 

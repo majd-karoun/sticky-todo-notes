@@ -43,7 +43,7 @@ lastNoteColors[1] = colors[0];
 let currentBoardId = 1;
 let boardCount = 1;
 let isMobileView = false;
-const MAX_BOARDS = 10;
+const MAX_BOARDS = 9;
 
 // Local Storage Keys
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
@@ -160,6 +160,9 @@ function loadSavedNotes() {
 
     // Update indicators after loading notes
     updateBoardIndicators();
+    
+    // Update shortcut hint visibility
+    updateShortcutHintVisibility();
 }
 
 // Save active notes to localStorage
@@ -883,6 +886,9 @@ function setupBoardNavigation() {
             // Ctrl+D to delete current board (except board 1)
             e.preventDefault();
             deleteBoard(currentBoardId);
+        } else if (e.key === 't' || e.key === 'T') {
+            // 't' key to toggle trash bin
+            toggleTrashModal();
         }
         
         // Number keys 1-9 for direct board access
@@ -1183,6 +1189,22 @@ function updateAddButtonState() {
     } else {
         addButton.classList.remove('disabled');
         addButton.title = "Add new board";
+    }
+    
+    // Update shortcut hint visibility based on board count
+    updateShortcutHintVisibility();
+}
+
+// Function to update shortcut hint visibility
+function updateShortcutHintVisibility() {
+    const shortcutHint = document.querySelector('.shortcut-hint');
+    if (shortcutHint) {
+        // Only show hint if there are 2 or more boards
+        if (boardCount >= 2) {
+            shortcutHint.style.display = 'block';
+        } else {
+            shortcutHint.style.display = 'none';
+        }
     }
 }
 
