@@ -650,6 +650,9 @@ function continueWithBoardDeletion(boardId) {
                 localStorage.setItem(newKey, boardData);
                 localStorage.removeItem(oldKey);
             }
+            
+            // Load board styles for the new button immediately
+            loadBoardStyles(newId);
         });
         
         // Remove animation classes after a delay
