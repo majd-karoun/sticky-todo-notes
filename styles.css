@@ -426,7 +426,7 @@ body {
 
 .note-input textarea {
     width: 100%;
-    height: 60px;
+    height: 50px;
     background: rgba(255,255,255,0.9);
     border: none;
     border-radius: 15px;
@@ -437,11 +437,13 @@ body {
     font-family: 'Poppins', sans-serif;
     font-weight: 300;
     transition: height 0.3s ease, background-color 0.3s ease;
+    overflow: hidden;
 }
 
 .note-input textarea:focus {
     outline: none;
     background: rgba(255,255,255,0.95);
+    overflow: auto;
 }
 
 .note-input textarea:not(:focus) {
