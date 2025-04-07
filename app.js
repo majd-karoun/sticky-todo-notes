@@ -157,6 +157,9 @@ function loadSavedNotes() {
         deletedNotes = JSON.parse(savedDeletedNotes);
         updateTrashCount();
     }
+
+    // Update indicators after loading notes
+    updateBoardIndicators();
 }
 
 // Save active notes to localStorage
@@ -176,6 +179,9 @@ function saveActiveNotes() {
     }));
     
     localStorage.setItem(boardKey, JSON.stringify(notes));
+    
+    // Update board indicators to reflect the current state
+    updateBoardIndicators();
 }
 
 // Save deleted notes to localStorage.
@@ -233,6 +239,9 @@ function addNote() {
     
     // Clear the input
     textarea.value = '';
+
+    saveActiveNotes();
+    updateBoardIndicators();
 }
 
 function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId) {
@@ -766,6 +775,8 @@ function switchToBoard(boardId) {
     patternPreviews.forEach(preview => {
         preview.style.backgroundColor = boardStyles.colors.current;
     });
+
+    updateBoardIndicators();
 }
 
 // Setup event listeners for board navigation
@@ -1049,6 +1060,8 @@ function restoreNote(index) {
         renderDeletedNotes();
         saveActiveNotes();
     }, 300);
+
+    updateBoardIndicators();
 }
 
 
@@ -1093,6 +1106,8 @@ function restoreAllNotes() {
         updateTrashCount();
         toggleTrashModal();
     }, 300);
+
+    updateBoardIndicators();
 }
 
 function clearTrash() {
@@ -1497,3 +1512,24 @@ document.addEventListener('click', function(event) {
 document.querySelector('.board-style-menu').addEventListener('click', function(event) {
     event.stopPropagation();
 });
+
+// Add this function to update board indicators
+function updateBoardIndicators() {
+    // Loop through all boards
+    for (let i = 1; i <= boardCount; i++) {
+        const boardElement = document.querySelector(`.board[data-board-id="${i}"]`);
+        const buttonElement = document.querySelector(`.board-button[data-board-id="${i}"]`);
+        
+        if (!boardElement || !buttonElement) continue;
+        
+        // Check if board has any notes
+        const hasNotes = boardElement.querySelectorAll('.sticky-note').length > 0;
+        
+        // Update button class
+        if (hasNotes) {
+            buttonElement.classList.add('has-notes');
+        } else {
+            buttonElement.classList.remove('has-notes');
+        }
+    }
+}
