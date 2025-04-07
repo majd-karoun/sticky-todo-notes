@@ -1161,6 +1161,9 @@ font-size: 2rem;
     color: white;
     font-size: 24px;
     transition: all 0.2s ease, background-color 0.15s ease;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 200;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .add-board-button:hover {
