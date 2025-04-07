@@ -956,6 +956,13 @@ function setupTextareaEvents() {
                     shortcutIcon.classList.remove('enter-hint');
                 }
             }
+            
+            // Animate the textarea to become twice as big
+            const currentHeight = parseInt(window.getComputedStyle(textarea).height);
+            textarea.style.height = currentHeight + 'px';
+            setTimeout(() => {
+                textarea.style.height = (currentHeight * 2) + 'px';
+            }, 0);
         });
         
         // Add input event listener to update shortcut icon when text changes
@@ -979,6 +986,13 @@ function setupTextareaEvents() {
         
         textarea.addEventListener('blur', function() {
             updateShortcutIcon();
+            
+            // Animate the textarea back to its original size (80px)
+            const expandedHeight = parseInt(window.getComputedStyle(textarea).height);
+            textarea.style.height = expandedHeight + 'px';
+            setTimeout(() => {
+                textarea.style.height = '80px';
+            }, 0);
         });
     }
 }
