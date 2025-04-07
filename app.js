@@ -870,7 +870,7 @@ function setupBoardNavigation() {
         
         // Check for standalone Cmd (Mac) or Ctrl (Windows) key press to focus textarea
         if ((e.key === 'Control' || e.key === 'Meta') && 
-            !e.shiftKey && !e.altKey && 
+            !e.altKey && !e.shiftKey && 
             e.target.tagName !== 'TEXTAREA' && e.target.getAttribute('contenteditable') !== 'true') {
             e.preventDefault();
             document.querySelector('.note-input textarea').focus();
@@ -919,10 +919,50 @@ function setupBoardNavigation() {
     });
 }
 
+// Function to update shortcut icon based on OS
+function updateShortcutIcon() {
+    const shortcutIcon = document.getElementById('shortcutIcon');
+    if (shortcutIcon) {
+        // Check if user is on Mac or Windows
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modKey = isMac ? '⌘' : 'Ctrl';
+        
+        // Default focus hint
+        shortcutIcon.innerHTML = `${modKey}`;
+        shortcutIcon.classList.add('focus-hint');
+        shortcutIcon.classList.remove('enter-hint');
+    }
+}
+
+// Setup textarea focus/blur events
+function setupTextareaEvents() {
+    const textarea = document.querySelector('.note-input textarea');
+    if (textarea) {
+        textarea.addEventListener('focus', function() {
+            const shortcutIcon = document.getElementById('shortcutIcon');
+            if (shortcutIcon) {
+                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                const modKey = isMac ? '⌘' : 'Ctrl';
+                shortcutIcon.innerHTML = `${modKey}+↵`;
+                shortcutIcon.classList.remove('focus-hint');
+                shortcutIcon.classList.add('enter-hint');
+            }
+        });
+        
+        textarea.addEventListener('blur', function() {
+            updateShortcutIcon();
+        });
+    }
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', function() {
     loadSavedNotes();
     setupBoardNavigation();
+    
+    // Update the shortcut icon and setup events
+    updateShortcutIcon();
+    setupTextareaEvents();
 });
 
 // Color Management
@@ -951,13 +991,11 @@ function showColorPalette(palette) {
     activePalette = palette;
 }
 
-
 document.addEventListener('click', (e) => {
     if (activePalette && !e.target.closest('.color-button')) {
         hideAllColorPalettes();
     }
 });
-
 
 function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
@@ -1070,6 +1108,7 @@ function renderDeletedNotes() {
         </div>
     `).join('');
 }
+
 function restoreNote(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
     noteElement.classList.add('removing');
@@ -1101,7 +1140,6 @@ function restoreNote(index) {
 
     updateBoardIndicators();
 }
-
 
 function deleteNotePermanently(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
@@ -1181,6 +1219,7 @@ document.addEventListener('click', (e) => {
         toggleTrashModal();
     }
 });
+
 // Event Listeners
 document.addEventListener('click', (e) => {
     if (activePalette && !e.target.closest('.color-button')) {
