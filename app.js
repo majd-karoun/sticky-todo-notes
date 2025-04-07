@@ -593,6 +593,10 @@ function continueWithBoardDeletion(boardId) {
     const boardKey = `${ACTIVE_NOTES_KEY}_board_${boardId}`;
     localStorage.removeItem(boardKey);
     
+    // Remove board styles from localStorage
+    const boardStylesKey = `boardStyles_board_${boardId}`;
+    localStorage.removeItem(boardStylesKey);
+    
     // Wait for all removal animations to complete before creating new buttons
     setTimeout(() => {
         // Remove the deleted button
@@ -651,7 +655,17 @@ function continueWithBoardDeletion(boardId) {
                 localStorage.removeItem(oldKey);
             }
             
-            // Load board styles for the new button immediately
+            // Move board styles in localStorage
+            const oldStyleKey = `boardStyles_board_${oldId}`;
+            const newStyleKey = `boardStyles_board_${newId}`;
+            const boardStyles = localStorage.getItem(oldStyleKey);
+            
+            if (boardStyles) {
+                localStorage.setItem(newStyleKey, boardStyles);
+                localStorage.removeItem(oldStyleKey);
+            }
+            
+            // Apply the board's existing style immediately
             loadBoardStyles(newId);
         });
         
