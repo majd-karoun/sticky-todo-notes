@@ -426,7 +426,7 @@ body {
 
 .note-input textarea {
     width: 100%;
-    height: 50px;
+    height: 55px;
     background: rgba(255,255,255,0.9);
     border: none;
     border-radius: 15px;
@@ -1083,7 +1083,7 @@ font-size: 2rem;
 .boards-navigation {
     position: fixed;
     bottom: 20px;
-    left: 50%;
+    left: 60%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: row;
@@ -1349,8 +1349,8 @@ font-size: 2rem;
 }
 
 .board-style-icon {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 50%;
     display: flex;
@@ -1364,8 +1364,8 @@ font-size: 2rem;
 }
 
 .board-style-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 27px;
+    height: 27px;
 }
 
 .board-style-icon:hover {
