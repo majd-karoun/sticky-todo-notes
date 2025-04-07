@@ -446,10 +446,11 @@ body {
     outline: none;
     background: rgba(255,255,255,0.95);
     overflow: auto;
+    height: 200px;
 }
 
 .note-input textarea:not(:focus) {
-    
+    height: 55px;
 }
 
 .shortcut-icon {
