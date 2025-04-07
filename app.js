@@ -1029,6 +1029,15 @@ function setupTextareaEvents() {
                 textarea.style.height = '50px';
             }, 0);
         });
+        
+        // Add global click handler to ensure textarea collapses when clicking elsewhere
+        document.addEventListener('mousedown', function(e) {
+            // If clicking outside the textarea and it's currently focused
+            if (!e.target.closest('.note-input') && document.activeElement === textarea) {
+                // Explicitly blur the textarea to trigger the blur event
+                textarea.blur();
+            }
+        });
     }
 }
 
@@ -1699,6 +1708,12 @@ function startSelection(e) {
     
     // Prevent default to avoid text selection
     e.preventDefault();
+    
+    // If textarea is focused, blur it first
+    const textarea = document.querySelector('.note-input textarea');
+    if (textarea && document.activeElement === textarea) {
+        textarea.blur();
+    }
     
     // Clear selection if not holding shift
     if (!e.shiftKey) {
