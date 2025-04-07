@@ -164,11 +164,13 @@ body {
     z-index: 1;
 }
 
-
+/* Selected note style */
+.sticky-note.selected {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), var(--note-shadow);
+    z-index: 2;
+}
 
 .sticky-note:hover { z-index: 100; }
-
-
 
 .sticky-content {
     transition: all 0.2s ease;
@@ -1579,4 +1581,18 @@ font-size: 2rem;
 .button-pattern-lines {
     background-image: linear-gradient(0deg, transparent 7px, rgba(255, 255, 255, 0.4) 8px);
     background-size: 8px 8px;
+}
+
+/* Selection box styles */
+.selection-box {
+    position: absolute;
+    border: 2px dashed rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    z-index: 999;
+}
+
+/* Prevent text selection when selection box is active */
+body.selecting * {
+    user-select: none !important;
 }

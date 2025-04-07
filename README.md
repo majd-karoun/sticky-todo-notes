@@ -9,7 +9,7 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 ### Note Management
 - 🖱️ Double-click to edit note content
 - 🎨 Customizable colors with the circle color picker
-- 🖐️ Hold-to-drag notes around
+- 🖐️ Hold-to-drag notes around.you can drag multiple notes together by first hilighting an area with the mouse,then draging all the selected notes.
 - 🖊️ Click (B) for bolder text 
 - ↘️ Resize Notes from the corner
 - 🗑️ Drag to Bin or use checkmark to delete
@@ -35,7 +35,7 @@ open index.html
 - HTML5
 - CSS3
 - JavaScript
-
+- LocalStorage for persistent data
 
 
 ## ⚙️ Customization
@@ -49,6 +49,10 @@ const colors = [
     // ... add your colors
 ];
 ```
+
+### Board Styles
+- Multiple background colors
+- Pattern options: None, Dots, Grid, Lines
 
 ### Animation Timing
 ```css

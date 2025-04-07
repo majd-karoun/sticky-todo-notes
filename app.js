@@ -28,6 +28,17 @@ let holdTimer;
 let activeNote = null;
 let activePalette = null;
 
+// Selection box variables
+let isSelecting = false;
+let selectionBox = null;
+let selectionStartX = 0;
+let selectionStartY = 0;
+let selectedNotes = [];
+let isMovingSelection = false;
+let selectionMoveStartX = 0;
+let selectionMoveStartY = 0;
+let notesInitialPositions = [];
+
 // Store last note position and color for each board
 const lastNotePositions = {};
 const lastNoteColors = {};
@@ -94,6 +105,9 @@ function getNextNotePosition(lastX, lastY) {
 function loadSavedNotes() {
     // Check for mobile view
     checkMobileView();
+    
+    // Create selection box element
+    createSelectionBox();
     
     // Load board count
     const savedBoardCount = localStorage.getItem(BOARDS_COUNT_KEY);
@@ -163,6 +177,14 @@ function loadSavedNotes() {
     
     // Update shortcut hint visibility
     updateShortcutHintVisibility();
+}
+
+// Create selection box element
+function createSelectionBox() {
+    selectionBox = document.createElement('div');
+    selectionBox.className = 'selection-box';
+    selectionBox.style.display = 'none';
+    document.body.appendChild(selectionBox);
 }
 
 // Save active notes to localStorage
@@ -362,6 +384,21 @@ function setupNote(note) {
     function startHandler(e) {
         if (e.target.closest('.color-palette') || 
             e.target.closest('.done-button')) return;
+            
+        // If this note is part of a selected group, handle differently
+        if (selectedNotes.includes(note) && selectedNotes.length > 1) {
+            handleSelectionMove(e);
+            return;
+        }
+
+        // Clear selection when clicking on a single note if not holding shift
+        if (!e.shiftKey) {
+            clearSelection();
+        } else if (!selectedNotes.includes(note)) {
+            // Add to selection when holding shift
+            selectedNotes.push(note);
+            note.classList.add('selected');
+        }
 
         startX = e.clientX;
         startY = e.clientY;
@@ -995,14 +1032,16 @@ function setupTextareaEvents() {
     }
 }
 
-// Initialize on load
+// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     loadSavedNotes();
-    setupBoardNavigation();
-    
-    // Update the shortcut icon and setup events
-    updateShortcutIcon();
     setupTextareaEvents();
+    setupBoardNavigation();
+    setupStyleOptions();
+    initBoardSelectionHandlers();
+    
+    // Update mobile view check on resize
+    window.addEventListener('resize', checkMobileView);
 });
 
 // Color Management
@@ -1624,4 +1663,202 @@ function hexToRgb(hex) {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16)
     } : null;
+}
+
+// Handle selection box and multi-note selection
+function initBoardSelectionHandlers() {
+    const boardsContainer = document.querySelector('.boards-container');
+    
+    // Add pointer-events: none to all UI elements' text to prevent text selection
+    document.addEventListener('mousedown', function(e) {
+        // If we're starting a selection, prevent text selection
+        if (e.target.closest('.board') && 
+            !e.target.closest('.sticky-note') && 
+            !e.target.closest('.note-input') && 
+            !e.target.closest('.boards-navigation') && 
+            !e.target.closest('.trash-bin') && 
+            !e.target.closest('.board-style-button')) {
+            e.preventDefault(); // Prevent text selection
+        }
+    });
+    
+    boardsContainer.addEventListener('mousedown', startSelection);
+    document.addEventListener('mousemove', updateSelection);
+    document.addEventListener('mouseup', endSelection);
+}
+
+function startSelection(e) {
+    // Only start selection if clicking directly on the board, not on a note or control
+    if (e.target.closest('.sticky-note') || 
+        e.target.closest('.note-input') || 
+        e.target.closest('.trash-bin') ||
+        e.target.closest('.boards-navigation') ||
+        e.target.closest('.board-style-button')) {
+        return;
+    }
+    
+    // Prevent default to avoid text selection
+    e.preventDefault();
+    
+    // Clear selection if not holding shift
+    if (!e.shiftKey) {
+        clearSelection();
+    }
+    
+    isSelecting = true;
+    document.body.classList.add('selecting');
+    selectionStartX = e.clientX;
+    selectionStartY = e.clientY;
+    
+    // Position and show the selection box
+    selectionBox.style.left = `${selectionStartX}px`;
+    selectionBox.style.top = `${selectionStartY}px`;
+    selectionBox.style.width = '0';
+    selectionBox.style.height = '0';
+    selectionBox.style.display = 'block';
+}
+
+function updateSelection(e) {
+    if (!isSelecting) return;
+    
+    // Prevent default to avoid text selection
+    e.preventDefault();
+    
+    // Calculate selection box dimensions
+    const width = Math.abs(e.clientX - selectionStartX);
+    const height = Math.abs(e.clientY - selectionStartY);
+    
+    // Calculate top-left corner of selection box
+    const left = e.clientX < selectionStartX ? e.clientX : selectionStartX;
+    const top = e.clientY < selectionStartY ? e.clientY : selectionStartY;
+    
+    // Update selection box position and size
+    selectionBox.style.left = `${left}px`;
+    selectionBox.style.top = `${top}px`;
+    selectionBox.style.width = `${width}px`;
+    selectionBox.style.height = `${height}px`;
+    
+    // Find notes that intersect with the selection box
+    checkNotesInSelection();
+}
+
+function endSelection() {
+    if (!isSelecting) return;
+    
+    isSelecting = false;
+    document.body.classList.remove('selecting');
+    selectionBox.style.display = 'none';
+}
+
+function checkNotesInSelection() {
+    // Get the bounds of the selection box
+    const selectionRect = selectionBox.getBoundingClientRect();
+    
+    // Get all notes on the current board
+    const currentBoardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+    const notes = Array.from(currentBoardElement.querySelectorAll('.sticky-note'));
+    
+    // Check each note to see if it intersects with the selection box
+    notes.forEach(note => {
+        const noteRect = note.getBoundingClientRect();
+        
+        // Check for intersection
+        const intersects = !(
+            noteRect.right < selectionRect.left || 
+            noteRect.left > selectionRect.right || 
+            noteRect.bottom < selectionRect.top || 
+            noteRect.top > selectionRect.bottom
+        );
+        
+        // Add or remove from selection based on intersection
+        if (intersects) {
+            if (!selectedNotes.includes(note)) {
+                selectedNotes.push(note);
+                note.classList.add('selected');
+            }
+        } else if (!isMovingSelection) {
+            // Only remove if not moving selection
+            const index = selectedNotes.indexOf(note);
+            if (index !== -1) {
+                selectedNotes.splice(index, 1);
+                note.classList.remove('selected');
+            }
+        }
+    });
+}
+
+function clearSelection() {
+    selectedNotes.forEach(note => {
+        note.classList.remove('selected');
+    });
+    selectedNotes = [];
+}
+
+function handleSelectionMove(e) {
+    // Start moving all selected notes
+    isMovingSelection = true;
+    document.body.classList.add('selecting');
+    selectionMoveStartX = e.clientX;
+    selectionMoveStartY = e.clientY;
+    
+    // Store initial positions of all selected notes
+    notesInitialPositions = selectedNotes.map(note => ({
+        note: note,
+        x: parsePosition(note.style.left),
+        y: parsePosition(note.style.top)
+    }));
+    
+    // Set up move and end handlers
+    document.addEventListener('mousemove', moveSelectionHandler);
+    document.addEventListener('mouseup', endSelectionMoveHandler);
+}
+
+function moveSelectionHandler(e) {
+    if (!isMovingSelection) return;
+    
+    const dx = e.clientX - selectionMoveStartX;
+    const dy = e.clientY - selectionMoveStartY;
+    
+    // Calculate board boundaries for selected notes
+    const padding = 5;
+    const minX = -padding;
+    const minY = -padding;
+    const maxX = window.innerWidth - padding;
+    const maxY = window.innerHeight - padding;
+    
+    // Move each selected note by the same amount
+    notesInitialPositions.forEach(item => {
+        let newX = item.x + dx;
+        let newY = item.y + dy;
+        
+        // Keep notes within bounds
+        newX = Math.min(Math.max(newX, minX), maxX - (item.note.offsetWidth / 4));
+        newY = Math.min(Math.max(newY, minY), maxY - (item.note.offsetHeight / 4));
+        
+        item.note.style.left = `${newX}px`;
+        item.note.style.top = `${newY}px`;
+    });
+}
+
+function endSelectionMoveHandler() {
+    if (!isMovingSelection) return;
+    
+    isMovingSelection = false;
+    document.body.classList.remove('selecting');
+    document.removeEventListener('mousemove', moveSelectionHandler);
+    document.removeEventListener('mouseup', endSelectionMoveHandler);
+    
+    // Save the changes to localStorage
+    saveActiveNotes();
+    
+    // Update the positions
+    selectedNotes.forEach(note => {
+        if (checkTrashCollision(note)) {
+            // If a note was deleted, we need to update the selectedNotes array
+            const index = selectedNotes.indexOf(note);
+            if (index !== -1) {
+                selectedNotes.splice(index, 1);
+            }
+        }
+    });
 }
