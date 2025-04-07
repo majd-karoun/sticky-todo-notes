@@ -868,8 +868,23 @@ function setupBoardNavigation() {
         // Don't handle board navigation keyboard shortcuts on mobile
         if (isMobileView) return;
         
+        // Check for standalone Cmd (Mac) or Ctrl (Windows) key press to focus textarea
+        if ((e.key === 'Control' || e.key === 'Meta') && 
+            !e.shiftKey && !e.altKey && 
+            e.target.tagName !== 'TEXTAREA' && e.target.getAttribute('contenteditable') !== 'true') {
+            e.preventDefault();
+            document.querySelector('.note-input textarea').focus();
+            return;
+        }
+        
         // Avoid capturing keyboard events when focused on text areas or editable content
         if (e.target.tagName === 'TEXTAREA' || e.target.getAttribute('contenteditable') === 'true') {
+            // Handle Cmd+Enter or Ctrl+Enter in textarea to add a note
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                addNote();
+                return;
+            }
             return;
         }
         
@@ -1174,7 +1189,7 @@ document.addEventListener('click', (e) => {
 });
 
 document.querySelector('.note-input textarea').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && e.shiftKey) {
+    if ((e.key === 'Enter' && e.shiftKey) || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {
         e.preventDefault();
         addNote();
     }
