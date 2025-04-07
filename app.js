@@ -957,11 +957,10 @@ function setupTextareaEvents() {
                 }
             }
             
-            // Animate the textarea to become twice as big
-            const currentHeight = parseInt(window.getComputedStyle(textarea).height);
-            textarea.style.height = currentHeight + 'px';
+            // Animate the textarea to become 200px tall
+            textarea.style.height = '50px';
             setTimeout(() => {
-                textarea.style.height = (currentHeight * 2) + 'px';
+                textarea.style.height = '200px';
             }, 0);
         });
         
@@ -987,11 +986,10 @@ function setupTextareaEvents() {
         textarea.addEventListener('blur', function() {
             updateShortcutIcon();
             
-            // Animate the textarea back to its original size (80px)
-            const expandedHeight = parseInt(window.getComputedStyle(textarea).height);
-            textarea.style.height = expandedHeight + 'px';
+            // Animate the textarea back to 50px tall
+            textarea.style.height = '200px';
             setTimeout(() => {
-                textarea.style.height = '80px';
+                textarea.style.height = '50px';
             }, 0);
         });
     }
