@@ -1004,6 +1004,20 @@ font-size: 2rem;
         font-size: 1.5rem;
       }
 
+      .shortcut-icon {
+        font-size: 1.2rem;
+        padding: 6px 12px;
+        color: #777777;
+      }
+
+      .shortcut-icon.focus-hint {
+        font-size: 1.2rem;
+      }
+
+      .shortcut-icon.enter-hint {
+        font-size: 1.2rem;
+      }
+
       .sticky-content {
         font-size: 1.5rem;
       }
