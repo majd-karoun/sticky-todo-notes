@@ -943,9 +943,37 @@ function setupTextareaEvents() {
             if (shortcutIcon) {
                 const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
                 const modKey = isMac ? '⌘' : 'Ctrl';
-                shortcutIcon.innerHTML = `${modKey}+↵`;
-                shortcutIcon.classList.remove('focus-hint');
-                shortcutIcon.classList.add('enter-hint');
+                
+                // Only show the enter shortcut if textarea has content
+                if (textarea.value.trim()) {
+                    shortcutIcon.innerHTML = `${modKey}+↵`;
+                    shortcutIcon.classList.remove('focus-hint');
+                    shortcutIcon.classList.add('enter-hint');
+                } else {
+                    // Keep the default shortcut icon when textarea is empty
+                    shortcutIcon.innerHTML = `${modKey}`;
+                    shortcutIcon.classList.add('focus-hint');
+                    shortcutIcon.classList.remove('enter-hint');
+                }
+            }
+        });
+        
+        // Add input event listener to update shortcut icon when text changes
+        textarea.addEventListener('input', function() {
+            const shortcutIcon = document.getElementById('shortcutIcon');
+            if (shortcutIcon) {
+                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                const modKey = isMac ? '⌘' : 'Ctrl';
+                
+                if (textarea.value.trim()) {
+                    shortcutIcon.innerHTML = `${modKey}+↵`;
+                    shortcutIcon.classList.remove('focus-hint');
+                    shortcutIcon.classList.add('enter-hint');
+                } else {
+                    shortcutIcon.innerHTML = `${modKey}`;
+                    shortcutIcon.classList.add('focus-hint');
+                    shortcutIcon.classList.remove('enter-hint');
+                }
             }
         });
         
