@@ -1263,22 +1263,46 @@ function setActiveStyle() {
 }
 
 function changeBoardColor(color) {
-    // Create a temporary overlay for fade transition
+    // Store current color
+    boardStyles.colors.current = color;
+    
+    // Apply to active board
     const activeBoard = document.querySelector('.board.active');
+    activeBoard.style.backgroundColor = color;
+    
+    // Save to localStorage
+    saveBoardStyles();
+    
+    // Update the board navigation buttons to match
+    updateBoardIndicators();
+    
+    // Apply animation
+    activeBoard.style.transition = 'background-color 0.5s ease';
+    setTimeout(() => {
+        activeBoard.style.transition = '';
+    }, 500);
+}
+
+function changeBoardPattern(pattern) {
+    // Store current pattern
+    boardStyles.patterns.current = pattern;
+    
+    // Apply to active board
+    const activeBoard = document.querySelector('.board.active');
+    
+    // Create an overlay element for the transition
     const overlay = document.createElement('div');
     overlay.style.position = 'absolute';
     overlay.style.top = '0';
     overlay.style.left = '0';
     overlay.style.width = '100%';
     overlay.style.height = '100%';
-    overlay.style.backgroundColor = color;
-    overlay.style.zIndex = '-1'; // Place behind notes
     overlay.style.pointerEvents = 'none';
+    overlay.style.zIndex = '0';
     overlay.style.transition = 'opacity 0.5s ease';
     
-    // Apply the current pattern to the overlay if one exists
-    if (boardStyles.patterns.current !== 'none') {
-        const pattern = boardStyles.patterns.current;
+    // Set the background pattern on the overlay instead of directly on the board
+    if (pattern !== 'none') {
         if (pattern === 'dots') {
             overlay.style.backgroundImage = 'radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)';
             overlay.style.backgroundSize = '20px 20px';
@@ -1291,23 +1315,11 @@ function changeBoardColor(color) {
         }
     }
     
-    // Store current color
-    boardStyles.colors.current = color;
-    
-    // Update pattern option buttons background color immediately
-    const patternOptions = document.querySelectorAll('.board-pattern-option');
-    patternOptions.forEach(option => {
-        option.style.backgroundColor = color;
-    });
-    
-    // Update pattern previews background color immediately
-    const patternPreviews = document.querySelectorAll('.pattern-preview');
-    patternPreviews.forEach(preview => {
-        preview.style.backgroundColor = color;
-    });
-    
     // Start with opacity 0
     overlay.style.opacity = '0';
+    
+    // Remove all pattern classes from the board
+    activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
     
     // Add the overlay to the board
     activeBoard.appendChild(overlay);
@@ -1315,123 +1327,22 @@ function changeBoardColor(color) {
     // Force a reflow to ensure the transition works
     void overlay.offsetWidth;
     
-    // Fade in the new color
+    // Fade in the pattern
     overlay.style.opacity = '1';
     
-    // After the transition completes, apply the color directly to the board
+    // After the transition completes, apply the pattern directly to the board
     setTimeout(() => {
-        // Apply to the active board
-        activeBoard.style.backgroundColor = color;
-        
         // Remove the overlay
         overlay.remove();
         
-        // Save to localStorage
-        saveBoardStyles();
-    }, 500);
-}
-
-function changeBoardPattern(pattern) {
-    // Store previous pattern for transition
-    const previousPattern = boardStyles.patterns.current;
-    
-    // Update current pattern
-    boardStyles.patterns.current = pattern;
-    
-    // Apply to active board
-    const activeBoard = document.querySelector('.board.active');
-    
-    // Check if we're switching from an existing pattern
-    if (previousPattern !== 'none' && previousPattern !== pattern) {
-        // Create a fade-out overlay for the current pattern
-        const fadeOutOverlay = document.createElement('div');
-        fadeOutOverlay.style.position = 'absolute';
-        fadeOutOverlay.style.top = '0';
-        fadeOutOverlay.style.left = '0';
-        fadeOutOverlay.style.width = '100%';
-        fadeOutOverlay.style.height = '100%';
-        fadeOutOverlay.style.backgroundColor = boardStyles.colors.current;
-        fadeOutOverlay.style.pointerEvents = 'none';
-        fadeOutOverlay.style.zIndex = '-1'; // Place behind notes
-        fadeOutOverlay.style.transition = 'opacity 0.2s ease';
-        fadeOutOverlay.style.opacity = '0';
-        
-        // Add the fade-out overlay
-        activeBoard.appendChild(fadeOutOverlay);
-        
-        // Force a reflow
-        void fadeOutOverlay.offsetWidth;
-        
-        // Fade in the overlay (which makes the current pattern fade out)
-        fadeOutOverlay.style.opacity = '0.95';
-        
-        // Wait for fade-out to complete before fading in the new pattern
-        setTimeout(() => {
-            // Remove the fade-out overlay
-            fadeOutOverlay.remove();
-            
-            // Remove all pattern classes from the board
-            activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
-            
-            // Apply the new pattern with fade-in
-            applyNewPattern();
-        }, 200);
-    } else {
-        // No previous pattern or same pattern, just apply the new one directly
-        activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
-        applyNewPattern();
-    }
-    
-    function applyNewPattern() {
-        // Create an overlay element for the transition
-        const overlay = document.createElement('div');
-        overlay.style.position = 'absolute';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.pointerEvents = 'none';
-        overlay.style.zIndex = '-1'; // Place behind notes
-        overlay.style.transition = 'opacity 0.3s ease';
-        overlay.style.backgroundColor = boardStyles.colors.current;
-        
-        // Set the background pattern on the overlay instead of directly on the board
+        // Apply the pattern class to the board
         if (pattern !== 'none') {
-            if (pattern === 'dots') {
-                overlay.style.backgroundImage = 'radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)';
-                overlay.style.backgroundSize = '20px 20px';
-            } else if (pattern === 'grid') {
-                overlay.style.backgroundImage = 'linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px)';
-                overlay.style.backgroundSize = '20px 20px';
-            } else if (pattern === 'lines') {
-                overlay.style.backgroundImage = 'linear-gradient(0deg, transparent 19px, rgba(255, 255, 255, 0.4) 20px)';
-                overlay.style.backgroundSize = '20px 20px';
-            }
+            activeBoard.classList.add(`board-pattern-${pattern}`);
         }
         
-        // Start with opacity 0
-        overlay.style.opacity = '0';
-        
-        // Add the overlay to the board
-        activeBoard.appendChild(overlay);
-        
-        // Force a reflow to ensure the transition works
-        void overlay.offsetWidth;
-        
-        // Fade in the pattern
-        overlay.style.opacity = '1';
-        
-        // After the transition completes, apply the pattern directly to the board
-        setTimeout(() => {
-            // Remove the overlay
-            overlay.remove();
-            
-            // Apply the pattern class to the board
-            if (pattern !== 'none') {
-                activeBoard.classList.add(`board-pattern-${pattern}`);
-            }
-        }, 300);
-    }
+        // Update the board navigation buttons to match
+        updateBoardIndicators();
+    }, 500);
     
     // Save to localStorage
     saveBoardStyles();
@@ -1467,27 +1378,15 @@ function loadBoardStyles(boardId) {
             if (styles.pattern !== 'none') {
                 board.classList.add(`board-pattern-${styles.pattern}`);
             }
-            
-            // If this is the current board, update pattern option buttons color
-            if (boardId === currentBoardId) {
-                // Update pattern option buttons background color
-                const patternOptions = document.querySelectorAll('.board-pattern-option');
-                patternOptions.forEach(option => {
-                    option.style.backgroundColor = styles.color;
-                });
-                
-                // Update pattern previews background color
-                const patternPreviews = document.querySelectorAll('.pattern-preview');
-                patternPreviews.forEach(preview => {
-                    preview.style.backgroundColor = styles.color;
-                });
-            }
         }
     } else {
         // Reset to defaults
         boardStyles.colors.current = boardStyles.colors.default;
         boardStyles.patterns.current = boardStyles.patterns.default;
     }
+    
+    // Update board button styles to match
+    updateBoardIndicators();
 }
 
 // Close board style menu when clicking outside
@@ -1531,5 +1430,65 @@ function updateBoardIndicators() {
         } else {
             buttonElement.classList.remove('has-notes');
         }
+        
+        // Get board background color
+        const boardColor = boardElement.style.backgroundColor || '#1a1a1a';
+        
+        // Set button background color to match board
+        buttonElement.style.backgroundColor = boardColor;
+        
+        // Find if the board has a pattern and which one
+        let patternClass = '';
+        if (boardElement.classList.contains('board-pattern-dots')) {
+            patternClass = 'board-pattern-dots';
+        } else if (boardElement.classList.contains('board-pattern-grid')) {
+            patternClass = 'board-pattern-grid';
+        } else if (boardElement.classList.contains('board-pattern-lines')) {
+            patternClass = 'board-pattern-lines';
+        }
+        
+        // Remove any existing pattern classes from button
+        buttonElement.classList.remove('button-pattern-dots', 'button-pattern-grid', 'button-pattern-lines');
+        
+        // Apply matching pattern class to button if board has a pattern
+        if (patternClass) {
+            // Convert to button-specific pattern class
+            const buttonPatternClass = patternClass.replace('board-pattern', 'button-pattern');
+            buttonElement.classList.add(buttonPatternClass);
+        }
+        
+        // Adjust text color based on background color brightness
+        const rgb = hexToRgb(boardColor) || { r: 26, g: 26, b: 26 }; // default to #1a1a1a
+        const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+        
+        // Use white text for dark backgrounds, black text for light backgrounds
+        buttonElement.style.color = brightness > 128 ? '#000' : '#fff';
     }
+}
+
+// Helper function to convert hex to RGB
+function hexToRgb(hex) {
+    // Handle rgba format
+    if (hex.startsWith('rgba')) {
+        const parts = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+        if (parts) {
+            return {
+                r: parseInt(parts[1]),
+                g: parseInt(parts[2]),
+                b: parseInt(parts[3])
+            };
+        }
+        return null;
+    }
+    
+    // Handle hex format
+    const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+    
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
 }

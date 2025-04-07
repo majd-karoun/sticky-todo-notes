@@ -556,7 +556,7 @@ body {
     justify-content: center;
     height: 500px;  
     color: rgb(151, 151, 151);
-    font-size: 2rem; 
+    font-size: 2.5rem; 
     font-weight: 300;
     letter-spacing: 0.05em;
     animation: fadeIn 0.8s ease-out;
@@ -1400,8 +1400,8 @@ font-size: 2rem;
     bottom: -5px;
     left: 50%;
     transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background-color: transparent;
     transition: background-color 0.3s ease, transform 0.3s ease;
@@ -1410,4 +1410,21 @@ font-size: 2rem;
 .board-button.has-notes::after {
     background-color: rgba(76, 175, 80, 0.8);
     transform: translateX(-50%) scale(1);
+}
+
+/* Button patterns to match board patterns */
+.button-pattern-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+    background-size: 8px 8px;
+}
+
+.button-pattern-grid {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+                     linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+    background-size: 8px 8px;
+}
+
+.button-pattern-lines {
+    background-image: linear-gradient(0deg, transparent 7px, rgba(255, 255, 255, 0.4) 8px);
+    background-size: 8px 8px;
 }
