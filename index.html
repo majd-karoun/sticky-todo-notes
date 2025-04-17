@@ -26,7 +26,7 @@
         <div class="add-board-button">+</div>
     </div>
 
-    <div class="board-style-button" onclick="toggleBoardStyleMenu()">
+    <div class="board-style-button">
         <div class="board-style-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -71,7 +71,7 @@
         <button onclick="addNote()">Add Note</button>
     </div>
 
-    <div class="trash-bin" onclick="toggleTrashModal()">
+    <div class="trash-bin">
         <div class="bin-lid"></div>
         <div class="bin-body">
         </div>
@@ -87,7 +87,7 @@
                 <div class="modal-controls">
                     <button onclick="restoreAllNotes()" class="restore-all-btn">Restore All</button>
                     <button onclick="clearTrash()" class="clear-trash-btn">Clear Bin</button>
-                    <button onclick="toggleTrashModal()" class="close-modal-btn">X</button>
+                    <button class="close-modal-btn">X</button>
                 </div>
             </div>
             <div class="deleted-notes-container">

@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Add event listener for the close button in the trash modal
-    const closeTrashButton = document.querySelector('#trashModal .close-btn');
+    const closeTrashButton = document.querySelector('#trashModal .close-modal-btn'); // Corrected selector
      if (closeTrashButton) {
         closeTrashButton.addEventListener('click', toggleTrashModal); // toggleTrashModal is in components/trash.js
     }
