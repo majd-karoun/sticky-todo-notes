@@ -736,10 +736,45 @@ function loadBoardStyles(boardId) {
             // Apply color
             board.style.backgroundColor = styles.color;
 
+            // Remove any existing pattern overlays first
+            const existingOverlays = board.querySelectorAll('.pattern-overlay');
+            existingOverlays.forEach(overlay => overlay.remove());
+
+            // Remove all pattern classes
+            board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
+            
             // Apply pattern
-            board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
             if (styles.pattern !== 'none') {
                 board.classList.add(`board-pattern-${styles.pattern}`);
+                
+                // For weekdays pattern, create a header with day names
+                if (styles.pattern === 'weekdays') {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'pattern-overlay weekday-header';
+                    
+                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    days.forEach(day => {
+                        const span = document.createElement('span');
+                        span.textContent = day;
+                        overlay.appendChild(span);
+                    });
+                    
+                    board.appendChild(overlay);
+                }
+                
+                // For days pattern, create a header with day numbers
+                if (styles.pattern === 'days') {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'pattern-overlay day-header';
+                    
+                    for (let i = 1; i <= 5; i++) {
+                        const span = document.createElement('span');
+                        span.textContent = `Day ${i}`;
+                        overlay.appendChild(span);
+                    }
+                    
+                    board.appendChild(overlay);
+                }
             }
         }
 
@@ -750,16 +785,16 @@ function loadBoardStyles(boardId) {
         }
 
     } else {
-         // If loading styles for the current board, reset to defaults
+        // If loading styles for the current board, reset to defaults
         if (boardId === currentBoardId) {
             boardStyles.colors.current = boardStyles.colors.default;
             boardStyles.patterns.current = boardStyles.patterns.default;
         }
-         // Apply default styles to the board element
+        // Apply default styles to the board element
         const board = document.querySelector(`.board[data-board-id="${boardId}"]`);
         if (board) {
             board.style.backgroundColor = boardStyles.colors.default;
-            board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
+            board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
         }
     }
 
@@ -827,16 +862,22 @@ function updateBoardIndicators() {
             patternClass = 'board-pattern-grid';
         } else if (boardElement.classList.contains('board-pattern-lines')) {
             patternClass = 'board-pattern-lines';
+        } else if (boardElement.classList.contains('board-pattern-weekdays')) {
+            patternClass = 'board-pattern-weekdays';
+        } else if (boardElement.classList.contains('board-pattern-days')) {
+            patternClass = 'board-pattern-days';
         }
 
         // Remove any existing pattern classes from button
-        buttonElement.classList.remove('button-pattern-dots', 'button-pattern-grid', 'button-pattern-lines');
+        buttonElement.classList.remove('button-pattern-dots', 'button-pattern-grid', 'button-pattern-lines', 'button-pattern-weekdays', 'button-pattern-days');
 
         // Apply matching pattern class to button if board has a pattern
         if (patternClass) {
             // Convert to button-specific pattern class
             const buttonPatternClass = patternClass.replace('board-pattern', 'button-pattern');
             buttonElement.classList.add(buttonPatternClass);
+            
+            // No need to add separator elements anymore as we're using CSS gradients
         }
 
         // Adjust text color based on background color brightness

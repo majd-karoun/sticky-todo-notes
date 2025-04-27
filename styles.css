@@ -1587,6 +1587,32 @@ font-size: 2rem;
     z-index: 1;
 }
 
+/* Add separator lines between days */
+.weekday-header span, .day-header span {
+    position: relative;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    /* Remove the border-right as we're using background gradients for lines */
+}
+
+/* No special styling needed for last child */
+
+/* Full-height separator lines */
+.board-pattern-weekdays {
+    background-image: linear-gradient(90deg, transparent calc(16.66% - 1px), rgba(255, 255, 255, 0.2) calc(16.66%), transparent calc(16.66% + 1px)),
+                      linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.2) calc(33.33%), transparent calc(33.33% + 1px)),
+                      linear-gradient(90deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.2) calc(50%), transparent calc(50% + 1px)),
+                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.2) calc(66.66%), transparent calc(66.66% + 1px)),
+                      linear-gradient(90deg, transparent calc(83.33% - 1px), rgba(255, 255, 255, 0.2) calc(83.33%), transparent calc(83.33% + 1px)) !important;
+    background-size: 100% 100%;
+}
+
+.board-pattern-days {
+    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.2) calc(33.33%), transparent calc(33.33% + 1px)),
+                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.2) calc(66.66%), transparent calc(66.66% + 1px)) !important;
+    background-size: 100% 100%;
+}
+
 .weekday-header span, .day-header span {
     flex: 1;
     text-align: center;
@@ -1657,18 +1683,72 @@ font-size: 2rem;
 /* Button patterns to match board patterns */
 .button-pattern-dots {
     background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
-    background-size: 8px 8px;
+    background-size: 6px 6px;
 }
 
 .button-pattern-grid {
     background-image: linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
                      linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
-    background-size: 8px 8px;
+    background-size: 6px 6px;
 }
 
 .button-pattern-lines {
-    background-image: linear-gradient(0deg, transparent 7px, rgba(255, 255, 255, 0.4) 8px);
-    background-size: 8px 8px;
+    background-image: linear-gradient(0deg, transparent 5px, rgba(255, 255, 255, 0.4) 6px);
+    background-size: 6px 6px;
+}
+
+.button-pattern-weekdays {
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.3) calc(33.33%), transparent calc(33.33% + 1px)),
+                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.3) calc(66.66%), transparent calc(66.66% + 1px)) !important;
+    background-size: 100% 100%;
+}
+
+.button-pattern-weekdays::before {
+    content: "Mon";
+    position: absolute;
+    top: 2px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 1;
+    font-size: 6px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    line-height: 1;
+    padding-top: 1px;
+}
+
+.button-pattern-days {
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.3) calc(33.33%), transparent calc(33.33% + 1px)),
+                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.3) calc(66.66%), transparent calc(66.66% + 1px)) !important;
+    background-size: 100% 100%;
+}
+
+.button-pattern-days::before {
+    content: "Day 1";
+    position: absolute;
+    top: 2px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 1;
+    font-size: 6px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    line-height: 1;
+    padding-top: 1px;
 }
 
 /* Selection box styles */
