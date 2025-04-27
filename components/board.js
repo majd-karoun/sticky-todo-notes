@@ -682,15 +682,39 @@ function changeBoardPattern(pattern) {
 
     // Remove all pattern classes from the board
     activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
+    
+    // Create a separate lines overlay for animated lines (only for weekdays and days patterns)
+    let linesOverlay = null;
+    if (pattern === 'weekdays' || pattern === 'days') {
+        linesOverlay = document.createElement('div');
+        linesOverlay.className = 'lines-overlay';
+        linesOverlay.style.position = 'absolute';
+        linesOverlay.style.top = '0';
+        linesOverlay.style.left = '0';
+        linesOverlay.style.width = '100%';
+        linesOverlay.style.height = '100%';
+        linesOverlay.style.pointerEvents = 'none';
+        linesOverlay.style.zIndex = '0';
+        linesOverlay.style.opacity = '0';
+        linesOverlay.style.transition = 'opacity 0.5s ease';
+        
+        // Add pattern-specific class for styling
+        linesOverlay.classList.add(`lines-overlay-${pattern}`);
+        
+        // Add to board
+        activeBoard.appendChild(linesOverlay);
+    }
 
-    // Add the overlay to the board
+    // Add the header overlay to the board
     activeBoard.appendChild(overlay);
 
     // Force a reflow to ensure the transition works
     void overlay.offsetWidth;
+    if (linesOverlay) void linesOverlay.offsetWidth;
 
-    // Fade in the pattern
+    // Fade in the pattern and lines
     overlay.style.opacity = '1';
+    if (linesOverlay) linesOverlay.style.opacity = '1';
 
     // After the transition completes, apply the pattern directly to the board
     setTimeout(() => {
@@ -707,9 +731,16 @@ function changeBoardPattern(pattern) {
             overlay.style.zIndex = '1';
             // Give the overlay a class for easier reference
             overlay.classList.add('pattern-overlay');
+            
+            // Keep the lines overlay as well
+            if (linesOverlay) {
+                linesOverlay.style.zIndex = '0';
+                linesOverlay.classList.add('pattern-overlay');
+            }
         } else {
             // For other patterns, remove the overlay and apply the pattern class
             overlay.remove();
+            if (linesOverlay) linesOverlay.remove();
             if (pattern !== 'none') {
                 activeBoard.classList.add(`board-pattern-${pattern}`);
             }
@@ -760,6 +791,18 @@ function loadBoardStyles(boardId) {
                     });
                     
                     board.appendChild(overlay);
+                    
+                    // Add lines overlay for weekdays
+                    const linesOverlay = document.createElement('div');
+                    linesOverlay.className = 'pattern-overlay lines-overlay lines-overlay-weekdays';
+                    linesOverlay.style.position = 'absolute';
+                    linesOverlay.style.top = '0';
+                    linesOverlay.style.left = '0';
+                    linesOverlay.style.width = '100%';
+                    linesOverlay.style.height = '100%';
+                    linesOverlay.style.pointerEvents = 'none';
+                    linesOverlay.style.zIndex = '0';
+                    board.appendChild(linesOverlay);
                 }
                 
                 // For days pattern, create a header with day numbers
@@ -774,6 +817,18 @@ function loadBoardStyles(boardId) {
                     }
                     
                     board.appendChild(overlay);
+                    
+                    // Add lines overlay for days
+                    const linesOverlay = document.createElement('div');
+                    linesOverlay.className = 'pattern-overlay lines-overlay lines-overlay-days';
+                    linesOverlay.style.position = 'absolute';
+                    linesOverlay.style.top = '0';
+                    linesOverlay.style.left = '0';
+                    linesOverlay.style.width = '100%';
+                    linesOverlay.style.height = '100%';
+                    linesOverlay.style.pointerEvents = 'none';
+                    linesOverlay.style.zIndex = '0';
+                    board.appendChild(linesOverlay);
                 }
             }
         }

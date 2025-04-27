@@ -1599,6 +1599,15 @@ font-size: 2rem;
 
 /* Full-height separator lines */
 .board-pattern-weekdays {
+    background-image: none !important;
+}
+
+.board-pattern-days {
+    background-image: none !important;
+}
+
+/* Animated lines overlays */
+.lines-overlay-weekdays {
     background-image: linear-gradient(90deg, transparent calc(16.66% - 1px), rgba(255, 255, 255, 0.2) calc(16.66%), transparent calc(16.66% + 1px)),
                       linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.2) calc(33.33%), transparent calc(33.33% + 1px)),
                       linear-gradient(90deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.2) calc(50%), transparent calc(50% + 1px)),
@@ -1607,7 +1616,7 @@ font-size: 2rem;
     background-size: 100% 100%;
 }
 
-.board-pattern-days {
+.lines-overlay-days {
     background-image: linear-gradient(90deg, transparent calc(20% - 1px), rgba(255, 255, 255, 0.2) calc(20%), transparent calc(20% + 1px)),
                       linear-gradient(90deg, transparent calc(40% - 1px), rgba(255, 255, 255, 0.2) calc(40%), transparent calc(40% + 1px)),
                       linear-gradient(90deg, transparent calc(60% - 1px), rgba(255, 255, 255, 0.2) calc(60%), transparent calc(60% + 1px)),
