@@ -1608,8 +1608,10 @@ font-size: 2rem;
 }
 
 .board-pattern-days {
-    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.2) calc(33.33%), transparent calc(33.33% + 1px)),
-                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.2) calc(66.66%), transparent calc(66.66% + 1px)) !important;
+    background-image: linear-gradient(90deg, transparent calc(20% - 1px), rgba(255, 255, 255, 0.2) calc(20%), transparent calc(20% + 1px)),
+                      linear-gradient(90deg, transparent calc(40% - 1px), rgba(255, 255, 255, 0.2) calc(40%), transparent calc(40% + 1px)),
+                      linear-gradient(90deg, transparent calc(60% - 1px), rgba(255, 255, 255, 0.2) calc(60%), transparent calc(60% + 1px)),
+                      linear-gradient(90deg, transparent calc(80% - 1px), rgba(255, 255, 255, 0.2) calc(80%), transparent calc(80% + 1px)) !important;
     background-size: 100% 100%;
 }
 
@@ -1727,8 +1729,10 @@ font-size: 2rem;
 .button-pattern-days {
     position: relative;
     overflow: hidden;
-    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.3) calc(33.33%), transparent calc(33.33% + 1px)),
-                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.3) calc(66.66%), transparent calc(66.66% + 1px)) !important;
+    background-image: linear-gradient(90deg, transparent calc(20% - 1px), rgba(255, 255, 255, 0.3) calc(20%), transparent calc(20% + 1px)),
+                      linear-gradient(90deg, transparent calc(40% - 1px), rgba(255, 255, 255, 0.3) calc(40%), transparent calc(40% + 1px)),
+                      linear-gradient(90deg, transparent calc(60% - 1px), rgba(255, 255, 255, 0.3) calc(60%), transparent calc(60% + 1px)),
+                      linear-gradient(90deg, transparent calc(80% - 1px), rgba(255, 255, 255, 0.3) calc(80%), transparent calc(80% + 1px)) !important;
     background-size: 100% 100%;
 }
 
