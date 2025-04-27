@@ -1,5 +1,31 @@
 // Bin Management
 function markAsDone(note) {
+    // Check if there are any selected notes and if the clicked note is one of them
+    const isPartOfSelection = selectedNotes.includes(note) && selectedNotes.length > 1;
+    
+    // If the note is part of a selection, mark all selected notes as done
+    if (isPartOfSelection) {
+        // Make a copy of the selected notes array to avoid modification issues during iteration
+        const notesToDelete = [...selectedNotes];
+        
+        // Mark each selected note as done with a slight delay between them
+        notesToDelete.forEach((selectedNote, index) => {
+            setTimeout(() => {
+                // Don't call markAsDone recursively to avoid infinite loop
+                markNoteAsDone(selectedNote);
+            }, index * 100); // Stagger the animations by 100ms
+        });
+        
+        // Clear the selection
+        selectedNotes = [];
+    } else {
+        // Just mark the single note as done
+        markNoteAsDone(note);
+    }
+}
+
+// Helper function to mark a single note as done
+function markNoteAsDone(note) {
     const content = note.querySelector('.sticky-content');
     const isBold = content.classList.contains('bold');
 
@@ -140,35 +166,59 @@ function deleteNotePermanently(index) {
 }
 
 function restoreAllNotes() {
-    const notes = document.querySelectorAll('.deleted-note');
-    notes.forEach((note, index) => {
+    // Only confirm once if there are more than 15 notes
+    if (deletedNotes.length > 15) {
+        if (!confirm(`Are you sure you want to restore ${deletedNotes.length} notes onto this board?`)) {
+            return; // If user cancels, exit the function
+        }
+    }
+    
+    // Store all notes to restore before clearing the array
+    const notesToRestore = [...deletedNotes];
+    
+    // Animate all notes disappearing from the trash at the same time
+    const noteElements = document.querySelectorAll('.deleted-note');
+    noteElements.forEach(note => {
         note.classList.add('removing');
         note.style.animation = 'noteDelete 0.2s ease-out forwards';
     });
-
+    
+    // First step: Clear the trash and close the modal
     setTimeout(() => {
-        while (deletedNotes.length > 0) { // deletedNotes is in utils.js
-            const note = deletedNotes[0];
-            createNote( // createNote is in note.js
-                note.text,
-                note.color,
-                parsePosition(note.x), // parsePosition is in utils.js
-                parsePosition(note.y),
-                true,
-                note.width,
-                note.height,
-                note.isBold  // Pass the bold state
-            ).style.animation = 'paperPop 0.3s ease-out forwards';
-
-            deletedNotes.splice(0, 1);
-            saveActiveNotes(); // saveActiveNotes is in utils.js
-        }
-        saveDeletedNotes(); // saveDeletedNotes is in utils.js
+        // Clear the trash
+        deletedNotes = [];
+        saveDeletedNotes();
         updateTrashCount();
-        toggleTrashModal();
-    }, 300);
-
-    updateBoardIndicators(); // updateBoardIndicators is in board.js
+        
+        // Close the modal with animation
+        const modal = document.getElementById('trashModal');
+        modal.classList.remove('visible');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 400); // Match the CSS transition duration (0.4s)
+        
+        // Second step: Create notes on board as the modal starts to close
+        // This reduces the lag between animations
+        setTimeout(() => {
+            // Create all notes at once
+            notesToRestore.forEach(note => {
+                createNote(
+                    note.text,
+                    note.color,
+                    parsePosition(note.x),
+                    parsePosition(note.y),
+                    true,
+                    note.width,
+                    note.height,
+                    note.isBold
+                ).style.animation = 'paperPop 0.3s ease-out forwards';
+            });
+            
+            // Save the active notes and update board indicators
+            saveActiveNotes();
+            updateBoardIndicators();
+        }, 200); // Reduced delay to make animation flow smoother
+    }, 300); // Wait for the notes to disappear from trash
 }
 
 function clearTrash() {

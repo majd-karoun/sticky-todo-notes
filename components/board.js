@@ -602,6 +602,19 @@ function changeBoardColor(color) {
     // Apply to active board
     const activeBoard = document.querySelector('.board.active');
     activeBoard.style.backgroundColor = color;
+    
+    // Update pattern preview backgrounds to match the new board color
+    const patternPreviews = document.querySelectorAll('.pattern-preview');
+    patternPreviews.forEach(preview => {
+        preview.style.backgroundColor = color;
+    });
+    
+    // Update the board pattern options background color
+    const patternOptions = document.querySelectorAll('.board-pattern-option');
+    patternOptions.forEach(option => {
+        option.style.backgroundColor = color;
+        option.style.opacity = '0.8'; // Add slight transparency
+    });
 
     // Save to localStorage
     saveBoardStyles(); // saveBoardStyles is in utils.js

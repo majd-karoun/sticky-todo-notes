@@ -99,6 +99,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
 function setupNote(note) {
     let isDragging = false;
     let isResizing = false;
+    let isEditing = false;
     let startX, startY, initialX, initialY, initialW, initialH;
 
     const colorButton = note.querySelector('.color-button');
@@ -112,6 +113,24 @@ function setupNote(note) {
 
     content.addEventListener('blur', saveContent);
     content.addEventListener('input', saveContent);
+    
+    // Double-click to edit
+    content.addEventListener('dblclick', function(e) {
+        isEditing = true;
+        // Set up a one-time click handler on document to detect clicks outside
+        setTimeout(() => {
+            document.addEventListener('click', cancelEditing);
+        }, 0);
+    });
+    
+    // Function to cancel editing when clicking outside
+    function cancelEditing(e) {
+        if (isEditing && !content.contains(e.target)) {
+            isEditing = false;
+            content.blur();
+            document.removeEventListener('click', cancelEditing);
+        }
+    }
 
     // Track position after movement ends
     function updateLastPosition() {
@@ -263,6 +282,11 @@ function setupNote(note) {
         note.style.zIndex = '';
         activeNote = null;
     }
+    
+    // Clean up event listeners when note is removed
+    note.addEventListener('remove', function() {
+        document.removeEventListener('click', cancelEditing);
+    });
 }
 
 // Color Management
