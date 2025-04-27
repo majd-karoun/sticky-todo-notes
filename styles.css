@@ -627,25 +627,42 @@ body {
 }
 
 .modal-content {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, calc(-50% + 30px));
-    background: rgba(0, 0, 0, 0.7);
-    padding: 25px;
-    border-radius: 12px;
-    width: 800px;
-    height: 600px;
-    opacity: 0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
-    backdrop-filter: blur(5px);
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, calc(-50% + 30px));
+background: rgba(0, 0, 0, 0.7);
+padding: 25px;
+border-radius: 12px;
+width: 800px;
+height: 600px;
+opacity: 0;
+transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+border: 1px solid rgba(255,255,255,0.1);
+box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+display: flex;
+flex-direction: column;
+backdrop-filter: blur(5px);
 }
 
-
+.board-style-menu {
+position: absolute;
+top: 20px; /* Moved down by 10px from 10px */
+right: 20px;
+background: rgba(0, 0, 0, 0.8);
+border-radius: 10px;
+padding: 15px;
+width: 250px;
+display: none;
+opacity: 0;
+transform: scale(0.95);
+transform-origin: top right;
+transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+z-index: 10;
+backdrop-filter: blur(5px);
+border: 1px solid rgba(255, 255, 255, 0.1);
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
 .trash-modal.visible {
     opacity: 1;
@@ -1347,7 +1364,7 @@ font-size: 2rem;
 .board-style-button {
     position: fixed;
     bottom: 20px;
-    left: 290px;
+    left: 295px; /* Moved 5px to the right from 290px */
     z-index: 1000;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
@@ -1379,7 +1396,7 @@ font-size: 2rem;
 
 .board-style-menu {
     position: absolute;
-    top: -280px;
+    top: -350px; /* Moved up by another 20px from -330px */
     left: 0;
     width: 220px;
     background-color: rgba(0, 0, 0, 0.3);
@@ -1410,7 +1427,8 @@ font-size: 2rem;
     color: #ccc;
     margin-bottom: 8px;
     font-size: 14px;
-    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
 }
 
 .board-style-colors {
@@ -1507,8 +1525,76 @@ font-size: 2rem;
     background-size: 8px 8px;
 }
 
+.pattern-weekdays {
+    position: relative;
+    overflow: hidden;
+}
+
+.pattern-weekdays::before {
+    content: "Monday";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    white-space: nowrap;
+}
+
+.pattern-days {
+    position: relative;
+    overflow: hidden;
+}
+
+.pattern-days::before {
+    content: "Day 1";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    white-space: nowrap;
+}
+
 .board-pattern-option:hover {
     background-color: rgba(60, 60, 60, 0.7);
+}
+
+/* Board pattern headers */
+.weekday-header, .day-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 10px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 1;
+}
+
+.weekday-header span, .day-header span {
+    flex: 1;
+    text-align: center;
+    padding: 5px;
+}
+
+.board-pattern-weekdays, .board-pattern-days {
+    padding-top: 60px; /* Add padding to the top to make space for the headers */
 }
 
 /* Mobile optimizations */

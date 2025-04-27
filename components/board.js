@@ -635,6 +635,10 @@ function changeBoardPattern(pattern) {
 
     // Apply to active board
     const activeBoard = document.querySelector('.board.active');
+    
+    // Remove any existing pattern overlays first
+    const existingOverlays = activeBoard.querySelectorAll('.pattern-overlay');
+    existingOverlays.forEach(overlay => overlay.remove());
 
     // Create an overlay element for the transition
     const overlay = document.createElement('div');
@@ -658,6 +662,18 @@ function changeBoardPattern(pattern) {
         } else if (pattern === 'lines') {
             overlay.style.backgroundImage = 'linear-gradient(0deg, transparent 19px, rgba(255, 255, 255, 0.4) 20px)';
             overlay.style.backgroundSize = '20px 20px';
+        } else if (pattern === 'weekdays') {
+            // Create weekday headers
+            const weekdayHeader = document.createElement('div');
+            weekdayHeader.className = 'weekday-header';
+            weekdayHeader.innerHTML = '<span>Monday</span><span>Tuesday</span><span>Wednesday</span><span>Thursday</span><span>Friday</span><span>Saturday</span>';
+            overlay.appendChild(weekdayHeader);
+        } else if (pattern === 'days') {
+            // Create day number headers
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'day-header';
+            dayHeader.innerHTML = '<span>Day 1</span><span>Day 2</span><span>Day 3</span><span>Day 4</span><span>Day 5</span>';
+            overlay.appendChild(dayHeader);
         }
     }
 
@@ -665,7 +681,7 @@ function changeBoardPattern(pattern) {
     overlay.style.opacity = '0';
 
     // Remove all pattern classes from the board
-    activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines');
+    activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
 
     // Add the overlay to the board
     activeBoard.appendChild(overlay);
@@ -678,12 +694,25 @@ function changeBoardPattern(pattern) {
 
     // After the transition completes, apply the pattern directly to the board
     setTimeout(() => {
-        // Remove the overlay
-        overlay.remove();
-
-        // Apply the pattern class to the board
-        if (pattern !== 'none') {
+        // For weekdays and days patterns, keep the overlay with headers
+        if (pattern === 'weekdays' || pattern === 'days') {
+            // Just add the pattern class without removing the overlay
             activeBoard.classList.add(`board-pattern-${pattern}`);
+            // Make sure the overlay stays in place
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = 'auto';
+            overlay.style.zIndex = '1';
+            // Give the overlay a class for easier reference
+            overlay.classList.add('pattern-overlay');
+        } else {
+            // For other patterns, remove the overlay and apply the pattern class
+            overlay.remove();
+            if (pattern !== 'none') {
+                activeBoard.classList.add(`board-pattern-${pattern}`);
+            }
         }
 
         // Update the board navigation buttons to match
