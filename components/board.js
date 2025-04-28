@@ -16,7 +16,7 @@ function createNewBoard() {
     // Remove auto-switching to the new board
     // switchToBoard(boardCount);
 
-    // Update add button visibility based on board count
+    // Update add button visibility based on board count.
     updateAddButtonState();
 }
 
