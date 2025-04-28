@@ -23,6 +23,27 @@ const boardStyles = {
     }
 };
 
+// Quote storage
+let currentQuote = {
+    text: '',
+    author: ''
+};
+let lastQuoteFetch = null;
+
+// Fallback quotes for when API is unavailable
+const fallbackQuotes = [
+    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+    { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+    { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+    { text: "Everything you've ever wanted is on the other side of fear.", author: "George Addair" },
+    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+    { text: "Hardships often prepare ordinary people for an extraordinary destiny.", author: "C.S. Lewis" },
+    { text: "Your time is limited, so don't waste it living someone else's life.", author: "Steve Jobs" },
+    { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+    { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
+    { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" }
+];
+
 let deletedNotes = [];
 let holdTimer;
 let activeNote = null;
@@ -60,6 +81,7 @@ const MAX_BOARDS = 9;
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
 const DELETED_NOTES_KEY = 'stickyNotes_deleted';
 const BOARDS_COUNT_KEY = 'stickyNotes_boardCount';
+const LAST_QUOTE_DATE_KEY = 'stickyNotes_lastQuoteDate';
 
 // Helper function to check if we're on a mobile device
 function checkMobileView() {
@@ -187,53 +209,143 @@ function updateShortcutIcon() {
     }
 }
 
+// Get a random quote (from API or fallback)
+async function fetchRandomQuote() {
+    try {
+        // Check if we already fetched a quote today
+        const today = new Date().toDateString();
+        const lastFetchDate = localStorage.getItem(LAST_QUOTE_DATE_KEY);
+        
+        // If we have a quote from today, use it
+        if (lastFetchDate === today && currentQuote.text) {
+            return currentQuote;
+        }
+        
+        // Try to fetch from API with a timeout to prevent long waits
+        const fetchPromise = fetch('https://api.quotable.io/random?maxLength=100');
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Fetch timeout')), 2000)
+        );
+        
+        // Race between fetch and timeout
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        const data = await response.json();
+        
+        // Save the quote and update the last fetch date
+        currentQuote = {
+            text: data.content,
+            author: data.author
+        };
+        localStorage.setItem(LAST_QUOTE_DATE_KEY, today);
+        
+        return currentQuote;
+    } catch (error) {
+        console.error('Error fetching quote:', error);
+        
+        // Use a random fallback quote instead
+        const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
+        return fallbackQuotes[randomIndex];
+    }
+}
+
 // Setup textarea focus/blur events
 function setupTextareaEvents() {
     const textarea = document.querySelector('.note-input textarea');
     if (textarea) {
-        textarea.addEventListener('focus', function() {
+        // Add CSS classes for animations
+        if (!document.getElementById('quote-animations')) {
+            const style = document.createElement('style');
+            style.id = 'quote-animations';
+            style.textContent = `
+                @keyframes fadeOutPlaceholder {
+                    0% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+                @keyframes fadeInQuote {
+                    0% { opacity: 0; }
+                    100% { opacity: 1; }
+                }
+                .textarea-fade-out::placeholder {
+                    animation: fadeOutPlaceholder 0.5s forwards;
+                }
+                .textarea-quote-ready::placeholder {
+                    opacity: 0;
+                }
+                .textarea-quote-visible::placeholder {
+                    animation: fadeInQuote 0.5s forwards;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        textarea.addEventListener('focus', async function() {
             const shortcutIcon = document.getElementById('shortcutIcon');
             if (shortcutIcon) {
                 const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
                 const modKey = isMac ? '⌘' : 'Ctrl';
 
-                // Only show the enter shortcut if textarea has content
                 if (textarea.value.trim()) {
                     shortcutIcon.innerHTML = `${modKey}+↵`;
                     shortcutIcon.classList.remove('focus-hint');
                     shortcutIcon.classList.add('enter-hint');
                 } else {
-                    // Keep the default shortcut icon when textarea is empty
                     shortcutIcon.innerHTML = `${modKey}`;
                     shortcutIcon.classList.add('focus-hint');
                     shortcutIcon.classList.remove('enter-hint');
                 }
             }
 
-            // Animate the textarea to become 200px tall
+            // Animate the textarea to expand
             textarea.style.height = '50px';
             setTimeout(() => {
                 textarea.style.height = '200px';
             }, 0);
-        });
+            
+            // Animate out the current placeholder
+            textarea.classList.add('textarea-fade-out');
+            
+            // Fetch and show a quote after the animation
+            setTimeout(async () => {
+                // Get a quote
+                const quote = await fetchRandomQuote();
+                
+                // Prepare for the new placeholder
+                textarea.classList.remove('textarea-fade-out');
+                textarea.classList.add('textarea-quote-ready');
+                
+                // Set the new placeholder and animate it in
+                const quoteText = quote.author ? `"${quote.text}" — ${quote.author}` : quote.text;
+                textarea.placeholder = quoteText;
+                
+                // Animate in the quote
+                setTimeout(() => {
+                    textarea.classList.remove('textarea-quote-ready');
+                    textarea.classList.add('textarea-quote-visible');
+                }, 50);
+            }, 500); // Wait for fade out animation to complete
 
-        // Add input event listener to update shortcut icon when text changes
-        textarea.addEventListener('input', function() {
-            const shortcutIcon = document.getElementById('shortcutIcon');
-            if (shortcutIcon) {
-                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-                const modKey = isMac ? '⌘' : 'Ctrl';
+            // Update shortcut icon when content changes
+            const inputHandler = function() {
+                if (shortcutIcon) {
+                    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                    const modKey = isMac ? '⌘' : 'Ctrl';
 
-                if (textarea.value.trim()) {
-                    shortcutIcon.innerHTML = `${modKey}+↵`;
-                    shortcutIcon.classList.remove('focus-hint');
-                    shortcutIcon.classList.add('enter-hint');
-                } else {
-                    shortcutIcon.innerHTML = `${modKey}`;
-                    shortcutIcon.classList.add('focus-hint');
-                    shortcutIcon.classList.remove('enter-hint');
+                    if (textarea.value.trim()) {
+                        shortcutIcon.innerHTML = `${modKey}+↵`;
+                        shortcutIcon.classList.remove('focus-hint');
+                        shortcutIcon.classList.add('enter-hint');
+                    } else {
+                        shortcutIcon.innerHTML = `${modKey}`;
+                        shortcutIcon.classList.add('focus-hint');
+                        shortcutIcon.classList.remove('enter-hint');
+                    }
                 }
-            }
+            };
+
+            textarea.addEventListener('input', inputHandler);
+            textarea.addEventListener('blur', function() {
+                textarea.removeEventListener('input', inputHandler);
+            }, { once: true });
         });
 
         textarea.addEventListener('blur', function() {
@@ -244,6 +356,14 @@ function setupTextareaEvents() {
             setTimeout(() => {
                 textarea.style.height = '50px';
             }, 0);
+            
+            // Reset placeholder to default with animation
+            textarea.classList.add('textarea-fade-out');
+            
+            setTimeout(() => {
+                textarea.classList.remove('textarea-fade-out', 'textarea-quote-visible', 'textarea-quote-ready');
+                textarea.placeholder = 'Write your note...';
+            }, 500);
         });
 
         // Add global click handler to ensure textarea collapses when clicking elsewhere
@@ -261,6 +381,11 @@ function setupTextareaEvents() {
 function loadSavedData() {
     // Check for mobile view
     checkMobileView();
+    
+    // Prefetch a quote in the background
+    fetchRandomQuote().catch(() => {
+        // Silent fail for prefetch - we'll try again when needed
+    });
 
     // Create selection box element
     createSelectionBox(); // Note: createSelectionBox will be defined in selection.js
