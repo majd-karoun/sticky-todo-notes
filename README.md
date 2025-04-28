@@ -1,6 +1,6 @@
 #  Sticky Todo Notes 📝
 
-An intuitive sticky notes application built with vanilla JavaScript. Create, customize, and manage your notes with easy management system.
+An intuitive sticky notes application built with vanilla JavaScript. Create, customize, and manage your notes with easy management system With daily quotes.
 
 [Live Demo](https://sticky-todo-notes.netlify.app) 🚀
 

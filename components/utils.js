@@ -210,15 +210,21 @@ function updateShortcutIcon() {
 }
 
 // Get a random quote (from API or fallback)
-async function fetchRandomQuote() {
+async function fetchRandomQuote(forceRefresh = false) {
     try {
         // Check if we already fetched a quote today
         const today = new Date().toDateString();
         const lastFetchDate = localStorage.getItem(LAST_QUOTE_DATE_KEY);
+        const savedQuote = localStorage.getItem('stickyNotes_dailyQuote');
         
-        // If we have a quote from today, use it
-        if (lastFetchDate === today && currentQuote.text) {
-            return currentQuote;
+        // If we have a quote from today and we're not forcing a refresh, use it
+        if (lastFetchDate === today && savedQuote && !forceRefresh) {
+            try {
+                currentQuote = JSON.parse(savedQuote);
+                return currentQuote;
+            } catch (e) {
+                // If parsing fails, continue to fetch a new quote
+            }
         }
         
         // Try to fetch from API with a timeout to prevent long waits
@@ -236,15 +242,35 @@ async function fetchRandomQuote() {
             text: data.content,
             author: data.author
         };
+        
+        // Store in localStorage for persistence
         localStorage.setItem(LAST_QUOTE_DATE_KEY, today);
+        localStorage.setItem('stickyNotes_dailyQuote', JSON.stringify(currentQuote));
         
         return currentQuote;
     } catch (error) {
         console.error('Error fetching quote:', error);
         
+        // Check if we have a saved quote from a previous day
+        const savedQuote = localStorage.getItem('stickyNotes_dailyQuote');
+        if (savedQuote) {
+            try {
+                return JSON.parse(savedQuote);
+            } catch (e) {
+                // If parsing fails, use fallback
+            }
+        }
+        
         // Use a random fallback quote instead
         const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
-        return fallbackQuotes[randomIndex];
+        const fallbackQuote = fallbackQuotes[randomIndex];
+        
+        // Save this fallback as today's quote
+        const today = new Date().toDateString();
+        localStorage.setItem(LAST_QUOTE_DATE_KEY, today);
+        localStorage.setItem('stickyNotes_dailyQuote', JSON.stringify(fallbackQuote));
+        
+        return fallbackQuote;
     }
 }
 
@@ -278,6 +304,20 @@ function setupTextareaEvents() {
             document.head.appendChild(style);
         }
         
+        // Store the daily quote when loaded
+        let dailyQuote = null;
+        
+        // Function to get and cache the daily quote
+        const getDailyQuote = async () => {
+            if (!dailyQuote) {
+                dailyQuote = await fetchRandomQuote();
+            }
+            return dailyQuote;
+        };
+        
+        // Pre-load the quote when setting up
+        getDailyQuote();
+        
         textarea.addEventListener('focus', async function() {
             const shortcutIcon = document.getElementById('shortcutIcon');
             if (shortcutIcon) {
@@ -304,10 +344,10 @@ function setupTextareaEvents() {
             // Animate out the current placeholder
             textarea.classList.add('textarea-fade-out');
             
-            // Fetch and show a quote after the animation
+            // Show the daily quote after the animation
             setTimeout(async () => {
-                // Get a quote
-                const quote = await fetchRandomQuote();
+                // Get the daily quote (already cached)
+                const quote = await getDailyQuote();
                 
                 // Prepare for the new placeholder
                 textarea.classList.remove('textarea-fade-out');
@@ -382,10 +422,16 @@ function loadSavedData() {
     // Check for mobile view
     checkMobileView();
     
-    // Prefetch a quote in the background
-    fetchRandomQuote().catch(() => {
-        // Silent fail for prefetch - we'll try again when needed
-    });
+    // Check if we need a new daily quote
+    const today = new Date().toDateString();
+    const lastFetchDate = localStorage.getItem(LAST_QUOTE_DATE_KEY);
+    
+    // Only fetch a new quote if we don't have one for today
+    if (lastFetchDate !== today) {
+        fetchRandomQuote(true).catch(() => {
+            // Silent fail for prefetch - we'll try again when needed
+        });
+    }
 
     // Create selection box element
     createSelectionBox(); // Note: createSelectionBox will be defined in selection.js
