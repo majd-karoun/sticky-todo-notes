@@ -278,27 +278,28 @@ async function fetchRandomQuote(forceRefresh = false) {
 function setupTextareaEvents() {
     const textarea = document.querySelector('.note-input textarea');
     if (textarea) {
-        // Add CSS classes for animations
-        if (!document.getElementById('quote-animations')) {
+        // Add CSS for placeholder animations
+        if (!document.getElementById('placeholder-animations')) {
             const style = document.createElement('style');
-            style.id = 'quote-animations';
+            style.id = 'placeholder-animations';
             style.textContent = `
-                @keyframes fadeOutPlaceholder {
-                    0% { opacity: 1; }
-                    100% { opacity: 0; }
-                }
-                @keyframes fadeInQuote {
-                    0% { opacity: 0; }
-                    100% { opacity: 1; }
-                }
                 .textarea-fade-out::placeholder {
-                    animation: fadeOutPlaceholder 0.5s forwards;
+                    opacity: 0;
+                    transition: opacity 0.3s ease-out;
                 }
                 .textarea-quote-ready::placeholder {
                     opacity: 0;
                 }
                 .textarea-quote-visible::placeholder {
-                    animation: fadeInQuote 0.5s forwards;
+                    opacity: 1;
+                    transition: opacity 0.3s ease-in;
+                }
+                .textarea-default-ready::placeholder {
+                    opacity: 0;
+                }
+                .textarea-default-visible::placeholder {
+                    opacity: 1;
+                    transition: opacity 0.3s ease-in;
                 }
             `;
             document.head.appendChild(style);
@@ -361,8 +362,8 @@ function setupTextareaEvents() {
                 setTimeout(() => {
                     textarea.classList.remove('textarea-quote-ready');
                     textarea.classList.add('textarea-quote-visible');
-                }, 50);
-            }, 500); // Wait for fade out animation to complete
+                }, 30);
+            }, 300); // Wait for fade out animation to complete
 
             // Update shortcut icon when content changes
             const inputHandler = function() {
@@ -397,13 +398,30 @@ function setupTextareaEvents() {
                 textarea.style.height = '50px';
             }, 0);
             
-            // Reset placeholder to default with animation
+            // Animate out the quote placeholder
             textarea.classList.add('textarea-fade-out');
+            textarea.classList.remove('textarea-quote-visible');
             
+            // After animation completes, reset to default placeholder with animation
             setTimeout(() => {
-                textarea.classList.remove('textarea-fade-out', 'textarea-quote-visible', 'textarea-quote-ready');
+                // Reset the placeholder to default
                 textarea.placeholder = 'Write your note...';
-            }, 500);
+                
+                // Prepare for fade-in animation
+                textarea.classList.remove('textarea-fade-out', 'textarea-quote-ready');
+                textarea.classList.add('textarea-default-ready');
+                
+                // Animate in the default placeholder
+                setTimeout(() => {
+                    textarea.classList.remove('textarea-default-ready');
+                    textarea.classList.add('textarea-default-visible');
+                    
+                    // Clean up classes after animation completes
+                    setTimeout(() => {
+                        textarea.classList.remove('textarea-default-visible');
+                    }, 600);
+                }, 30);
+            }, 300);
         });
 
         // Add global click handler to ensure textarea collapses when clicking elsewhere
