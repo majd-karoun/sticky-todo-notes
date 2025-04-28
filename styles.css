@@ -1,10 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
 
 * { 
     margin: 0;  
     padding: 0; 
-    box-sizing: border-box; 
+    box-sizing: border-box;
     font-family: 'Roboto', sans-serif;
     
 }
@@ -188,8 +191,9 @@ body {
     resize: none;
     padding: 0;
     padding-right: 8px; 
-    line-height: 1.4;
+    line-height: 1.5;
     white-space: pre-wrap;
+    font-family: 'Comic Neue', cursive;
     font-weight: 400;
     letter-spacing: 0.01em;
 }
@@ -227,6 +231,8 @@ body {
     animation: smoothBold 0.3s ease-in-out forwards;
     text-shadow: 0 0 0.5px rgba(0,0,0,0.3);
     font-size: 1.6rem;
+    font-family: 'Comic Neue', cursive;
+    font-weight: 700;
 }
 
 
@@ -273,15 +279,18 @@ body {
 
 
 .bold-toggle {
-    font-weight: 900 !important;
-    font-size: 0.8rem !important;  
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+    font-family: 'Comic Neue', cursive !important;
 }
 
 .bold-toggle.active {
     background: rgba(0,0,0,0.3) !important; 
     color: rgba(0,0,0,1) !important;  
     transform: scale(1.1);
-    font-size: 1rem  !important;
+    font-size: 1rem !important;
+    font-family: 'Comic Neue', cursive !important;
+    font-weight: 700 !important;
 }
 
 .bold-toggle:hover {
@@ -920,7 +929,9 @@ font-size: 1.4rem;
 line-height: 1.45;
 }
 .sticky-content.bold {
-font-size: 1.8rem;
+    font-size: 1.8rem;
+    font-family: 'Comic Neue', cursive;
+    font-weight: 700;
 }
 .note-controls {
 bottom: 12px;
@@ -1087,9 +1098,9 @@ font-size: 2rem;
     }
 
     .deleted-note-content.bold {
-        
         font-size: 2rem;
-        
+        font-family: 'Comic Neue', cursive;
+        font-weight: 700;
     }
 
     .done-button {
