@@ -805,7 +805,7 @@ function loadBoardStyles(boardId) {
                     board.appendChild(linesOverlay);
                 }
                 
-                // For days pattern, create a header with day numbers
+                // For days pattern, create a header with day numbers.
                 if (styles.pattern === 'days') {
                     const overlay = document.createElement('div');
                     overlay.className = 'pattern-overlay day-header';
