@@ -1063,12 +1063,12 @@ font-size: 2rem;
       }
 
       .bold-toggle {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
         font-family: 'Comic Neue', cursive !important;
       }
     
     .bold-toggle.active {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
         font-family: 'Comic Neue', cursive !important;
         font-weight: 700 !important;
     }
