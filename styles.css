@@ -244,6 +244,7 @@ body {
     display: flex;
     gap: 8px;
     align-items: center;
+    z-index: 5;
 }
 
 .bold-button {
@@ -1063,14 +1064,21 @@ font-size: 2rem;
       }
 
       .bold-toggle {
-        font-size: 1.5rem;
+        font-size: 1.2rem !important;
         font-family: 'Comic Neue', cursive !important;
+        -webkit-font-smoothing: antialiased;
+        width: 28px !important;
+        height: 28px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
     
     .bold-toggle.active {
-        font-size: 1.7rem;
+        font-size: 1.5rem !important;
         font-family: 'Comic Neue', cursive !important;
         font-weight: 800 !important;
+        background-color: rgba(0,0,0,0.3) !important;
     }
 
     .note-input button {
@@ -1112,7 +1120,18 @@ font-size: 2rem;
         font-size: 1.2rem;
         
     }
+
+    .button-pattern-weekdays::before {
+        font-size: 12px;
     }
+    .button-pattern-days::before {
+        font-size: 12px;
+        
+    }
+
+    
+    }
+
   }
 
 /* Board Navigation Styles */
@@ -1551,14 +1570,14 @@ font-size: 2rem;
 .pattern-weekdays::before {
     content: "Mon";
     position: absolute;
-    top: 2px;
+    top: 0px;
     left: 0;
     right: 0;
-    height: 8px;
+    height: 12px;
     background-color: rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     z-index: 1;
-    font-size: 6px;
+    font-size: 12px;
     text-align: center;
     color: rgba(255, 255, 255, 0.9);
     font-family: 'Poppins', sans-serif;
@@ -1578,14 +1597,14 @@ font-size: 2rem;
 .pattern-days::before {
     content: "Day 1";
     position: absolute;
-    top: 2px;
+    top: 0px;
     left: 0;
     right: 0;
-    height: 8px;
+    height: 12px;
     background-color: rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     z-index: 1;
-    font-size: 6px;
+    font-size: 12px;
     text-align: center;
     color: rgba(255, 255, 255, 0.9);
     font-family: 'Poppins', sans-serif;
@@ -1749,6 +1768,7 @@ font-size: 2rem;
 .button-pattern-weekdays::before {
     content: "Mon";
     position: absolute;
+    border-radius: 25px 25px 0 0;
     top: 2px;
     left: 0;
     right: 0;
@@ -1756,7 +1776,7 @@ font-size: 2rem;
     background-color: rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     z-index: 1;
-    font-size: 6px;
+    font-size: 10px;
     text-align: center;
     color: rgba(255, 255, 255, 0.9);
     font-family: 'Poppins', sans-serif;
@@ -1764,6 +1784,7 @@ font-size: 2rem;
     line-height: 1;
     padding-top: 1px;
     pointer-events: none;
+    overflow: hidden;
 }
 
 .button-pattern-days {
@@ -1780,11 +1801,12 @@ font-size: 2rem;
     top: 2px;
     left: 0;
     right: 0;
+    border-radius: 25px 25px 0 0;
     height: 8px;
     background-color: rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     z-index: 1;
-    font-size: 6px;
+    font-size: 10px;
     text-align: center;
     color: rgba(255, 255, 255, 0.9);
     font-family: 'Poppins', sans-serif;
@@ -1792,6 +1814,7 @@ font-size: 2rem;
     line-height: 1;
     padding-top: 1px;
     pointer-events: none;
+    overflow: hidden;
 }
 
 /* Selection box styles */
