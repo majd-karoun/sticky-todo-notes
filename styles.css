@@ -1063,14 +1063,14 @@ font-size: 2rem;
       }
 
       .bold-toggle {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-family: 'Comic Neue', cursive !important;
       }
     
     .bold-toggle.active {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
         font-family: 'Comic Neue', cursive !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
     }
 
     .note-input button {
