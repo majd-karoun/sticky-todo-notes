@@ -13,23 +13,70 @@ function addNote() {
     let lastX = lastNotePositions[currentBoardId].x;
     let lastY = lastNotePositions[currentBoardId].y;
     let lastColor = lastNoteColors[currentBoardId];
+    let positionX, positionY;
 
-    if (lastAddedNote) {
+    // Check if board has weekdays pattern and no notes
+    const hasWeekdaysPattern = boardElement.classList.contains('board-pattern-weekdays');
+    const hasDaysPattern = boardElement.classList.contains('board-pattern-days');
+    const hasNoNotes = notes.length === 0;
+
+    if (hasWeekdaysPattern && hasNoNotes) {
+        // Get today's day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+        const today = new Date().getDay();
+        // Convert to 0 = Monday, 1 = Tuesday, ..., 5 = Saturday, 6 = Sunday
+        const adjustedDay = today === 0 ? 6 : today - 1;
+        
+        // Skip Sunday as it's not shown in the weekday headers
+        if (adjustedDay < 6) {
+            // Get the weekday header
+            const weekdayHeader = boardElement.querySelector('.weekday-header');
+            if (weekdayHeader) {
+                // Position the note under the corresponding day header
+                // Each header span is approximately 1/6 of the board width
+                const boardWidth = boardElement.offsetWidth;
+                const headerWidth = boardWidth / 6;
+                
+                // Calculate position: center of the day's column
+                positionX = (adjustedDay * headerWidth) + (headerWidth / 2) - 100; // 100 is half of note width
+                positionY = 60; // Position below the header
+            }
+        }
+    } else if (hasDaysPattern && hasNoNotes) {
+        // For day pattern, place the first note under Day 1 header
+        const dayHeader = boardElement.querySelector('.day-header');
+        if (dayHeader) {
+            // Position the note under the Day 1 header
+            // Each header span is approximately 1/5 of the board width
+            const boardWidth = boardElement.offsetWidth;
+            const headerWidth = boardWidth / 5;
+            
+            // Calculate position: center of the first day's column
+            positionX = (headerWidth / 2) - 100; // 100 is half of note width
+            positionY = 60; // Position below the header
+        }
+    } else if (lastAddedNote) {
         // Use the last added note's position and color
         lastX = parsePosition(lastAddedNote.style.left);
         lastY = parsePosition(lastAddedNote.style.top);
         lastColor = lastAddedNote.style.backgroundColor;
+        
+        // Get next position based on the last added note's position
+        const nextPosition = getNextNotePosition(lastX, lastY);
+        positionX = nextPosition.x;
+        positionY = nextPosition.y;
+    } else {
+        // Get next position based on the last saved position
+        const nextPosition = getNextNotePosition(lastX, lastY);
+        positionX = nextPosition.x;
+        positionY = nextPosition.y;
     }
-
-    // Get next position based on the last added note's position
-    const nextPosition = getNextNotePosition(lastX, lastY);
 
     // Create the note on the current board
     createNote(
         text.replace(/\n/g, '<br>'),
         lastColor,
-        nextPosition.x,
-        nextPosition.y,
+        positionX,
+        positionY,
         false,
         '200px',
         '150px',
@@ -38,7 +85,7 @@ function addNote() {
     );
 
     // Update the last position and color for this board
-    lastNotePositions[currentBoardId] = nextPosition;
+    lastNotePositions[currentBoardId] = { x: positionX, y: positionY };
     lastNoteColors[currentBoardId] = lastColor;
 
     // Clear the input

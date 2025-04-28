@@ -1215,7 +1215,7 @@ font-size: 2rem;
     font-size: 12px;
     opacity: 0;
     transition: opacity 0.2s ease;
-    z-index: 1;
+    z-index: 3;
     cursor: pointer;
     border: 1px solid white;
 }
@@ -1528,41 +1528,55 @@ font-size: 2rem;
 .pattern-weekdays {
     position: relative;
     overflow: hidden;
+    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.3) calc(33.33%), transparent calc(33.33% + 1px)),
+                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.3) calc(66.66%), transparent calc(66.66% + 1px)) !important;
+    background-size: 100% 100%;
 }
 
 .pattern-weekdays::before {
-    content: "Monday";
+    content: "Mon";
     position: absolute;
-    top: 50%;
+    top: 2px;
     left: 0;
     right: 0;
-    transform: translateY(-50%);
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 1;
+    font-size: 6px;
     text-align: center;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
     font-family: 'Poppins', sans-serif;
     font-weight: 300;
-    white-space: nowrap;
+    line-height: 1;
+    padding-top: 1px;
 }
 
 .pattern-days {
     position: relative;
     overflow: hidden;
+    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.3) calc(33.33%), transparent calc(33.33% + 1px)),
+                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.3) calc(66.66%), transparent calc(66.66% + 1px)) !important;
+    background-size: 100% 100%;
 }
 
 .pattern-days::before {
     content: "Day 1";
     position: absolute;
-    top: 50%;
+    top: 2px;
     left: 0;
     right: 0;
-    transform: translateY(-50%);
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 1;
+    font-size: 6px;
     text-align: center;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
     font-family: 'Poppins', sans-serif;
     font-weight: 300;
-    white-space: nowrap;
+    line-height: 1;
+    padding-top: 1px;
 }
 
 .board-pattern-option:hover {
@@ -1684,6 +1698,7 @@ font-size: 2rem;
     border-radius: 50%;
     background-color: transparent;
     transition: background-color 0.3s ease, transform 0.3s ease;
+    z-index: 2;
 }
 
 .board-button.has-notes::after {
@@ -1710,7 +1725,7 @@ font-size: 2rem;
 
 .button-pattern-weekdays {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.3) calc(33.33%), transparent calc(33.33% + 1px)),
                       linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.3) calc(66.66%), transparent calc(66.66% + 1px)) !important;
     background-size: 100% 100%;
@@ -1733,15 +1748,14 @@ font-size: 2rem;
     font-weight: 300;
     line-height: 1;
     padding-top: 1px;
+    pointer-events: none;
 }
 
 .button-pattern-days {
     position: relative;
-    overflow: hidden;
-    background-image: linear-gradient(90deg, transparent calc(20% - 1px), rgba(255, 255, 255, 0.3) calc(20%), transparent calc(20% + 1px)),
-                      linear-gradient(90deg, transparent calc(40% - 1px), rgba(255, 255, 255, 0.3) calc(40%), transparent calc(40% + 1px)),
-                      linear-gradient(90deg, transparent calc(60% - 1px), rgba(255, 255, 255, 0.3) calc(60%), transparent calc(60% + 1px)),
-                      linear-gradient(90deg, transparent calc(80% - 1px), rgba(255, 255, 255, 0.3) calc(80%), transparent calc(80% + 1px)) !important;
+    overflow: visible;
+    background-image: linear-gradient(90deg, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.3) calc(33.33%), transparent calc(33.33% + 1px)),
+                      linear-gradient(90deg, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.3) calc(66.66%), transparent calc(66.66% + 1px)) !important;
     background-size: 100% 100%;
 }
 
@@ -1762,6 +1776,7 @@ font-size: 2rem;
     font-weight: 300;
     line-height: 1;
     padding-top: 1px;
+    pointer-events: none;
 }
 
 /* Selection box styles */
