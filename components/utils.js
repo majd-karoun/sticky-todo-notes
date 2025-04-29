@@ -23,26 +23,7 @@ const boardStyles = {
     }
 };
 
-// Quote storage
-let currentQuote = {
-    text: '',
-    author: ''
-};
-let lastQuoteFetch = null;
 
-// Fallback quotes for when API is unavailable
-const fallbackQuotes = [
-    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-    { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-    { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
-    { text: "Everything you've ever wanted is on the other side of fear.", author: "George Addair" },
-    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
-    { text: "Hardships often prepare ordinary people for an extraordinary destiny.", author: "C.S. Lewis" },
-    { text: "Your time is limited, so don't waste it living someone else's life.", author: "Steve Jobs" },
-    { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
-    { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
-    { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" }
-];
 
 let deletedNotes = [];
 let holdTimer;
@@ -81,7 +62,7 @@ const MAX_BOARDS = 9;
 const ACTIVE_NOTES_KEY = 'stickyNotes_active';
 const DELETED_NOTES_KEY = 'stickyNotes_deleted';
 const BOARDS_COUNT_KEY = 'stickyNotes_boardCount';
-const LAST_QUOTE_DATE_KEY = 'stickyNotes_lastQuoteDate';
+
 
 // Helper function to check if we're on a mobile device
 function checkMobileView() {
@@ -209,115 +190,13 @@ function updateShortcutIcon() {
     }
 }
 
-// Get a random quote (from API or fallback)
-async function fetchRandomQuote(forceRefresh = false) {
-    try {
-        // Check if we already fetched a quote today
-        const today = new Date().toDateString();
-        const lastFetchDate = localStorage.getItem(LAST_QUOTE_DATE_KEY);
-        const savedQuote = localStorage.getItem('stickyNotes_dailyQuote');
-        
-        // If we have a quote from today and we're not forcing a refresh, use it
-        if (lastFetchDate === today && savedQuote && !forceRefresh) {
-            try {
-                currentQuote = JSON.parse(savedQuote);
-                return currentQuote;
-            } catch (e) {
-                // If parsing fails, continue to fetch a new quote
-            }
-        }
-        
-        // Try to fetch from API with a timeout to prevent long waits
-        const fetchPromise = fetch('https://api.quotable.io/random?maxLength=100');
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Fetch timeout')), 2000)
-        );
-        
-        // Race between fetch and timeout
-        const response = await Promise.race([fetchPromise, timeoutPromise]);
-        const data = await response.json();
-        
-        // Save the quote and update the last fetch date
-        currentQuote = {
-            text: data.content,
-            author: data.author
-        };
-        
-        // Store in localStorage for persistence
-        localStorage.setItem(LAST_QUOTE_DATE_KEY, today);
-        localStorage.setItem('stickyNotes_dailyQuote', JSON.stringify(currentQuote));
-        
-        return currentQuote;
-    } catch (error) {
-        console.error('Error fetching quote:', error);
-        
-        // Check if we have a saved quote from a previous day
-        const savedQuote = localStorage.getItem('stickyNotes_dailyQuote');
-        if (savedQuote) {
-            try {
-                return JSON.parse(savedQuote);
-            } catch (e) {
-                // If parsing fails, use fallback
-            }
-        }
-        
-        // Use a random fallback quote instead
-        const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
-        const fallbackQuote = fallbackQuotes[randomIndex];
-        
-        // Save this fallback as today's quote
-        const today = new Date().toDateString();
-        localStorage.setItem(LAST_QUOTE_DATE_KEY, today);
-        localStorage.setItem('stickyNotes_dailyQuote', JSON.stringify(fallbackQuote));
-        
-        return fallbackQuote;
-    }
-}
+
 
 // Setup textarea focus/blur events
 function setupTextareaEvents() {
     const textarea = document.querySelector('.note-input textarea');
     if (textarea) {
-        // Add CSS for placeholder animations
-        if (!document.getElementById('placeholder-animations')) {
-            const style = document.createElement('style');
-            style.id = 'placeholder-animations';
-            style.textContent = `
-                .textarea-fade-out::placeholder {
-                    opacity: 0;
-                    transition: opacity 0.3s ease-out;
-                }
-                .textarea-quote-ready::placeholder {
-                    opacity: 0;
-                }
-                .textarea-quote-visible::placeholder {
-                    opacity: 1;
-                    transition: opacity 0.3s ease-in;
-                }
-                .textarea-default-ready::placeholder {
-                    opacity: 0;
-                }
-                .textarea-default-visible::placeholder {
-                    opacity: 1;
-                    transition: opacity 0.3s ease-in;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        // Store the daily quote when loaded
-        let dailyQuote = null;
-        
-        // Function to get and cache the daily quote
-        const getDailyQuote = async () => {
-            if (!dailyQuote) {
-                dailyQuote = await fetchRandomQuote();
-            }
-            return dailyQuote;
-        };
-        
-        // Pre-load the quote when setting up
-        getDailyQuote();
+
         
         textarea.addEventListener('focus', async function() {
             const shortcutIcon = document.getElementById('shortcutIcon');
@@ -342,28 +221,7 @@ function setupTextareaEvents() {
                 textarea.style.height = '200px';
             }, 0);
             
-            // Animate out the current placeholder
-            textarea.classList.add('textarea-fade-out');
-            
-            // Show the daily quote after the animation
-            setTimeout(async () => {
-                // Get the daily quote (already cached)
-                const quote = await getDailyQuote();
-                
-                // Prepare for the new placeholder
-                textarea.classList.remove('textarea-fade-out');
-                textarea.classList.add('textarea-quote-ready');
-                
-                // Set the new placeholder and animate it in
-                const quoteText = quote.author ? `"${quote.text}" — ${quote.author}` : quote.text;
-                textarea.placeholder = quoteText;
-                
-                // Animate in the quote
-                setTimeout(() => {
-                    textarea.classList.remove('textarea-quote-ready');
-                    textarea.classList.add('textarea-quote-visible');
-                }, 30);
-            }, 300); // Wait for fade out animation to complete
+
 
             // Update shortcut icon when content changes
             const inputHandler = function() {
@@ -398,30 +256,7 @@ function setupTextareaEvents() {
                 textarea.style.height = '50px';
             }, 0);
             
-            // Animate out the quote placeholder
-            textarea.classList.add('textarea-fade-out');
-            textarea.classList.remove('textarea-quote-visible');
-            
-            // After animation completes, reset to default placeholder with animation
-            setTimeout(() => {
-                // Reset the placeholder to default
-                textarea.placeholder = 'Write your note...';
-                
-                // Prepare for fade-in animation
-                textarea.classList.remove('textarea-fade-out', 'textarea-quote-ready');
-                textarea.classList.add('textarea-default-ready');
-                
-                // Animate in the default placeholder
-                setTimeout(() => {
-                    textarea.classList.remove('textarea-default-ready');
-                    textarea.classList.add('textarea-default-visible');
-                    
-                    // Clean up classes after animation completes
-                    setTimeout(() => {
-                        textarea.classList.remove('textarea-default-visible');
-                    }, 600);
-                }, 30);
-            }, 300);
+
         });
 
         // Add global click handler to ensure textarea collapses when clicking elsewhere
@@ -440,16 +275,7 @@ function loadSavedData() {
     // Check for mobile view
     checkMobileView();
     
-    // Check if we need a new daily quote
-    const today = new Date().toDateString();
-    const lastFetchDate = localStorage.getItem(LAST_QUOTE_DATE_KEY);
-    
-    // Only fetch a new quote if we don't have one for today
-    if (lastFetchDate !== today) {
-        fetchRandomQuote(true).catch(() => {
-            // Silent fail for prefetch - we'll try again when needed
-        });
-    }
+
 
     // Create selection box element
     createSelectionBox(); // Note: createSelectionBox will be defined in selection.js

@@ -164,7 +164,8 @@ body {
     animation: paperPop 0.3s ease-out forwards;
     touch-action: none;
     border: #5a5a5a 1px solid;
-    transition: background-color 0.3s ease;
+    /* Update transition to include transform and box-shadow */
+    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out;
     z-index: 1;
 }
 
@@ -174,7 +175,14 @@ body {
     z-index: 2;
 }
 
-.sticky-note:hover { z-index: 100; }
+.sticky-note:hover {
+    z-index: 100;
+    /* Add transform for visual feedback */
+    transform: scale(1.03);
+    /* Optional: slightly enhance shadow for a lifted effect */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2),
+                0 8px 16px rgba(0,0,0,0.2);
+}
 
 .sticky-content {
     transition: all 0.2s ease;
