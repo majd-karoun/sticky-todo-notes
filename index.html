@@ -17,7 +17,11 @@
     </head>
 <body>
     <div class="boards-container">
-        <div class="board active" data-board-id="1"></div>
+        <div class="board active" data-board-id="1">
+            <div class="board-title-circle" onclick="this.querySelector('.board-title-input').focus()">
+                <input type="text" class="board-title-input" placeholder="title..." maxlength="30">
+            </div>
+        </div>
     </div>
 
     <div class="boards-navigation">
@@ -82,7 +86,6 @@
         <div class="bin-body">
         </div>
         <div class="trash-count">0</div>
-        <div class="trash-shortcut-hint">Press 'T' to open/close</div>
     </div>
   
 

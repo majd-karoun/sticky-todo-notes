@@ -362,11 +362,11 @@ body {
 }
 
 .color-palette {
-    animation: colorPopup 0.25s ease-out forwards;
+    animation: colorPopup 0.18s ease-out forwards;
 }
 
 .color-palette.closing {
-    animation: colorPopdown 0.25s ease-out forwards;
+    animation: colorPopdown 0.18s ease-out forwards;
 }
 
 .color-option {
@@ -1705,6 +1705,83 @@ font-size: 2rem;
         left: 0;
         right: auto;
     }
+}
+
+/* Board title circle */
+.board-title-circle {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.board-title-circle:hover {
+    width: 200px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(5px);
+}
+
+.board-title-circle.delayed-close {
+    width: 200px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(5px);
+}
+
+.board-title-input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0 15px;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: auto; /* Ensure input receives pointer events */
+}
+
+.board-title-circle:hover .board-title-input,
+.board-title-input:focus {
+    opacity: 1 !important;
+}
+
+/* Ensure input is always interactive even when not visible */
+.board-title-input:focus {
+    width: 100%;
+    height: 100%;
+}
+
+/* Class for temporarily showing the board title */
+.board-title-circle.show-temporary {
+    width: 200px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(5px);
+}
+
+.board-title-circle.show-temporary .board-title-input {
+    opacity: 1 !important;
 }
 
 /* Board patterns (used on the actual boards) */

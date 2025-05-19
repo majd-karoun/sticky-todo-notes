@@ -26,6 +26,28 @@ function createBoardUI(boardId) {
     boardElement.className = 'board';
     boardElement.dataset.boardId = boardId;
     document.querySelector('.boards-container').appendChild(boardElement);
+    
+    // Create title circle element
+    const titleCircle = document.createElement('div');
+    titleCircle.className = 'board-title-circle';
+    titleCircle.setAttribute('onclick', "this.querySelector('.board-title-input').focus()");
+    
+    // Create title input element
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.className = 'board-title-input';
+    titleInput.placeholder = 'title...';
+    titleInput.maxLength = 30;
+    
+    // Add event listener to save title when input changes
+    titleInput.addEventListener('change', () => saveBoardTitle(boardId, titleInput.value));
+    titleInput.addEventListener('blur', () => saveBoardTitle(boardId, titleInput.value));
+    
+    // Append title input to title circle
+    titleCircle.appendChild(titleInput);
+    
+    // Append title circle to board element
+    boardElement.appendChild(titleCircle);
 
     // Create navigation button
     const buttonElement = document.createElement('div');
@@ -57,6 +79,9 @@ function createBoardUI(boardId) {
 
     // Initialize board styles
     loadBoardStyles(boardId);
+    
+    // Load board title if it exists
+    loadBoardTitle(boardId);
 }
 
 function deleteBoard(boardId) {
@@ -151,9 +176,35 @@ function continueWithBoardDeletion(boardId) {
     const boardKey = `${ACTIVE_NOTES_KEY}_board_${boardId}`; // ACTIVE_NOTES_KEY is in utils.js
     localStorage.removeItem(boardKey);
 
+    // Remove board title from localStorage
+    localStorage.removeItem(`stickyNotes_boardTitle_${boardId}`);
+
     // Remove board styles from localStorage
-    const boardStylesKey = `boardStyles_board_${boardId}`;
-    localStorage.removeItem(boardStylesKey);
+    localStorage.removeItem(`boardColor_${boardId}`);
+    localStorage.removeItem(`boardPattern_${boardId}`);
+    localStorage.removeItem(`boardStyles_board_${boardId}`);
+
+    // If there's a next board, inherit its styles
+    const nextBoardId = boardId + 1;
+    if (nextBoardId <= boardCount) {
+        // Inherit color
+        const nextColor = localStorage.getItem(`boardColor_${nextBoardId}`);
+        if (nextColor) {
+            localStorage.setItem(`boardColor_${boardId}`, nextColor);
+        }
+
+        // Inherit pattern
+        const nextPattern = localStorage.getItem(`boardPattern_${nextBoardId}`);
+        if (nextPattern) {
+            localStorage.setItem(`boardPattern_${boardId}`, nextPattern);
+        }
+
+        // Inherit combined styles
+        const nextStyles = localStorage.getItem(`boardStyles_board_${nextBoardId}`);
+        if (nextStyles) {
+            localStorage.setItem(`boardStyles_board_${boardId}`, nextStyles);
+        }
+    }
 
     // Wait for all removal animations to complete before creating new buttons
     setTimeout(() => {
@@ -185,7 +236,11 @@ function continueWithBoardDeletion(boardId) {
             const newButton = document.createElement('div');
             newButton.className = 'board-button new-button';
             newButton.dataset.boardId = newId;
+            
+            // Always show the board number
             newButton.textContent = newId;
+            newButton.dataset.originalNumber = newId;
+            
             newButton.addEventListener('click', () => switchToBoard(newId));
 
             // Add delete button for any board other than board 1
@@ -213,14 +268,33 @@ function continueWithBoardDeletion(boardId) {
                 localStorage.removeItem(oldKey);
             }
 
+            // Move board title in localStorage
+            const oldTitleKey = `stickyNotes_boardTitle_${oldId}`;
+            const newTitleKey = `stickyNotes_boardTitle_${newId}`;
+            const boardTitle = localStorage.getItem(oldTitleKey);
+
+            if (boardTitle) {
+                localStorage.setItem(newTitleKey, boardTitle);
+                localStorage.removeItem(oldTitleKey);
+            }
+
             // Move board styles in localStorage
-            const oldStyleKey = `boardStyles_board_${oldId}`;
-            const newStyleKey = `boardStyles_board_${newId}`;
+            const oldStyleKey = `boardColor_${oldId}`;
+            const newStyleKey = `boardColor_${newId}`;
             const boardStylesData = localStorage.getItem(oldStyleKey); // Renamed variable
 
             if (boardStylesData) {
                 localStorage.setItem(newStyleKey, boardStylesData);
                 localStorage.removeItem(oldStyleKey);
+            }
+
+            const oldPatternKey = `boardPattern_${oldId}`;
+            const newPatternKey = `boardPattern_${newId}`;
+            const boardPatternData = localStorage.getItem(oldPatternKey);
+
+            if (boardPatternData) {
+                localStorage.setItem(newPatternKey, boardPatternData);
+                localStorage.removeItem(oldPatternKey);
             }
 
             // Apply the board's existing style immediately
@@ -307,6 +381,35 @@ function switchToBoard(boardId) {
             notes.forEach((note, index) => {
                 note.style.setProperty('--note-index', index);
             });
+            
+            // Check if board has title circle, if not create it
+            let titleCircle = board.querySelector('.board-title-circle');
+            if (!titleCircle) {
+                // Create title circle element
+                titleCircle = document.createElement('div');
+                titleCircle.className = 'board-title-circle';
+                titleCircle.setAttribute('onclick', "this.querySelector('.board-title-input').focus()");
+                
+                // Create title input element
+                const titleInput = document.createElement('input');
+                titleInput.type = 'text';
+                titleInput.className = 'board-title-input';
+                titleInput.placeholder = 'title...';
+                titleInput.maxLength = 30;
+                
+                // Add event listener to save title when input changes
+                titleInput.addEventListener('change', () => saveBoardTitle(id, titleInput.value));
+                titleInput.addEventListener('blur', () => saveBoardTitle(id, titleInput.value));
+                
+                // Append title input to title circle
+                titleCircle.appendChild(titleInput);
+                
+                // Append title circle to board element
+                board.appendChild(titleCircle);
+                
+                // Load board title if it exists
+                loadBoardTitle(id);
+            }
         } else if (id < currentBoardId) {
             board.classList.add('prev');
             setTimeout(() => {
@@ -352,6 +455,9 @@ function switchToBoard(boardId) {
     });
 
     updateBoardIndicators();
+    
+    // Show the board title temporarily for 3 seconds after switching
+    setTimeout(() => showBoardTitleTemporarily(currentBoardId), 300);
 }
 
 // Setup event listeners for board navigation
@@ -456,9 +562,6 @@ function setupBoardNavigation() {
             // Ctrl+D to delete current board (except board 1)
             e.preventDefault();
             deleteBoard(currentBoardId);
-        } else if (e.key === 't' || e.key === 'T') {
-            // 't' key to toggle trash bin
-            toggleTrashModal(); // toggleTrashModal is in trash.js
         }
 
         // Number keys 1-9 for direct board access
@@ -883,6 +986,102 @@ document.addEventListener('click', function(event) {
 document.querySelector('.board-style-menu').addEventListener('click', function(event) {
     event.stopPropagation();
 });
+
+// Board title functions
+function saveBoardTitle(boardId, title) {
+    // Save title to localStorage
+    localStorage.setItem(`stickyNotes_boardTitle_${boardId}`, title);
+    
+    // Don't update button text - keep showing numbers only
+    // Still store the original number just in case we need it later
+    const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
+    if (buttonElement && !buttonElement.dataset.originalNumber) {
+        buttonElement.dataset.originalNumber = buttonElement.textContent;
+    }
+}
+
+function loadBoardTitle(boardId) {
+    // Load title from localStorage
+    const title = localStorage.getItem(`stickyNotes_boardTitle_${boardId}`);
+    
+    // Set input value if title exists
+    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    if (boardElement) {
+        const titleInput = boardElement.querySelector('.board-title-input');
+        if (titleInput && title) {
+            titleInput.value = title;
+        }
+    }
+    
+    // Store original number but don't update button text
+    const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
+    if (buttonElement && !buttonElement.dataset.originalNumber) {
+        buttonElement.dataset.originalNumber = buttonElement.textContent;
+    }
+}
+
+// Function to temporarily show the board title for 3 seconds
+function showBoardTitleTemporarily(boardId) {
+    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    if (!boardElement) return;
+    
+    const titleCircle = boardElement.querySelector('.board-title-circle');
+    if (!titleCircle) return;
+    
+    // Add a temporary class to show the title
+    titleCircle.classList.add('show-temporary');
+    
+    // After 3 seconds, remove the class
+    setTimeout(() => {
+        titleCircle.classList.remove('show-temporary');
+    }, 3000);
+}
+
+// Add event listeners to board title circles
+function setupBoardTitleListeners() {
+    document.querySelectorAll('.board-title-circle').forEach(circle => {
+        let hoverTimeout;
+        
+        // On hover
+        circle.addEventListener('mouseenter', function() {
+            // Focus the input
+            const input = this.querySelector('.board-title-input');
+            if (input) {
+                input.focus();
+            }
+            
+            // Clear any existing timeout
+            clearTimeout(hoverTimeout);
+            
+            // Add delayed-close class
+            this.classList.add('delayed-close');
+        });
+
+        // On unhover
+        circle.addEventListener('mouseleave', function() {
+            hoverTimeout = setTimeout(() => {
+                this.classList.remove('delayed-close');
+            }, 2000); // 2 seconds delay
+        });
+
+        // On click
+        circle.addEventListener('click', function(e) {
+            const input = this.querySelector('.board-title-input');
+            if (input) {
+                input.focus();
+            }
+        });
+
+        // Add blur listener to handle input blur
+        const input = circle.querySelector('.board-title-input');
+        if (input) {
+            input.addEventListener('blur', function() {
+                // Don't set inline styles that would override hover
+                // The CSS will handle the collapse
+            });
+        }
+    });
+}
 
 // Add this function to update board indicators
 function updateBoardIndicators() {

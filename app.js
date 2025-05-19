@@ -25,6 +25,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // This function is defined in components/utils.js
     updateShortcutIcon();
 
+    // Setup board title listeners
+    // This function is defined in components/board.js
+    setupBoardTitleListeners();
+    
+    // Show the board title temporarily for 3 seconds on page load
+    setTimeout(() => showBoardTitleTemporarily(currentBoardId), 500);
+
     // Add event listener for the board style button
     const styleButton = document.querySelector('.board-style-button');
     if (styleButton) {
