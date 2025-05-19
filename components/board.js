@@ -40,8 +40,20 @@ function createBoardUI(boardId) {
     titleInput.maxLength = 30;
     
     // Add event listener to save title when input changes
-    titleInput.addEventListener('change', () => saveBoardTitle(boardId, titleInput.value));
-    titleInput.addEventListener('blur', () => saveBoardTitle(boardId, titleInput.value));
+    titleInput.addEventListener('change', () => {
+        saveBoardTitle(boardId, titleInput.value);
+        updateCharCounter(titleInput);
+    });
+    titleInput.addEventListener('blur', () => {
+        saveBoardTitle(boardId, titleInput.value);
+        updateCharCounter(titleInput);
+    });
+    titleInput.addEventListener('input', () => {
+        updateCharCounter(titleInput);
+    });
+
+    // Initialize character counter
+    updateCharCounter(titleInput);
     
     // Append title input to title circle
     titleCircle.appendChild(titleInput);
@@ -998,6 +1010,13 @@ function saveBoardTitle(boardId, title) {
     if (buttonElement && !buttonElement.dataset.originalNumber) {
         buttonElement.dataset.originalNumber = buttonElement.textContent;
     }
+}
+
+// Function to update character counter
+function updateCharCounter(input) {
+    const maxLength = input.maxLength;
+    const currentLength = input.value.length;
+    input.setAttribute('data-counter', `${currentLength}/${maxLength}`);
 }
 
 function loadBoardTitle(boardId) {
