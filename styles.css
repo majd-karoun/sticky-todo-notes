@@ -1219,7 +1219,8 @@ font-size: 2rem;
     padding: 8px;
     
     border-radius: 8px;
-   width: 130px;
+    width: 130px;
+    margin-right: -12px;
 }
 
 .weather-toggle {
