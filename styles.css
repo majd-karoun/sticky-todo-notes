@@ -1288,7 +1288,7 @@ font-size: 2rem;
     border-radius: 10px;
     cursor: pointer;
     outline: none;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -1302,7 +1302,7 @@ font-size: 2rem;
     height: 16px;
     background: #fff;
     border-radius: 50%;
-    transition: all 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     left: 2px;
 }
 
@@ -1312,8 +1312,7 @@ font-size: 2rem;
 }
 
 .weather-toggle.on::before {
-    left: auto;
-    right: 2px;
+    transform: translateX(18px);
 }
 
 .weather-toggle.on:active::before {
