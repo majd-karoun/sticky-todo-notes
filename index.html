@@ -196,13 +196,16 @@
             }
         }
 
-        // Update immediately and then every minute
+        // Update immediately and then every second
         updateStatusBar();
-        setInterval(updateStatusBar, 60000); // Update time every minute
-        setInterval(updateWeather, 1800000); // Update weather every 30 minutes
+        setInterval(updateStatusBar, 1000);
 
         // Add click event listener to toggle button
         weatherToggle.addEventListener('click', toggleWeather);
+
+        // Update immediately and then every minute
+        updateStatusBar();
+        setInterval(updateStatusBar, 60000);
     </script>
         </div>
     </div>
