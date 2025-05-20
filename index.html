@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-       
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
@@ -90,6 +90,22 @@
     <div class="status-bar">
         <div class="status-time"></div>
         <div class="status-date"></div>
+        <div class="radio-controls">
+            <button class="radio-control prev-station" title="Previous Station">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="radio-button">
+                <input type="checkbox" id="radioToggle" class="radio-toggle">
+                <label for="radioToggle" class="radio-label">
+                    <i class="fas fa-volume-mute radio-icon radio-mute"></i>
+                    <i class="fas fa-volume-up radio-icon radio-volume"></i>
+                    <i class="fas fa-volume-wave radio-waves"></i>
+                </label>
+            </div>
+            <button class="radio-control next-station" title="Next Station">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
         <div class="status-weather">
             <button class="weather-toggle"></button>
             <div class="weather-icon">☀️</div>
@@ -98,6 +114,82 @@
     </div>
 
     <script>
+        // Initialize radio player
+        const radioPlayer = document.createElement('audio');
+        radioPlayer.setAttribute('controls', 'false');
+        radioPlayer.setAttribute('autoplay', 'false');
+        radioPlayer.setAttribute('loop', 'true');
+        radioPlayer.volume = 0.2; // Reduce volume to 20%
+        document.body.appendChild(radioPlayer);
+
+        // Radio functionality
+        const radioToggle = document.getElementById('radioToggle');
+        const prevButton = document.querySelector('.prev-station');
+        const nextButton = document.querySelector('.next-station');
+        let currentStationIndex = -1;
+        let stations = [];
+
+        // Load stations
+        async function loadStations() {
+            try {
+                const response = await fetch('https://de1.api.radio-browser.info/json/stations/bytag/chill');
+                stations = await response.json();
+            } catch (error) {
+                console.error('Error loading stations:', error);
+            }
+        }
+
+        // Play station
+        async function playStation(index) {
+            if (stations.length === 0) {
+                await loadStations();
+            }
+            
+            if (stations.length === 0) return;
+
+            const station = stations[index];
+            radioPlayer.src = station.url_resolved;
+            radioPlayer.play();
+            currentStationIndex = index;
+        }
+
+        // Handle radio toggle
+        radioToggle.addEventListener('change', async function() {
+            if (this.checked) {
+                await playStation(Math.floor(Math.random() * stations.length));
+            } else {
+                radioPlayer.pause();
+            }
+        });
+
+        // Handle previous station
+        prevButton.addEventListener('click', async function() {
+            if (!radioToggle.checked) return;
+            
+            if (stations.length === 0) {
+                await loadStations();
+            }
+
+            if (stations.length === 0) return;
+
+            currentStationIndex = (currentStationIndex - 1 + stations.length) % stations.length;
+            await playStation(currentStationIndex);
+        });
+
+        // Handle next station
+        nextButton.addEventListener('click', async function() {
+            if (!radioToggle.checked) return;
+            
+            if (stations.length === 0) {
+                await loadStations();
+            }
+
+            if (stations.length === 0) return;
+
+            currentStationIndex = (currentStationIndex + 1) % stations.length;
+            await playStation(currentStationIndex);
+        });
+
         // OpenWeatherMap API key
         const API_KEY = 'a5efc298fea72e681c6900851b516e49';
         const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
