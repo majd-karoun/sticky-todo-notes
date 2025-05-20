@@ -1191,6 +1191,20 @@ font-size: 2rem;
         
     }
 
+    .status-bar {
+        font-size: 1.2em;
+    }
+    
+    .status-time,
+    .status-date,
+    .weather-temp {
+        font-size: 1.2em;
+    }
+    
+    .weather-icon {
+        font-size: 1.2em;
+    }
+
     
     }
 
@@ -1219,8 +1233,8 @@ font-size: 2rem;
     padding: 8px;
     
     border-radius: 8px;
-    width: 130px;
-    margin-right: -12px;
+   width: 130px;
+   margin-right: -12px;
 }
 
 .weather-toggle {
@@ -1901,6 +1915,8 @@ font-size: 2rem;
     .board-title-circle.delayed-close .board-title-input::placeholder {
         opacity: 0;
     }
+
+   
 }
 
 .board-title-input::after {
@@ -1941,6 +1957,8 @@ font-size: 2rem;
         right: 20px;
         bottom: 12px;
     }
+
+    
 }
 
 .board-title-input {
