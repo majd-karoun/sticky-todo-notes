@@ -1098,6 +1098,19 @@ function setupBoardTitleListeners() {
             hoverTimeout = setTimeout(() => {
                 this.classList.remove('delayed-close');
             }, 2000); // 2 seconds delay
+            
+            const input = this.querySelector('.board-title-input');
+            if (input) {
+                input.blur();
+            }
+        });
+
+        // Add blur functionality when mouse leaves
+        circle.addEventListener('mouseleave', function() {
+            const input = this.querySelector('.board-title-input');
+            if (input) {
+                input.blur();
+            }
         });
 
         // On click
@@ -1117,7 +1130,7 @@ function setupBoardTitleListeners() {
             const saveTitleDebounced = () => {
                 const title = input.value.trim();
                 if (title.length === 0) {
-                    input.value = input.dataset.originalTitle || '';
+                    input.dataset.originalTitle = '';
                     return;
                 }
                 saveBoardTitle(input.closest('.board').dataset.boardId, title);
