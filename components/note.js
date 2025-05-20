@@ -54,6 +54,23 @@ function addNote() {
             positionX = (headerWidth / 2) - 100; // 100 is half of note width
             positionY = 60; // Position below the header
         }
+    } else if (hasNoNotes) {
+        // For empty board, position the first note
+        const isMobile = window.innerWidth <= 1024;
+        if (isMobile) {
+            // On mobile: fixed position at (0, 100)
+            positionX = 0;
+            positionY = 100;
+        } else {
+            // On desktop: random position in upper half of screen
+            const boardRect = boardElement.getBoundingClientRect();
+            const boardWidth = boardRect.width;
+            const boardHeight = boardRect.height;
+            
+            // Generate random position
+            positionX = Math.floor(Math.random() * (boardWidth - 200)); // 200 is note width
+            positionY = Math.floor(Math.random() * (boardHeight / 2)); // Upper half of screen
+        }
     } else if (lastAddedNote) {
         // Use the last added note's position and color
         lastX = parsePosition(lastAddedNote.style.left);
