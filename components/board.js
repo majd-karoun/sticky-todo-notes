@@ -39,17 +39,23 @@ function createBoardUI(boardId) {
     titleInput.placeholder = 'title...';
     titleInput.maxLength = 30;
     
-    // Add event listener to save title when input changes
-    titleInput.addEventListener('change', () => {
-        saveBoardTitle(boardId, titleInput.value);
+    // Add debounced title saving
+    let titleSaveTimeout;
+    
+    const saveTitleDebounced = () => {
+        const title = titleInput.value.trim();
+        if (title.length === 0) {
+            titleInput.value = titleInput.dataset.originalTitle || '';
+            return;
+        }
+        saveBoardTitle(boardId, title);
         updateCharCounter(titleInput);
-    });
-    titleInput.addEventListener('blur', () => {
-        saveBoardTitle(boardId, titleInput.value);
-        updateCharCounter(titleInput);
-    });
+    };
+
+    // Add event listener for title changes
     titleInput.addEventListener('input', () => {
-        updateCharCounter(titleInput);
+        clearTimeout(titleSaveTimeout);
+        titleSaveTimeout = setTimeout(saveTitleDebounced, 500);
     });
 
     // Initialize character counter
@@ -972,6 +978,9 @@ function loadBoardStyles(boardId) {
     updateBoardIndicators();
 }
 
+// Load all board titles when the script loads
+loadAllBoardTitles();
+
 // Close board style menu when clicking outside
 document.addEventListener('click', function(event) {
     const styleButton = document.querySelector('.board-style-button');
@@ -1000,6 +1009,14 @@ document.querySelector('.board-style-menu').addEventListener('click', function(e
 });
 
 // Board title functions
+function loadAllBoardTitles() {
+    // Load titles for all existing boards
+    document.querySelectorAll('.board').forEach(board => {
+        const boardId = board.dataset.boardId;
+        loadBoardTitle(boardId);
+    });
+}
+
 function saveBoardTitle(boardId, title) {
     // Save title to localStorage
     localStorage.setItem(`stickyNotes_boardTitle_${boardId}`, title);
@@ -1094,6 +1111,28 @@ function setupBoardTitleListeners() {
         // Add blur listener to handle input blur
         const input = circle.querySelector('.board-title-input');
         if (input) {
+            // Add debounced title saving
+            let titleSaveTimeout;
+            
+            const saveTitleDebounced = () => {
+                const title = input.value.trim();
+                if (title.length === 0) {
+                    input.value = input.dataset.originalTitle || '';
+                    return;
+                }
+                saveBoardTitle(input.closest('.board').dataset.boardId, title);
+                updateCharCounter(input);
+            };
+
+            // Add event listener for title changes
+            input.addEventListener('input', () => {
+                clearTimeout(titleSaveTimeout);
+                titleSaveTimeout = setTimeout(saveTitleDebounced, 500);
+            });
+
+            // Initialize character counter
+            updateCharCounter(input);
+
             input.addEventListener('blur', function() {
                 // Don't set inline styles that would override hover
                 // The CSS will handle the collapse
