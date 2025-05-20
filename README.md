@@ -25,10 +25,16 @@ git clone https://github.com/majd-karoun/sticky-todo-notes.git
 
 2. Open in your preferred browser:
 ```bash
-cd sticky-todo-notes
-open index.html
+open index.html and start it on live server
 ```
 
+3. weather:
+```create a new .env file in root folder.
+ - add the REACT_APP_OPENWEATHER_API_KEY = 'your_api_key' and save it.
+ - go to https://openweathermap.org/api create an account and get an api key.
+ - replace api key with your own api key from openweather api. 
+
+```
 
 ## 🛠️ Technical Stack
 

@@ -16,6 +16,47 @@ body{
     background-color: red;
 }
 
+/* Status Bar Styles */
+.status-bar {
+    position: fixed;
+    bottom: 5px;
+    left: 60%;
+    transform: translateX(-50%);
+    width: 500px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.status-time, .status-date {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-weather {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+}
+
+.weather-icon {
+    font-size: 18px;
+}
+
+.weather-temp {
+    font-size: 14px;
+    font-weight: 500;
+}
+
 :root {
     --note-shadow: 0 1px 1px rgba(0,0,0,0.15),
                    0 2px 2px rgba(0,0,0,0.15),
@@ -428,7 +469,7 @@ body {
 /* Note Input Area */
 .note-input {
     position: fixed;
-    bottom: 20px;
+    bottom: 5px;
     left: 20px;
     width: 270px;
     background: rgba(0, 0, 0, 0.3);
@@ -552,7 +593,7 @@ body {
 /* Trash Bin */
 .trash-bin {
     position: fixed;
-    bottom: 20px;
+    bottom: 5px;
     right: 20px;
     width: 60px;
     height: 80px;
@@ -1158,7 +1199,7 @@ font-size: 2rem;
 /* Board Navigation Styles */
 .boards-navigation {
     position: fixed;
-    bottom: 20px;
+    bottom: 45px;
     left: 60%;
     transform: translateX(-50%);
     display: flex;
@@ -1169,6 +1210,61 @@ font-size: 2rem;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 25px;
     backdrop-filter: blur(5px);
+}
+
+.status-weather {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    
+    border-radius: 8px;
+   width: 130px;
+}
+
+.weather-toggle {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    background: #666;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2px;
+}
+
+.weather-toggle::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    left: 2px;
+}
+
+.weather-toggle.on {
+    background: #4CAF50;
+    justify-content: flex-end;
+}
+
+.weather-toggle.on::before {
+    left: auto;
+    right: 2px;
+}
+
+.weather-toggle.on:active::before {
+    transform: scale(0.95);
+}
+
+.weather-toggle:active::before {
+    transform: scale(0.95);
 }
 
 .shortcut-hint {
@@ -1418,7 +1514,7 @@ font-size: 2rem;
 /* Board Style Button and Menu */
 .board-style-button {
     position: fixed;
-    bottom: 20px;
+    bottom: 5px;
     left: 295px; /* Moved 5px to the right from 290px */
     z-index: 1000;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
@@ -1526,6 +1622,7 @@ font-size: 2rem;
 .board-color-option {
     width: 100%;
     height: 30px;
+    
     border-radius: 4px;
     cursor: pointer;
     transition: transform 0.2s ease;

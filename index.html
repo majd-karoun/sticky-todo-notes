@@ -86,6 +86,125 @@
         </div>
         <div class="trash-count">0</div>
     </div>
+
+    <div class="status-bar">
+        <div class="status-time"></div>
+        <div class="status-date"></div>
+        <div class="status-weather">
+            <button class="weather-toggle"></button>
+            <div class="weather-icon">☀️</div>
+            <div class="weather-temp">--°C</div>
+        </div>
+    </div>
+
+    <script>
+        // OpenWeatherMap API key
+        const API_KEY = 'a5efc298fea72e681c6900851b516e49';
+        const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+
+        let isWeatherEnabled = false;
+        const weatherToggle = document.querySelector('.weather-toggle');
+        const weatherIconElement = document.querySelector('.weather-icon');
+        const weatherTempElement = document.querySelector('.weather-temp');
+
+        function toggleWeather() {
+            isWeatherEnabled = !isWeatherEnabled;
+            weatherToggle.classList.toggle('on');
+            
+            if (isWeatherEnabled) {
+                updateWeather();
+            } else {
+                weatherIconElement.textContent = '☀️';
+                weatherTempElement.textContent = '--°C';
+            }
+        }
+
+        function updateWeather() {
+            if (!navigator.geolocation) {
+                weatherIconElement.textContent = '❌';
+                weatherTempElement.textContent = 'Geolocation not supported';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    // Fetch weather data from OpenWeatherMap API
+                    fetch(`${API_URL}?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const temp = Math.round(data.main.temp);
+                            const weatherCode = data.weather[0].id;
+                            
+                            // Update temperature
+                            weatherTempElement.textContent = `${temp}°C`;
+                            
+                            // Update weather icon based on weather code
+                            weatherIconElement.textContent = getWeatherIcon(weatherCode);
+                        })
+                        .catch(error => {
+                            console.error('Weather API error:', error);
+                            weatherIconElement.textContent = '❌';
+                            weatherTempElement.textContent = 'API error';
+                        });
+                },
+                error => {
+                    console.error('Geolocation error:', error);
+                    weatherIconElement.textContent = '❌';
+                    weatherTempElement.textContent = 'Location error';
+                }
+            );
+        }
+
+        // Map weather codes to emojis
+        function getWeatherIcon(weatherCode) {
+            if (weatherCode >= 200 && weatherCode < 300) return '⚡'; // Thunderstorm
+            if (weatherCode >= 300 && weatherCode < 400) return '🌧️'; // Drizzle
+            if (weatherCode >= 500 && weatherCode < 600) return '🌧️'; // Rain
+            if (weatherCode >= 600 && weatherCode < 700) return '❄️'; // Snow
+            if (weatherCode >= 700 && weatherCode < 800) return '🌫️'; // Atmosphere
+            if (weatherCode === 800) return '☀️'; // Clear
+            if (weatherCode >= 801 && weatherCode < 900) return '☁️'; // Clouds
+            return '☁️'; // Default
+        }
+
+        function updateStatusBar() {
+            const timeElement = document.querySelector('.status-time');
+            const dateElement = document.querySelector('.status-date');
+            
+            const now = new Date();
+            
+            // Format time as 24-hour format: HH:mm
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            timeElement.textContent = `${hours}:${minutes}`;
+            
+            // Format date as: Tue DD. MMM
+            const options = { weekday: 'short', day: 'numeric', month: 'short' };
+            const formattedDate = now.toLocaleDateString('en-US', options);
+            dateElement.textContent = formattedDate.replace(/, /g, ' ').replace(/\./g, '. ');
+
+            // Add click event listener to toggle button if not already added
+            if (!weatherToggle.hasAttribute('data-setup')) {
+                weatherToggle.addEventListener('click', toggleWeather);
+                weatherToggle.setAttribute('data-setup', 'true');
+            }
+
+            if (isWeatherEnabled) {
+                updateWeather();
+            }
+        }
+
+        // Add click event listener to toggle button
+        weatherToggle.addEventListener('click', toggleWeather);
+
+        // Update immediately and then every minute
+        updateStatusBar();
+        setInterval(updateStatusBar, 60000);
+    </script>
+        </div>
+    </div>
   
 
     <div class="trash-modal" id="trashModal">
