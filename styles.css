@@ -2101,6 +2101,31 @@ font-size: 2rem;
         bottom: 12px;
     }
 
+  
+    
+
+
+    .radio-control i {
+        font-size: 25px;
+    }
+
+    .radio-mute {
+        font-size: 21px;
+        
+    }
+    
+    .radio-volume {
+        font-size: 21px;
+        color: white;
+        display: none;
+        transition: all 0.3s ease;
+    }
+    
+   
+    
+    
+    
+   
     
 }
 
