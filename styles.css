@@ -68,6 +68,7 @@ body{
     opacity: 0.7;
     transition: opacity 0.3s ease;
     padding: 4px;
+    font-size: 12px;
 }
 
 .radio-control:hover {
@@ -93,6 +94,7 @@ body{
     cursor: pointer;
     padding: 4px;
     transition: all 0.3s ease;
+width: 25px;
 }
 
 .radio-label:hover {
