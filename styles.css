@@ -1823,13 +1823,27 @@ font-size: 2rem;
         left: 20px;
         
     }
-    
+    .board-style-button {
+        display: none;
+    }
+    .board-title-circle {
+        display: none;
+    }
+    .board-title-input {
+        display: none;
+    }
     .board-style-menu {
         top: auto;
         bottom: 130px;
         left: 0;
         right: auto;
     }
+
+    .status-bar {
+        display: none;
+        background-color: red;
+    }
+    
 }
 
 /* Board title circle */

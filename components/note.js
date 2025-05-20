@@ -59,8 +59,8 @@ function addNote() {
         const isMobile = window.innerWidth <= 1024;
         if (isMobile) {
             // On mobile: fixed position at (0, 100)
-            positionX = 0;
-            positionY = 100;
+            positionX = 200;
+            positionY = 120;
         } else {
             // On desktop: random position in upper half of screen
             const boardRect = boardElement.getBoundingClientRect();
