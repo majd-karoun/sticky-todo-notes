@@ -876,8 +876,7 @@ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
 .deleted-note {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(20px) scale(1);
     background: rgba(0, 0, 0, 0.3);
     padding: 20px;
     border-radius: 8px;
@@ -892,23 +891,40 @@ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
 .trash-modal.visible .deleted-note {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 @keyframes fadeInScale {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(20px) scale(1);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
 .deleted-note {
     animation: fadeInScale 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     animation-fill-mode: forwards;
+}
+
+@keyframes shrinkOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(0) scale(0);
+    }
+}
+
+.deleted-note.shrinking {
+    animation: shrinkOut 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: forwards;
+    pointer-events: none;
 }
 
 .deleted-note.removing {

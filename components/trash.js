@@ -122,8 +122,7 @@ function renderDeletedNotes() {
 
 function restoreNote(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
-    noteElement.classList.add('removing');
-    noteElement.style.animation = 'noteDelete 0.2s ease-out forwards';
+    noteElement.classList.add('shrinking');
 
     setTimeout(() => {
         const note = deletedNotes[index]; // deletedNotes is in utils.js
@@ -154,7 +153,7 @@ function restoreNote(index) {
 
 function deleteNotePermanently(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
-    noteElement.classList.add('removing');
+    noteElement.classList.add('shrinking');
     noteElement.style.animation = 'noteDelete 0.3s ease-out forwards';
 
     setTimeout(() => {
@@ -199,6 +198,10 @@ function restoreAllNotes() {
         
         // Second step: Create notes on board as the modal starts to close
         // This reduces the lag between animations
+        const noteElements = document.querySelectorAll('.deleted-note');
+        noteElements.forEach(note => {
+            note.classList.add('shrinking');
+        });
         setTimeout(() => {
             // Create all notes at once
             notesToRestore.forEach(note => {
