@@ -1312,7 +1312,7 @@ font-size: 2rem;
 }
 
 .weather-toggle.on::before {
-    transform: translateX(18px);
+    transform: translateX(20px);
 }
 
 .weather-toggle.on:active::before {
