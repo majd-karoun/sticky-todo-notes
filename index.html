@@ -180,10 +180,10 @@
             const minutes = now.getMinutes().toString().padStart(2, '0');
             timeElement.textContent = `${hours}:${minutes}`;
             
-            // Format date as: Tue DD. MMM
+            // Format date as: Tue, DD. MMM
             const options = { weekday: 'short', day: 'numeric', month: 'short' };
             const formattedDate = now.toLocaleDateString('en-US', options);
-            dateElement.textContent = formattedDate.replace(/, /g, ' ').replace(/\./g, '. ');
+            dateElement.textContent = formattedDate.replace(/, /g, ', ').replace(/\./g, '. ');
 
             // Add click event listener to toggle button if not already added
             if (!weatherToggle.hasAttribute('data-setup')) {
