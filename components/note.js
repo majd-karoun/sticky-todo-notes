@@ -384,6 +384,33 @@ function toggleBold(button) {
     saveActiveNotes();
 }
 
+// Initialize shortcut icon
+let shortcutIcon = document.getElementById('shortcutIcon');
+if (!shortcutIcon) {
+    shortcutIcon = document.createElement('div');
+    shortcutIcon.className = 'shortcut-icon';
+    shortcutIcon.id = 'shortcutIcon';
+    document.querySelector('.textarea-container').appendChild(shortcutIcon);
+}
+
+// Update shortcut icon based on platform and screen size
+function updateShortcutIcon() {
+    const isMobile = window.innerWidth <= 1024;
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    
+    if (isMobile) {
+        shortcutIcon.style.display = 'none';
+        return;
+    }
+    
+    shortcutIcon.style.display = 'block';
+    shortcutIcon.textContent = isMac ? '⌘' : 'Ctrl';
+}
+
+// Update shortcut icon on window resize and page load
+window.addEventListener('resize', updateShortcutIcon);
+updateShortcutIcon();
+
 // Event Listeners for note input
 document.querySelector('.note-input textarea').addEventListener('keydown', (e) => {
     if ((e.key === 'Enter' && e.shiftKey) || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {

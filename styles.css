@@ -513,6 +513,19 @@ body {
     background: transparent;
 }
 
+/* Hide shortcut hints on mobile devices */
+@media screen and (max-width: 1024px) {
+    .shortcut-icon {
+        display: none !important;
+    }
+    .textarea-container:hover .shortcut-icon {
+        display: none !important;
+    }
+    #shortcutIcon {
+        display: none !important;
+    }
+}
+
 .note-input button {
     width: 100%;
     padding: 12px;
