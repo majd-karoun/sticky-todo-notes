@@ -164,6 +164,9 @@
             }
         }
 
+        // Track last clicked direction
+        let lastDirection = 'next'; // Default to next
+
         // Handle radio toggle
         radioToggle.addEventListener('change', async function() {
             if (this.checked) {
@@ -191,8 +194,12 @@
                 // Check if station is playing sound after 3 seconds
                 setTimeout(() => {
                     if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
-                        // Skip to next station
-                        nextButton.click();
+                        // Skip to the last clicked direction
+                        if (lastDirection === 'prev') {
+                            prevButton.click();
+                        } else {
+                            nextButton.click();
+                        }
                     }
                 }, 3000); // Check after 3 seconds
             } else {
@@ -233,11 +240,14 @@
             currentStationIndex = (currentStationIndex - 1 + stations.length) % stations.length;
             await playStation(currentStationIndex);
 
+            // Track that we clicked prev
+            lastDirection = 'prev';
+
             // Check if station is playing sound after 3 seconds
             setTimeout(() => {
                 if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
-                    // Skip to next station
-                    nextButton.click();
+                    // Skip to prev station since we clicked prev
+                    prevButton.click();
                 }
             }, 3000); // Check after 3 seconds
         });
@@ -261,10 +271,13 @@
             currentStationIndex = (currentStationIndex + 1) % stations.length;
             await playStation(currentStationIndex);
 
+            // Track that we clicked next
+            lastDirection = 'next';
+
             // Check if station is playing sound after 3 seconds
             setTimeout(() => {
                 if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
-                    // Skip to next station
+                    // Skip to next station since we clicked next
                     nextButton.click();
                 }
             }, 3000); // Check after 3 seconds
