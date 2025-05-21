@@ -111,6 +111,9 @@
             <div class="weather-icon">☀️</div>
             <div class="weather-temp">--°C</div>
         </div>
+        <script>
+            let lastWeatherUpdate;
+        </script>
     </div>
 
     <script>
@@ -256,6 +259,7 @@
                             data.sunrise = sunrise;
                             data.sunset = sunset;
                             
+                            console.log('Weather API Response:', data);
                             weatherTempElement.textContent = `${temp}°C`;
                             // Update weather icon based on weather code and time
                             weatherIconElement.textContent = getWeatherIcon(weatherCode, data);
@@ -303,15 +307,16 @@
                 if (weatherCode === 781) return '🌪️'; // Tornado
             }
             
-            // Clear
-            if (weatherCode === 800) return isNight ? '🌙' : '☀️';
-            
             // Clouds
-            if (weatherCode >= 801 && weatherCode <= 804) {
-                if (weatherCode === 801) return '🌤️'; // Few clouds
-                if (weatherCode === 802) return '⛅'; // Scattered clouds
-                if (weatherCode === 803 || weatherCode === 804) return '☁️'; // Broken/Overcast clouds
+            if (weatherData.clouds.all > 1) {
+                if (weatherData.clouds.all <= 25) return '🌤️'; // Few clouds
+                if (weatherData.clouds.all <= 75) return '⛅'; // Partly cloudy
+                if (weatherData.clouds.all <= 95) return '🌥️'; // Mostly cloudy
+                return '☁️'; // Overcast
             }
+            
+            // Clear
+            if (weatherData.clouds.all <= 1) return isNight ? '🌙' : '☀️';
             
             // Extreme
             if (weatherCode >= 900 && weatherCode <= 906) {
@@ -363,15 +368,22 @@
                 weatherToggle.addEventListener('click', toggleWeather);
                 weatherToggle.setAttribute('data-setup', 'true');
             }
+        }
 
+        function updateWeatherIfEnabled() {
             if (isWeatherEnabled) {
                 updateWeather();
             }
         }
+        
 
         // Update immediately and then every second
         updateStatusBar();
         setInterval(updateStatusBar, 1000);
+        
+        // Update weather every 30 minutes
+        updateWeatherIfEnabled();
+        setInterval(updateWeatherIfEnabled, 30 * 60 * 1000);
 
         // Add click event listener to toggle button
         weatherToggle.addEventListener('click', toggleWeather);
