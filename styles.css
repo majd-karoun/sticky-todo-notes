@@ -67,9 +67,54 @@ body{
     color: white;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
     padding: 4px;
     font-size: 12px;
+    will-change: opacity;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        pointer-events: none;
+    }
+    99% {
+        opacity: 0.99;
+        pointer-events: none;
+    }
+    100% {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* Fade out animation */
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    99% {
+        opacity: 0.01;
+        pointer-events: auto;
+    }
+    100% {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+/* Apply animations */
+.radio-control {
+    animation-fill-mode: forwards;
+}
+
+.radio-control.show {
+    animation: fadeIn 0.5s ease;
+}
+
+.radio-control.hide {
+    animation: fadeOut 0.5s ease;
 }
 
 .radio-control:hover {
@@ -139,8 +184,8 @@ body{
 }
 
 .radio-toggle:checked + .radio-label {
-    transform: scale(1.2);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #4CAF50;
+    transition: color 0.3s ease;
 }
 
 .radio-toggle:checked + .radio-label .radio-waves {
@@ -441,6 +486,7 @@ body {
 .sticky-content[contenteditable="true"] {
     border: 1px dashed rgba(0,0,0,0.2);
     padding: 2px;
+    font-family: 'Comic Neue', cursive !important;
 }
 
 .sticky-content:hover {
@@ -1204,13 +1250,17 @@ padding: 10px;
 }
 .sticky-content {
 font-size: 1.4rem;
-
+font-family: 'Comic Neue', cursive;
 line-height: 1.45;
 }
+
+.sticky-content * {
+font-family: inherit !important;
+}
 .sticky-content.bold {
-    font-size: 1.8rem;
-    font-family: 'Comic Neue', cursive;
-    font-weight: 700;
+font-size: 1.8rem;
+font-family: 'Comic Neue', cursive;
+font-weight: 700;
 }
 .note-controls {
 bottom: 12px;

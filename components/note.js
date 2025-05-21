@@ -236,6 +236,20 @@ function setupNote(note) {
             e.preventDefault();
             content.contentEditable = "false";
             saveActiveNotes();
+        } else if (e.key === 'Enter') {
+            // Wrap new lines in a span with our font family
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const newLine = document.createElement('span');
+            newLine.style.fontFamily = "'Comic Neue', cursive";
+            newLine.innerHTML = '<br>';
+            range.deleteContents();
+            range.insertNode(newLine);
+            range.setStartAfter(newLine);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            e.preventDefault();
         }
     });
 
