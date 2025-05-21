@@ -169,26 +169,24 @@ function deleteNotePermanently(index) {
 }
 
 function clearTrash() {
-    if (confirm('Are you sure you want to permanently delete all notes in the Bin?')) {
-        const notes = document.querySelectorAll('.deleted-note');
-        const topNotes = Array.from(notes).slice(0, 6);
-        
-        // Animate the top 6 notes disappearing with a diagonal effect
-        topNotes.forEach((note, index) => {
-            note.classList.add('note-deleting');
-            // Add a slight delay for staggered effect
-            note.style.animationDelay = `${index * 50}ms`;
-        });
+    const notes = document.querySelectorAll('.deleted-note');
+    const topNotes = Array.from(notes).slice(0, 6);
+    
+    // Animate the top 6 notes disappearing with a diagonal effect
+    topNotes.forEach((note, index) => {
+        note.classList.add('note-deleting');
+        // Add a slight delay for staggered effect
+        note.style.animationDelay = `${index * 50}ms`;
+    });
 
-        // Wait for animation to complete before clearing
-        setTimeout(() => {
-            deletedNotes = []; // deletedNotes is in utils.js
-            saveDeletedNotes(); // saveDeletedNotes is in utils.js
-            updateTrashCount();
-            renderDeletedNotes();
-            toggleTrashModal(); // Close the modal
-        }, 350); // Match the diagonal animation duration with delay
-    }
+    // Wait for animation to complete before clearing
+    setTimeout(() => {
+        deletedNotes = []; // deletedNotes is in utils.js
+        saveDeletedNotes(); // saveDeletedNotes is in utils.js
+        updateTrashCount();
+        renderDeletedNotes();
+        toggleTrashModal(); // Close the modal
+    }, 350); // Match the diagonal animation duration with delay
 }
 
 function updateTrashCount() {
