@@ -243,17 +243,22 @@
                     const { latitude, longitude } = position.coords;
                     
                     // Fetch weather data from OpenWeatherMap API
-                    fetch(`${API_URL}?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`)
+                    fetch(`${API_URL}?lat=${position.coords.latitude}&lon=${position.coords.longitude}&appid=${API_KEY}&units=metric`)
                         .then(response => response.json())
                         .then(data => {
                             const temp = Math.round(data.main.temp);
                             const weatherCode = data.weather[0].id;
+                            const sunrise = data.sys.sunrise * 1000; // Convert to milliseconds
+                            const sunset = data.sys.sunset * 1000; // Convert to milliseconds
+                            const now = Date.now();
                             
-                            // Update temperature
+                            // Store sunrise/sunset in the data object for use in getWeatherIcon
+                            data.sunrise = sunrise;
+                            data.sunset = sunset;
+                            
                             weatherTempElement.textContent = `${temp}°C`;
-                            
-                            // Update weather icon based on weather code
-                            weatherIconElement.textContent = getWeatherIcon(weatherCode);
+                            // Update weather icon based on weather code and time
+                            weatherIconElement.textContent = getWeatherIcon(weatherCode, data);
                         })
                         .catch(error => {
                             console.error('Weather API error:', error);
@@ -270,10 +275,10 @@
         }
 
         // Map weather codes to emojis
-        function getWeatherIcon(weatherCode) {
-            // Get current hour
-            const now = new Date();
-            const isNight = now.getHours() >= 18 || now.getHours() < 6;
+        function getWeatherIcon(weatherCode, weatherData) {
+            // Get current time and compare with sunrise/sunset
+            const now = Date.now();
+            const isNight = now < weatherData.sunrise || now > weatherData.sunset;
             
             // Thunderstorm
             if (weatherCode >= 200 && weatherCode <= 232) return '⚡';
