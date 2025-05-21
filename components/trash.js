@@ -168,66 +168,6 @@ function deleteNotePermanently(index) {
     }, 400); // Match the animation duration
 }
 
-function restoreAllNotes() {
-    // Only confirm once if there are more than 15 notes
-    if (deletedNotes.length > 15) {
-        if (!confirm(`Are you sure you want to restore ${deletedNotes.length} notes onto this board?`)) {
-            return; // If user cancels, exit the function
-        }
-    }
-    
-    // Store all notes to restore before clearing the array
-    const notesToRestore = [...deletedNotes];
-    
-    // Animate all notes disappearing from the trash at the same time
-    const noteElements = document.querySelectorAll('.deleted-note');
-    noteElements.forEach(note => {
-        note.classList.add('removing');
-        note.style.animation = 'noteDelete 0.2s ease-out forwards';
-    });
-    
-    // First step: Clear the trash and close the modal
-    setTimeout(() => {
-        // Clear the trash
-        deletedNotes = [];
-        saveDeletedNotes();
-        updateTrashCount();
-        
-        // Close the modal with animation
-        const modal = document.getElementById('trashModal');
-        modal.classList.remove('visible');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 400); // Match the CSS transition duration (0.4s)
-        
-        // Second step: Create notes on board as the modal starts to close
-        // This reduces the lag between animations
-        const noteElements = document.querySelectorAll('.deleted-note');
-        noteElements.forEach(note => {
-            note.classList.add('shrinking');
-        });
-        setTimeout(() => {
-            // Create all notes at once
-            notesToRestore.forEach(note => {
-                createNote(
-                    note.text,
-                    note.color,
-                    parsePosition(note.x),
-                    parsePosition(note.y),
-                    true,
-                    note.width,
-                    note.height,
-                    note.isBold
-                ).style.animation = 'paperPop 0.3s ease-out forwards';
-            });
-            
-            // Save the active notes and update board indicators
-            saveActiveNotes();
-            updateBoardIndicators();
-        }, 200); // Reduced delay to make animation flow smoother
-    }, 300); // Wait for the notes to disappear from trash
-}
-
 function clearTrash() {
     if (confirm('Are you sure you want to permanently delete all notes in the Bin?')) {
         const notes = document.querySelectorAll('.deleted-note');

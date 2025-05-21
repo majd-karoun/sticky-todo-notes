@@ -219,8 +219,15 @@
                     }
                 }, 3000); // Check after 3 seconds
             } else {
-                // Instantly mute
-                radioPlayer.volume = 0;
+                // Fade out volume
+                const fadeOutInterval = setInterval(() => {
+                    if (radioPlayer.volume > 0) {
+                        radioPlayer.volume -= 0.02;
+                    } else {
+                        clearInterval(fadeOutInterval);
+                        radioPlayer.volume = 0;
+                    }
+                }, 100);
 
                 // Hide radio controls
                 prevButton.style.opacity = '0';
@@ -491,7 +498,6 @@
             <div class="modal-header">
                 <h2>Paper Bin</h2>
                 <div class="modal-controls">
-                    <button class="restore-all-btn">Restore All</button>
                     <button class="clear-trash-btn">Clear Bin</button>
                     <button class="close-modal-btn">X</button>
                 </div>
