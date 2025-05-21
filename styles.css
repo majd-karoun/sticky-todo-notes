@@ -188,6 +188,15 @@ body{
     display: none;
 }
 
+/* Station button animations */
+.prev-station, .next-station {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prev-station:active, .next-station:active {
+    transform: scale(0.8) translateY(2px);
+}
+
 .radio-toggle:checked + .radio-label .radio-volume {
     display: inline-block;
 }

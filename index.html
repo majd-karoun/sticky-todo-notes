@@ -180,6 +180,12 @@
 
             if (stations.length === 0) return;
 
+            // Trigger animation
+            this.style.transform = 'scale(0.8) translateY(2px)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1) translateY(0)';
+            }, 100);
+
             currentStationIndex = (currentStationIndex - 1 + stations.length) % stations.length;
             await playStation(currentStationIndex);
         });
@@ -193,6 +199,12 @@
             }
 
             if (stations.length === 0) return;
+
+            // Trigger animation
+            this.style.transform = 'scale(0.8) translateY(2px)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1) translateY(0)';
+            }, 100);
 
             currentStationIndex = (currentStationIndex + 1) % stations.length;
             await playStation(currentStationIndex);
