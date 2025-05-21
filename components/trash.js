@@ -153,7 +153,7 @@ function restoreNote(index) {
 
 function deleteNotePermanently(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
-    noteElement.classList.add('shrinking');
+    noteElement.classList.add('note-deleting');
 
     // First wait for the animation to complete
     setTimeout(() => {
@@ -165,7 +165,7 @@ function deleteNotePermanently(index) {
         saveDeletedNotes(); // saveDeletedNotes is in utils.js
         updateTrashCount();
         renderDeletedNotes();
-    }, 170);
+    }, 400); // Match the animation duration
 }
 
 function restoreAllNotes() {
@@ -231,8 +231,13 @@ function restoreAllNotes() {
 function clearTrash() {
     if (confirm('Are you sure you want to permanently delete all notes in the Bin?')) {
         const notes = document.querySelectorAll('.deleted-note');
-        notes.forEach(note => {
-            note.classList.add('removing');
+        const topNotes = Array.from(notes).slice(0, 6);
+        
+        // Animate the top 6 notes disappearing with a diagonal effect
+        topNotes.forEach((note, index) => {
+            note.classList.add('note-deleting');
+            // Add a slight delay for staggered effect
+            note.style.animationDelay = `${index * 50}ms`;
         });
 
         // Wait for animation to complete before clearing
@@ -242,7 +247,7 @@ function clearTrash() {
             updateTrashCount();
             renderDeletedNotes();
             toggleTrashModal(); // Close the modal
-        }, 300);
+        }, 350); // Match the diagonal animation duration with delay
     }
 }
 

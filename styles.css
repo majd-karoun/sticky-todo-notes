@@ -1663,6 +1663,23 @@ font-size: 2rem;
     100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+@keyframes diagonalFadeOut {
+    0% {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        backdrop-filter: blur(0px);
+    }
+    100% {
+        clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+        backdrop-filter: blur(10px);
+    }
+}
+
+.note-deleting {
+    animation: diagonalFadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    backdrop-filter: blur(0px);
+}
+
 .board.active .sticky-note {
     animation: boardNoteReveal 0.4s ease-out forwards;
     animation-delay: calc(var(--note-index, 0) * 0.05s); /* Stagger effect */
