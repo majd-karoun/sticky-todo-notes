@@ -194,12 +194,8 @@
                 // Check if station is playing sound after 3 seconds
                 setTimeout(() => {
                     if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
-                        // Skip to the last clicked direction
-                        if (lastDirection === 'prev') {
-                            prevButton.click();
-                        } else {
-                            nextButton.click();
-                        }
+                        // Skip to next station if no sound is playing
+                        nextButton.click();
                     }
                 }, 3000); // Check after 3 seconds
             } else {
