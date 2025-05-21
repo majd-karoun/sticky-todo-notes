@@ -389,6 +389,16 @@ function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
     note.style.backgroundColor = color;
     note.querySelector('.color-button').style.backgroundColor = color;
+
+    // Update all selected notes
+    const selectedNotes = document.querySelectorAll('.sticky-note.selected');
+    selectedNotes.forEach(selectedNote => {
+        if (selectedNote !== note) { // Don't update the current note twice
+            selectedNote.style.backgroundColor = color;
+            selectedNote.querySelector('.color-button').style.backgroundColor = color;
+        }
+    });
+
     lastNoteColors[currentBoardId] = color;
     saveActiveNotes();
 }
