@@ -1454,11 +1454,11 @@ font-size: 2rem;
 
 .weather-toggle {
     position: relative;
-    width: 40px;
-    height: 20px;
+    width: 36px;
+    height: 16px;
     background: #666;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     outline: none;
     transition: background-color 0.3s ease;
@@ -1471,8 +1471,8 @@ font-size: 2rem;
 .weather-toggle::before {
     content: '';
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     background: #fff;
     border-radius: 50%;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1485,13 +1485,10 @@ font-size: 2rem;
 }
 
 .weather-toggle.on::before {
-    transform: translateX(20px);
+    transform: translateX(16px);
 }
 
-.weather-toggle.on:active::before {
-    transform: scale(0.95);
-}
-
+.weather-toggle.on:active::before,
 .weather-toggle:active::before {
     transform: scale(0.95);
 }
