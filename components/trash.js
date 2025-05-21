@@ -139,7 +139,7 @@ function restoreNote(index) {
             note.isBold  // Pass the bold state
         );
 
-        restoredNote.style.animation = 'paperPop 0.3s ease-out forwards';
+        restoredNote.classList.add('shrinking');
 
         deletedNotes.splice(index, 1);
         saveDeletedNotes(); // saveDeletedNotes is in utils.js
@@ -154,14 +154,18 @@ function restoreNote(index) {
 function deleteNotePermanently(index) {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
     noteElement.classList.add('shrinking');
-    noteElement.style.animation = 'noteDelete 0.3s ease-out forwards';
 
+    // First wait for the animation to complete
     setTimeout(() => {
+        // Remove the note element from the DOM
+        noteElement.remove();
+        
+        // Then update the data and refresh the list
         deletedNotes.splice(index, 1); // deletedNotes is in utils.js
         saveDeletedNotes(); // saveDeletedNotes is in utils.js
         updateTrashCount();
         renderDeletedNotes();
-    }, 300);
+    }, 170);
 }
 
 function restoreAllNotes() {
