@@ -263,13 +263,65 @@
             const now = new Date();
             const isNight = now.getHours() >= 18 || now.getHours() < 6;
             
-            if (weatherCode >= 200 && weatherCode < 300) return '⚡'; // Thunderstorm
-            if (weatherCode >= 300 && weatherCode < 400) return '🌧️'; // Drizzle
-            if (weatherCode >= 500 && weatherCode < 600) return '🌧️'; // Rain
-            if (weatherCode >= 600 && weatherCode < 700) return '❄️'; // Snow
-            if (weatherCode >= 700 && weatherCode < 800) return '🌫️'; // Atmosphere
-            if (weatherCode === 800) return isNight ? '🌙' : '☀️'; // Clear
-            if (weatherCode >= 801 && weatherCode < 900) return '☁️'; // Clouds
+            // Thunderstorm
+            if (weatherCode >= 200 && weatherCode <= 232) return '⚡';
+            
+            // Drizzle
+            if (weatherCode >= 300 && weatherCode <= 321) return '🌧️';
+            
+            // Rain
+            if (weatherCode >= 500 && weatherCode <= 531) return '🌧️';
+            
+            // Snow
+            if (weatherCode >= 600 && weatherCode <= 622) return '❄️';
+            
+            // Atmosphere
+            if (weatherCode >= 700 && weatherCode <= 781) {
+                if (weatherCode === 701 || weatherCode === 741) return '🌫️'; // Mist/Fog
+                if (weatherCode === 711) return '💨'; // Smoke
+                if (weatherCode === 721) return '💨'; // Haze
+                if (weatherCode === 731 || weatherCode === 751 || weatherCode === 761) return '💨'; // Dust/Sand
+                if (weatherCode === 762) return '🌋'; // Ash
+                if (weatherCode === 771) return '💨'; // Squall
+                if (weatherCode === 781) return '🌪️'; // Tornado
+            }
+            
+            // Clear
+            if (weatherCode === 800) return isNight ? '🌙' : '☀️';
+            
+            // Clouds
+            if (weatherCode >= 801 && weatherCode <= 804) {
+                if (weatherCode === 801) return '🌤️'; // Few clouds
+                if (weatherCode === 802) return '⛅'; // Scattered clouds
+                if (weatherCode === 803 || weatherCode === 804) return '☁️'; // Broken/Overcast clouds
+            }
+            
+            // Extreme
+            if (weatherCode >= 900 && weatherCode <= 906) {
+                if (weatherCode === 900) return '🌪️'; // Tornado
+                if (weatherCode === 901) return '🌪️'; // Tropical storm
+                if (weatherCode === 902) return '🌪️'; // Hurricane
+                if (weatherCode === 903) return '❄️'; // Cold
+                if (weatherCode === 904) return '🔥'; // Hot
+                if (weatherCode === 905) return '💨'; // Windy
+                if (weatherCode === 906) return '🌨️'; // Hail
+            }
+            
+            // Additional weather codes
+            if (weatherCode >= 951 && weatherCode <= 962) {
+                if (weatherCode === 952) return '💨'; // Light breeze
+                if (weatherCode === 953) return '💨'; // Gentle breeze
+                if (weatherCode === 954) return '💨'; // Moderate breeze
+                if (weatherCode === 955) return '💨'; // Fresh breeze
+                if (weatherCode === 956) return '💨'; // Strong breeze
+                if (weatherCode === 957) return '💨'; // High wind
+                if (weatherCode === 958) return '💨'; // Gale
+                if (weatherCode === 959) return '💨'; // Severe gale
+                if (weatherCode === 960) return '🌪️'; // Storm
+                if (weatherCode === 961) return '🌪️'; // Violent storm
+                if (weatherCode === 962) return '🌪️'; // Hurricane
+            }
+            
             return '☁️'; // Default
         }
 
