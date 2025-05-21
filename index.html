@@ -188,16 +188,13 @@
                 prevButton.style.pointerEvents = 'auto';
                 nextButton.style.pointerEvents = 'auto';
 
-                // Check if station is playing sound
-                const checkSound = setInterval(() => {
-                    if (radioPlayer.currentTime > 0) {
-                        clearInterval(checkSound);
-                    } else if (radioPlayer.currentTime === 0 && radioPlayer.volume === 0.2) {
-                        clearInterval(checkSound);
+                // Check if station is playing sound after 3 seconds
+                setTimeout(() => {
+                    if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
                         // Skip to next station
                         nextButton.click();
                     }
-                }, 500); // Check every 500ms
+                }, 3000); // Check after 3 seconds
             } else {
                 // Quickly fade out volume
                 const fadeOutInterval = setInterval(() => {
@@ -235,6 +232,14 @@
 
             currentStationIndex = (currentStationIndex - 1 + stations.length) % stations.length;
             await playStation(currentStationIndex);
+
+            // Check if station is playing sound after 3 seconds
+            setTimeout(() => {
+                if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
+                    // Skip to next station
+                    nextButton.click();
+                }
+            }, 3000); // Check after 3 seconds
         });
 
         // Handle next station
@@ -255,6 +260,14 @@
 
             currentStationIndex = (currentStationIndex + 1) % stations.length;
             await playStation(currentStationIndex);
+
+            // Check if station is playing sound after 3 seconds
+            setTimeout(() => {
+                if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
+                    // Skip to next station
+                    nextButton.click();
+                }
+            }, 3000); // Check after 3 seconds
         });
 
         // OpenWeatherMap API key
