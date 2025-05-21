@@ -67,23 +67,14 @@ body{
     color: white;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
     padding: 4px;
     font-size: 12px;
 }
 
 .radio-control:hover {
     opacity: 1;
-}
-
-.radio-control {
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s ease;
-}
-
-.radio-control:hover {
-    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
 .radio-toggle:checked + .radio-label .radio-mute {

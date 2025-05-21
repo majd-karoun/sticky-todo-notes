@@ -120,9 +120,9 @@
         // Initialize radio player
         const radioPlayer = document.createElement('audio');
         radioPlayer.setAttribute('controls', 'false');
-        radioPlayer.setAttribute('autoplay', 'false');
+        radioPlayer.setAttribute('autoplay', 'true');
         radioPlayer.setAttribute('loop', 'true');
-        radioPlayer.volume = 0.2; // Reduce volume to 20%
+        radioPlayer.volume = 0; // Start muted
         document.body.appendChild(radioPlayer);
 
         // Radio functionality
@@ -156,20 +156,40 @@
             currentStationIndex = index;
         }
 
-        // Handle radio toggle
-        radioToggle.addEventListener('change', async function() {
-            if (this.checked) {
+        // Load random station on page load
+        async function loadRandomStation() {
+            await loadStations();
+            if (stations.length > 0) {
                 await playStation(Math.floor(Math.random() * stations.length));
                 prevButton.style.opacity = '0.7';
                 nextButton.style.opacity = '0.7';
                 prevButton.style.pointerEvents = 'auto';
                 nextButton.style.pointerEvents = 'auto';
+            }
+        }
+
+        // Handle radio toggle
+        radioToggle.addEventListener('change', function() {
+            if (this.checked) {
+                // Fade in volume
+                const volumeInterval = setInterval(() => {
+                    if (radioPlayer.volume < 0.2) {
+                        radioPlayer.volume += 0.02;
+                    } else {
+                        clearInterval(volumeInterval);
+                        radioPlayer.volume = 0.2;
+                    }
+                }, 100);
             } else {
-                radioPlayer.pause();
-                prevButton.style.opacity = '0';
-                nextButton.style.opacity = '0';
-                prevButton.style.pointerEvents = 'none';
-                nextButton.style.pointerEvents = 'none';
+                // Quickly fade out volume
+                const fadeOutInterval = setInterval(() => {
+                    if (radioPlayer.volume > 0.04) {
+                        radioPlayer.volume -= 0.04;
+                    } else {
+                        radioPlayer.volume = 0; // Ensure volume reaches exactly 0
+                        clearInterval(fadeOutInterval);
+                    }
+                }, 50); // Faster interval
             }
         });
 
@@ -384,6 +404,9 @@
         // Update weather every 30 minutes
         updateWeatherIfEnabled();
         setInterval(updateWeatherIfEnabled, 30 * 60 * 1000);
+
+        // Load random station on page load
+        loadRandomStation();
 
         // Add click event listener to toggle button
         weatherToggle.addEventListener('click', toggleWeather);
