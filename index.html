@@ -167,8 +167,24 @@
         // Track last clicked direction
         let lastDirection = 'next'; // Default to next
 
+        // Track when the last toggle happened
+        let lastToggleTime = 0;
+        const TOGGLE_DELAY = 1000; // 1 second delay
+
         // Handle radio toggle
         radioToggle.addEventListener('change', async function() {
+            const currentTime = Date.now();
+            // Immediate unmute
+            if (this.checked) {
+                lastToggleTime = currentTime;
+            } else {
+                // 2 second delay for mute
+                if (currentTime - lastToggleTime < 2000) {
+                    this.checked = !this.checked;
+                    return;
+                }
+                lastToggleTime = currentTime;
+            }
             if (this.checked) {
                 // Check if we need to load a new station
                 if (radioPlayer.src === '') {
@@ -194,20 +210,17 @@
                 // Check if station is playing sound after 3 seconds
                 setTimeout(() => {
                     if (radioPlayer.currentTime === 0 && radioPlayer.volume > 0) {
-                        // Skip to next station if no sound is playing
-                        nextButton.click();
+                        // Skip to the last clicked direction
+                        if (lastDirection === 'prev') {
+                            prevButton.click();
+                        } else {
+                            nextButton.click();
+                        }
                     }
                 }, 3000); // Check after 3 seconds
             } else {
-                // Quickly fade out volume
-                const fadeOutInterval = setInterval(() => {
-                    if (radioPlayer.volume > 0.04) {
-                        radioPlayer.volume -= 0.04;
-                    } else {
-                        radioPlayer.volume = 0; // Ensure volume reaches exactly 0
-                        clearInterval(fadeOutInterval);
-                    }
-                }, 50); // Faster interval
+                // Instantly mute
+                radioPlayer.volume = 0;
 
                 // Hide radio controls
                 prevButton.style.opacity = '0';
