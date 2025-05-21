@@ -161,10 +161,6 @@
             await loadStations();
             if (stations.length > 0) {
                 await playStation(Math.floor(Math.random() * stations.length));
-                prevButton.style.opacity = '0.7';
-                nextButton.style.opacity = '0.7';
-                prevButton.style.pointerEvents = 'auto';
-                nextButton.style.pointerEvents = 'auto';
             }
         }
 
@@ -180,6 +176,12 @@
                         radioPlayer.volume = 0.2;
                     }
                 }, 100);
+
+                // Show radio controls
+                prevButton.style.opacity = '0.7';
+                nextButton.style.opacity = '0.7';
+                prevButton.style.pointerEvents = 'auto';
+                nextButton.style.pointerEvents = 'auto';
             } else {
                 // Quickly fade out volume
                 const fadeOutInterval = setInterval(() => {
@@ -190,6 +192,12 @@
                         clearInterval(fadeOutInterval);
                     }
                 }, 50); // Faster interval
+
+                // Hide radio controls
+                prevButton.style.opacity = '0';
+                nextButton.style.opacity = '0';
+                prevButton.style.pointerEvents = 'none';
+                nextButton.style.pointerEvents = 'none';
             }
         });
 
