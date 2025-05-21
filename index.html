@@ -259,12 +259,16 @@
 
         // Map weather codes to emojis
         function getWeatherIcon(weatherCode) {
+            // Get current hour
+            const now = new Date();
+            const isNight = now.getHours() >= 18 || now.getHours() < 6;
+            
             if (weatherCode >= 200 && weatherCode < 300) return '⚡'; // Thunderstorm
             if (weatherCode >= 300 && weatherCode < 400) return '🌧️'; // Drizzle
             if (weatherCode >= 500 && weatherCode < 600) return '🌧️'; // Rain
             if (weatherCode >= 600 && weatherCode < 700) return '❄️'; // Snow
             if (weatherCode >= 700 && weatherCode < 800) return '🌫️'; // Atmosphere
-            if (weatherCode === 800) return '☀️'; // Clear
+            if (weatherCode === 800) return isNight ? '🌙' : '☀️'; // Clear
             if (weatherCode >= 801 && weatherCode < 900) return '☁️'; // Clouds
             return '☁️'; // Default
         }
