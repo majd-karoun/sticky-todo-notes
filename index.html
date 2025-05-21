@@ -274,14 +274,22 @@
         const API_KEY = 'a5efc298fea72e681c6900851b516e49';
         const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
-        let isWeatherEnabled = false;
+        // Load weather toggle state from localStorage
+        let isWeatherEnabled = localStorage.getItem('weatherEnabled') === 'true';
         const weatherToggle = document.querySelector('.weather-toggle');
         const weatherIconElement = document.querySelector('.weather-icon');
         const weatherTempElement = document.querySelector('.weather-temp');
 
+        // Initialize weather toggle state
+        if (isWeatherEnabled) {
+            weatherToggle.classList.add('on');
+            updateWeather();
+        }
+
         function toggleWeather() {
             isWeatherEnabled = !isWeatherEnabled;
             weatherToggle.classList.toggle('on');
+            localStorage.setItem('weatherEnabled', isWeatherEnabled);
             
             if (isWeatherEnabled) {
                 updateWeather();
