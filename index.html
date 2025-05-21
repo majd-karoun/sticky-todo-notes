@@ -165,8 +165,13 @@
         }
 
         // Handle radio toggle
-        radioToggle.addEventListener('change', function() {
+        radioToggle.addEventListener('change', async function() {
             if (this.checked) {
+                // Check if we need to load a new station
+                if (radioPlayer.src === '') {
+                    await loadRandomStation();
+                }
+
                 // Fade in volume
                 const volumeInterval = setInterval(() => {
                     if (radioPlayer.volume < 0.2) {
@@ -182,6 +187,17 @@
                 nextButton.style.opacity = '0.7';
                 prevButton.style.pointerEvents = 'auto';
                 nextButton.style.pointerEvents = 'auto';
+
+                // Check if station is playing sound
+                const checkSound = setInterval(() => {
+                    if (radioPlayer.currentTime > 0) {
+                        clearInterval(checkSound);
+                    } else if (radioPlayer.currentTime === 0 && radioPlayer.volume === 0.2) {
+                        clearInterval(checkSound);
+                        // Skip to next station
+                        nextButton.click();
+                    }
+                }, 500); // Check every 500ms
             } else {
                 // Quickly fade out volume
                 const fadeOutInterval = setInterval(() => {
@@ -197,7 +213,7 @@
                 prevButton.style.opacity = '0';
                 nextButton.style.opacity = '0';
                 prevButton.style.pointerEvents = 'none';
-                nextButton.style.pointerEvents = 'none';
+                nextButton.stylePointerEvents = 'none';
             }
         });
 
