@@ -136,7 +136,7 @@
         async function loadStations() {
             try {
                 // Fetch stations for focus, study, and chill music
-                const tags = ['focus music', 'study music', 'chill out', 'background music'];
+                const tags = ['focus music', 'study music', 'chill out', 'background music', 'concentration'];
                 stations = [];
                 
                 for (const tag of tags) {
@@ -144,17 +144,7 @@
                     const encodedTag = encodeURIComponent(tag);
                     const response = await fetch(`https://de1.api.radio-browser.info/json/stations/bytag/${encodedTag}`);
                     const tagStations = await response.json();
-                    
-                    // Filter out broken stations
-                    const validStations = tagStations.filter(station => {
-                        // Check if station has a URL and is not broken
-                        return station.url && 
-                               station.url_resolved && 
-                               station.state === 'playing' && 
-                               station.codec !== 'unknown';
-                    });
-                    
-                    stations.push(...validStations);
+                    stations.push(...tagStations);
                 }
             } catch (error) {
                 console.error('Error loading stations:', error);
