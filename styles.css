@@ -51,128 +51,13 @@ body{
     gap: 8px;
     color: white;
     font-weight: 100;
+    margin-right: -10px;
 }
 
 
-.radio-control i {
-    font-size: 14px;
-}
-
-.radio-button {
-    display: flex;
-    align-items: center;
-}
-
-.radio-toggle {
-    display: none;
-}
-
-.radio-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    width: 25px;
-    transition: all 0.3s ease;
-}
-
-.radio-label:hover {
-    color: white;
-}
-
-.radio-mute {
-    font-size: 21px;
-    margin: 0;
-    position: relative;
-    left: 2px;
-}
-
-.radio-volume {
-    font-size: 21px;
-    margin: 0;
-    position: relative;
-    left: 2px;
-    color: white;
-    display: none;
-    transition: all 0.3s ease;
-}
-
-.radio-toggle:checked + .radio-label {
-    color: #4CAF50;
-    transition: color 0.3s ease;
-}
-
-.radio-toggle:checked + .radio-label .radio-waves {
-    opacity: 1;
-    transform: translateY(0);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.radio-toggle:not(:checked) + .radio-label .radio-waves {
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.radio-toggle:not(:checked) + .radio-label .radio-mute {
-    opacity: 1;
-    transform: translateY(0);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.radio-toggle:checked + .radio-label .radio-mute {
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
 
-.radio-volume {
-    font-size: 16px;
-    color: white;
-    display: none;
-    transition: all 0.3s ease;
-}
 
-.radio-toggle:checked + .radio-label .radio-mute {
-    display: none;
-}
-
-/* Station button animations */
-.prev-station, .next-station {
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.prev-station:active, .next-station:active {
-    transform: scale(0.8) translateY(2px);
-}
-
-.radio-toggle:checked + .radio-label .radio-volume {
-    display: inline-block;
-}
-
-.radio-waves {
-    font-size: 16px;
-    color: white;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.3s ease;
-    margin-left: 4px;
-}
-
-.radio-toggle:checked + .radio-label .radio-waves {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.radio-toggle:checked + .radio-label .radio-icon {
-    color: #4CAF50;
-    transform: none;
-}
-
-.radio-toggle:checked + .radio-label {
-    background: none;
-}
 
 .weather-icon {
     font-size: 18px;
