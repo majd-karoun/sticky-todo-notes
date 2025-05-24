@@ -1,47 +1,33 @@
 // Board Management Functions
 function createNewBoard() {
-    // Don't allow creating new boards on mobile
-    if (isMobileView) return;
-
-    // Check if maximum boards limit reached
-    if (boardCount >= MAX_BOARDS) {
-        alert(`Maximum number of boards (${MAX_BOARDS}) reached.`);
+    if (isMobileView || boardCount >= MAX_BOARDS) {
+        if (boardCount >= MAX_BOARDS) alert(`Maximum number of boards (${MAX_BOARDS}) reached.`);
         return;
     }
-
     boardCount++;
     createBoardUI(boardCount);
     saveBoardCount();
-
-    // Remove auto-switching to the new board
-    // switchToBoard(boardCount);
-
-    // Update add button visibility based on board count.
     updateAddButtonState();
 }
 
 function createBoardUI(boardId) {
-    // Create board element
+    const boardsContainer = document.querySelector('.boards-container');
     const boardElement = document.createElement('div');
     boardElement.className = 'board';
     boardElement.dataset.boardId = boardId;
-    document.querySelector('.boards-container').appendChild(boardElement);
-    
-    // Create title circle element
+    boardsContainer.appendChild(boardElement);
+
     const titleCircle = document.createElement('div');
     titleCircle.className = 'board-title-circle';
     titleCircle.setAttribute('onclick', "this.querySelector('.board-title-input').focus()");
-    
-    // Create title input element
+
     const titleInput = document.createElement('input');
     titleInput.type = 'text';
     titleInput.className = 'board-title-input';
     titleInput.placeholder = 'title...';
     titleInput.maxLength = 30;
-    
-    // Add debounced title saving
+
     let titleSaveTimeout;
-    
     const saveTitleDebounced = () => {
         const title = titleInput.value.trim();
         if (title.length === 0) {
@@ -51,136 +37,90 @@ function createBoardUI(boardId) {
         saveBoardTitle(boardId, title);
         updateCharCounter(titleInput);
     };
-
-    // Add event listener for title changes
     titleInput.addEventListener('input', () => {
         clearTimeout(titleSaveTimeout);
         titleSaveTimeout = setTimeout(saveTitleDebounced, 500);
     });
-
-    // Initialize character counter
     updateCharCounter(titleInput);
-    
-    // Append title input to title circle
     titleCircle.appendChild(titleInput);
-    
-    // Append title circle to board element
     boardElement.appendChild(titleCircle);
 
-    // Create navigation button
     const buttonElement = document.createElement('div');
     buttonElement.className = 'board-button new-button';
     buttonElement.dataset.boardId = boardId;
     buttonElement.textContent = boardId;
     buttonElement.addEventListener('click', () => switchToBoard(boardId));
 
-    // Add delete button (except for board 1)
     if (boardId > 1) {
         const deleteButton = document.createElement('div');
         deleteButton.className = 'delete-board';
         deleteButton.textContent = '×';
         deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent triggering board switch
+            e.stopPropagation();
             deleteBoard(boardId);
         });
         buttonElement.appendChild(deleteButton);
     }
 
-    // Insert before the add button
     const addButton = document.querySelector('.add-board-button');
     document.querySelector('.boards-navigation').insertBefore(buttonElement, addButton);
 
-    // Remove animation class after animation completes
-    setTimeout(() => {
-        buttonElement.classList.remove('new-button');
-    }, 500);
-
-    // Initialize board styles
+    setTimeout(() => buttonElement.classList.remove('new-button'), 500);
     loadBoardStyles(boardId);
-    
-    // Load board title if it exists
     loadBoardTitle(boardId);
 }
 
 function deleteBoard(boardId) {
-    if (confirm(`Are you sure you want to delete board ${boardId}?`)) {
-        // Get board element
-        const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    if (!confirm(`Are you sure you want to delete board ${boardId}?`)) return;
 
-        if (boardElement) {
-            // Get all notes on this board
-            const notes = boardElement.querySelectorAll('.sticky-note');
+    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    if (!boardElement) {
+        continueWithBoardDeletion(boardId);
+        return;
+    }
 
-            if (notes.length > 0) {
-                // Mark all notes as done with animation
-                const trashBin = document.querySelector('.trash-bin');
-                const trashRect = trashBin.getBoundingClientRect();
+    const notes = boardElement.querySelectorAll('.sticky-note');
+    if (notes.length > 0) {
+        const trashBin = document.querySelector('.trash-bin');
+        const trashRect = trashBin.getBoundingClientRect();
+        trashBin.style.animation = 'binShake 0.5s ease-in-out';
 
-                // Start trash bin shake animation
-                trashBin.style.animation = 'binShake 0.5s ease-in-out';
+        notes.forEach(note => {
+            const content = note.querySelector('.sticky-content');
+            const noteData = {
+                text: content.innerHTML,
+                color: note.style.backgroundColor,
+                x: note.style.left,
+                y: note.style.top,
+                width: note.style.width,
+                height: note.style.height,
+                timestamp: new Date().toLocaleString(),
+                isBold: content.classList.contains('bold')
+            };
+            deletedNotes.unshift(noteData);
 
-                // Process each note
-                notes.forEach(note => {
-                    const content = note.querySelector('.sticky-content');
-                    const isBold = content.classList.contains('bold');
-
-                    // Save note data to deleted notes
-                    const noteData = {
-                        text: content.innerHTML,
-                        color: note.style.backgroundColor,
-                        x: note.style.left,
-                        y: note.style.top,
-                        width: note.style.width,
-                        height: note.style.height,
-                        timestamp: new Date().toLocaleString(),
-                        isBold: isBold
-                    };
-
-                    deletedNotes.unshift(noteData); // deletedNotes is in utils.js
-
-                    // Calculate animation path to trash
-                    const noteRect = note.getBoundingClientRect();
-                    const throwX = trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2);
-                    const throwY = trashRect.top - noteRect.top;
-
-                    note.style.setProperty('--throwX', `${throwX}px`);
-                    note.style.setProperty('--throwY', `${throwY}px`);
-                    note.style.animation = 'paperCrumble 0.5s ease-in forwards';
-                });
-
-                // Save deleted notes
-                saveDeletedNotes(); // saveDeletedNotes is in utils.js
-                updateTrashCount(); // updateTrashCount is in trash.js
-
-                // Wait for animations to finish before removing board
-                setTimeout(() => {
-                    continueWithBoardDeletion(boardId);
-                }, 600);
-            } else {
-                // No notes to animate, delete immediately
-                continueWithBoardDeletion(boardId);
-            }
-        } else {
-            // Board element not found, delete anyway
-            continueWithBoardDeletion(boardId);
-        }
+            const noteRect = note.getBoundingClientRect();
+            const throwX = trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2);
+            const throwY = trashRect.top - noteRect.top;
+            note.style.setProperty('--throwX', `${throwX}px`);
+            note.style.setProperty('--throwY', `${throwY}px`);
+            note.style.animation = 'paperCrumble 0.5s ease-in forwards';
+        });
+        saveDeletedNotes();
+        updateTrashCount();
+        setTimeout(() => continueWithBoardDeletion(boardId), 600);
+    } else {
+        continueWithBoardDeletion(boardId);
     }
 }
 
 function continueWithBoardDeletion(boardId) {
-    // Remove board from DOM
     const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
-    if (boardElement) {
-        boardElement.remove();
-    }
+    if (boardElement) boardElement.remove();
 
-    // Animate board button removal
     const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
-    if (buttonElement) {
-        buttonElement.classList.add('removing');
-    }
+    if (buttonElement) buttonElement.classList.add('removing');
 
-    // Collect all buttons that need to be renumbered
     const buttonsToRenumber = [];
     for (let i = boardId + 1; i <= boardCount; i++) {
         const button = document.querySelector(`.board-button[data-board-id="${i}"]`);
@@ -190,1026 +130,465 @@ function continueWithBoardDeletion(boardId) {
         }
     }
 
-    // Remove board notes from localStorage
-    const boardKey = `${ACTIVE_NOTES_KEY}_board_${boardId}`; // ACTIVE_NOTES_KEY is in utils.js
-    localStorage.removeItem(boardKey);
-
-    // Remove board title from localStorage
+    localStorage.removeItem(`${ACTIVE_NOTES_KEY}_board_${boardId}`);
     localStorage.removeItem(`stickyNotes_boardTitle_${boardId}`);
-
-    // Remove board styles from localStorage
     localStorage.removeItem(`boardColor_${boardId}`);
     localStorage.removeItem(`boardPattern_${boardId}`);
     localStorage.removeItem(`boardStyles_board_${boardId}`);
 
-    // If there's a next board, inherit its styles
     const nextBoardId = boardId + 1;
     if (nextBoardId <= boardCount) {
-        // Inherit color
-        const nextColor = localStorage.getItem(`boardColor_${nextBoardId}`);
-        if (nextColor) {
-            localStorage.setItem(`boardColor_${boardId}`, nextColor);
-        }
-
-        // Inherit pattern
-        const nextPattern = localStorage.getItem(`boardPattern_${nextBoardId}`);
-        if (nextPattern) {
-            localStorage.setItem(`boardPattern_${boardId}`, nextPattern);
-        }
-
-        // Inherit combined styles
-        const nextStyles = localStorage.getItem(`boardStyles_board_${nextBoardId}`);
-        if (nextStyles) {
-            localStorage.setItem(`boardStyles_board_${boardId}`, nextStyles);
-        }
+        ['boardColor', 'boardPattern', 'boardStyles_board'].forEach(keyPrefix => {
+            const oldKey = `${keyPrefix}_${nextBoardId}`;
+            const newKey = `${keyPrefix}_${boardId}`;
+            const data = localStorage.getItem(oldKey);
+            if (data) localStorage.setItem(newKey, data);
+        });
     }
 
-    // Wait for all removal animations to complete before creating new buttons
     setTimeout(() => {
-        // Remove the deleted button
-        if (buttonElement) {
-            buttonElement.remove();
-        }
+        if (buttonElement) buttonElement.remove();
 
-        // Renumber boards and create new buttons one by one
-        buttonsToRenumber.forEach((oldId, index) => {
-            // First, remove the old button
+        buttonsToRenumber.forEach((oldId) => {
             const oldButton = document.querySelector(`.board-button[data-board-id="${oldId}"]`);
-            if (oldButton) {
-                oldButton.remove();
-            }
+            if (oldButton) oldButton.remove();
 
-            // Update board element
             const board = document.querySelector(`.board[data-board-id="${oldId}"]`);
             const newId = oldId - 1;
+            if (board) board.dataset.boardId = newId;
 
-            if (board) {
-                board.dataset.boardId = newId;
-            }
-
-            // Create a new button
             const navigationContainer = document.querySelector('.boards-navigation');
             const addButton = document.querySelector('.add-board-button');
-
             const newButton = document.createElement('div');
             newButton.className = 'board-button new-button';
             newButton.dataset.boardId = newId;
-            
-            // Always show the board number
             newButton.textContent = newId;
             newButton.dataset.originalNumber = newId;
-            
             newButton.addEventListener('click', () => switchToBoard(newId));
 
-            // Add delete button for any board other than board 1
             if (newId > 1) {
-                const deleteButton = document.createElement('div');
-                deleteButton.className = 'delete-board';
-                deleteButton.textContent = '×';
-                deleteButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    deleteBoard(newId);
-                });
-                newButton.appendChild(deleteButton);
+                const deleteBtn = document.createElement('div');
+                deleteBtn.className = 'delete-board';
+                deleteBtn.textContent = '×';
+                deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteBoard(newId); });
+                newButton.appendChild(deleteBtn);
             }
-
-            // Insert the new button before the add button
             navigationContainer.insertBefore(newButton, addButton);
 
-            // Move board data in localStorage
-            const oldKey = `${ACTIVE_NOTES_KEY}_board_${oldId}`;
-            const newKey = `${ACTIVE_NOTES_KEY}_board_${newId}`;
-            const boardData = localStorage.getItem(oldKey);
-
-            if (boardData) {
-                localStorage.setItem(newKey, boardData);
-                localStorage.removeItem(oldKey);
-            }
-
-            // Move board title in localStorage
-            const oldTitleKey = `stickyNotes_boardTitle_${oldId}`;
-            const newTitleKey = `stickyNotes_boardTitle_${newId}`;
-            const boardTitle = localStorage.getItem(oldTitleKey);
-
-            if (boardTitle) {
-                localStorage.setItem(newTitleKey, boardTitle);
-                localStorage.removeItem(oldTitleKey);
-            }
-
-            // Move board styles in localStorage
-            const oldStyleKey = `boardColor_${oldId}`;
-            const newStyleKey = `boardColor_${newId}`;
-            const boardStylesData = localStorage.getItem(oldStyleKey); // Renamed variable
-
-            if (boardStylesData) {
-                localStorage.setItem(newStyleKey, boardStylesData);
-                localStorage.removeItem(oldStyleKey);
-            }
-
-            const oldPatternKey = `boardPattern_${oldId}`;
-            const newPatternKey = `boardPattern_${newId}`;
-            const boardPatternData = localStorage.getItem(oldPatternKey);
-
-            if (boardPatternData) {
-                localStorage.setItem(newPatternKey, boardPatternData);
-                localStorage.removeItem(oldPatternKey);
-            }
-
-            // Apply the board's existing style immediately
+            ['', 'Title', 'Color', 'Pattern'].forEach(suffix => {
+                const baseKey = suffix ? `stickyNotes_board${suffix}` : ACTIVE_NOTES_KEY;
+                const oldStorageKey = `${baseKey}_board_${oldId}`;
+                const newStorageKey = `${baseKey}_board_${newId}`;
+                const data = localStorage.getItem(oldStorageKey);
+                if (data) {
+                    localStorage.setItem(newStorageKey, data);
+                    localStorage.removeItem(oldStorageKey);
+                }
+            });
             loadBoardStyles(newId);
         });
 
-        // Remove animation classes after a delay
         setTimeout(() => {
-            document.querySelectorAll('.board-button.new-button').forEach(button => {
-                button.classList.remove('new-button');
-            });
+            document.querySelectorAll('.board-button.new-button').forEach(button => button.classList.remove('new-button'));
         }, 500);
 
-        // Update board count
-        boardCount--; // boardCount is in utils.js
-        saveBoardCount(); // saveBoardCount is in utils.js
-
-        // Update add button state after deleting a board
+        boardCount--;
+        saveBoardCount();
         updateAddButtonState();
 
-        // If we deleted the current board, switch to another board
-        if (currentBoardId === boardId) { // currentBoardId is in utils.js
-            // If there are boards with lower numbers, go to the previous board
-            if (boardId > 1) {
-                switchToBoard(boardId - 1);
-            } else if (boardCount >= 1) {
-                // Otherwise go to the next board (now renumbered)
-                switchToBoard(1);
-            }
+        if (currentBoardId === boardId) {
+            switchToBoard(boardId > 1 ? boardId - 1 : (boardCount >= 1 ? 1 : null));
         } else if (currentBoardId > boardId) {
-            // If we're on a board with a higher number, adjust the current board ID
-            // since the boards have been renumbered
             currentBoardId--;
             switchToBoard(currentBoardId);
         }
-
-        // Reset trash bin animation
         document.querySelector('.trash-bin').style.animation = '';
-    }, 350); // Wait a bit longer than the animation duration
+    }, 350);
 }
 
 function switchToBoard(boardId) {
-    // On mobile devices, only allow board 1
-    if (isMobileView && boardId !== 1) { // isMobileView is in utils.js
-        return;
-    }
-
+    if (isMobileView && boardId !== 1) return;
     const targetBoardId = parseInt(boardId);
-    const previousBoardId = currentBoardId; // currentBoardId is in utils.js
+    if (targetBoardId === currentBoardId || targetBoardId === null) return;
 
-    // If we're already on this board, do nothing
-    if (targetBoardId === previousBoardId) return;
-
-    // Calculate direction for animation
-    const isMovingForward = targetBoardId > previousBoardId;
-
-    // Update current board ID
+    const previousBoardId = currentBoardId;
     currentBoardId = targetBoardId;
 
-    // Update last note position and color for the new board
-    if (!lastNotePositions[boardId]) { // lastNotePositions is in utils.js
-        lastNotePositions[boardId] = {
-            x: window.innerWidth / 2 - 100,
-            y: window.innerHeight / 2 - 75
-        };
-    }
-    if (!lastNoteColors[boardId]) { // lastNoteColors is in utils.js
-        lastNoteColors[boardId] = colors[0]; // colors is in utils.js
-    }
+    if (!lastNotePositions[boardId]) lastNotePositions[boardId] = { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 75 };
+    if (!lastNoteColors[boardId]) lastNoteColors[boardId] = colors[0];
 
-    // Update board display
     document.querySelectorAll('.board').forEach(board => {
         const id = parseInt(board.dataset.boardId);
-
-        // Clear all classes first
         board.classList.remove('active', 'prev', 'next');
+        board.style.visibility = 'hidden'; // Default to hidden
 
         if (id === currentBoardId) {
             board.classList.add('active');
             board.style.visibility = 'visible';
+            board.querySelectorAll('.sticky-note').forEach((note, index) => note.style.setProperty('--note-index', index));
 
-            // Apply staggered animation to notes
-            const notes = board.querySelectorAll('.sticky-note');
-            notes.forEach((note, index) => {
-                note.style.setProperty('--note-index', index);
-            });
-            
-            // Check if board has title circle, if not create it
-            let titleCircle = board.querySelector('.board-title-circle');
-            if (!titleCircle) {
-                // Create title circle element
-                titleCircle = document.createElement('div');
+            if (!board.querySelector('.board-title-circle')) {
+                const titleCircle = document.createElement('div');
                 titleCircle.className = 'board-title-circle';
                 titleCircle.setAttribute('onclick', "this.querySelector('.board-title-input').focus()");
-                
-                // Create title input element
                 const titleInput = document.createElement('input');
                 titleInput.type = 'text';
                 titleInput.className = 'board-title-input';
                 titleInput.placeholder = 'title...';
                 titleInput.maxLength = 30;
-                
-                // Add event listener to save title when input changes
-                titleInput.addEventListener('change', () => saveBoardTitle(id, titleInput.value));
-                titleInput.addEventListener('blur', () => saveBoardTitle(id, titleInput.value));
-                
-                // Append title input to title circle
+                const saveHandler = () => saveBoardTitle(id, titleInput.value);
+                titleInput.addEventListener('change', saveHandler);
+                titleInput.addEventListener('blur', saveHandler);
                 titleCircle.appendChild(titleInput);
-                
-                // Append title circle to board element
                 board.appendChild(titleCircle);
-                
-                // Load board title if it exists
                 loadBoardTitle(id);
             }
         } else if (id < currentBoardId) {
             board.classList.add('prev');
-            setTimeout(() => {
-                if (board.classList.contains('prev')) {
-                    board.style.visibility = 'hidden';
-                }
-            }, 500); // Match transition duration
         } else {
             board.classList.add('next');
-            setTimeout(() => {
-                if (board.classList.contains('next')) {
-                    board.style.visibility = 'hidden';
-                }
-            }, 500); // Match transition duration
         }
+        // Visibility for prev/next is handled by CSS transitions ending
     });
 
-    // Update navigation buttons
     document.querySelectorAll('.board-button').forEach(button => {
-        if (parseInt(button.dataset.boardId) === currentBoardId) {
-            button.classList.add('active');
-        } else {
-            button.classList.remove('active');
-        }
+        button.classList.toggle('active', parseInt(button.dataset.boardId) === currentBoardId);
     });
 
-    // Load board styles for the new active board
     loadBoardStyles(currentBoardId);
-
-    // Update style indicators in the menu if it's open
     setActiveStyle();
-
-    // Update pattern option buttons to match the new board color
-    const patternOptions = document.querySelectorAll('.board-pattern-option');
-    patternOptions.forEach(option => {
-        option.style.backgroundColor = boardStyles.colors.current; // boardStyles is in utils.js
-    });
-
-    // Update pattern previews to match the new board color
-    const patternPreviews = document.querySelectorAll('.pattern-preview');
-    patternPreviews.forEach(preview => {
-        preview.style.backgroundColor = boardStyles.colors.current;
-    });
-
+    document.querySelectorAll('.board-pattern-option, .pattern-preview').forEach(el => el.style.backgroundColor = boardStyles.colors.current);
     updateBoardIndicators();
-    
-    // Show the board title temporarily for 3 seconds after switching
     setTimeout(() => showBoardTitleTemporarily(currentBoardId), 300);
 }
 
-// Setup event listeners for board navigation
 function setupBoardNavigation() {
-    // Add click handler to add board button
     document.querySelector('.add-board-button').addEventListener('click', createNewBoard);
-
-    // Add click handlers to all existing board buttons, including board 1
     document.querySelectorAll('.board-button').forEach(button => {
         const boardId = parseInt(button.dataset.boardId);
-        // Remove any existing listeners first (to avoid duplicates)
         const newButton = button.cloneNode(true);
-
-        // Set up click handler for the board button
         newButton.addEventListener('click', () => switchToBoard(boardId));
-
-        // Set up click handler for the delete button if it exists
         const deleteButton = newButton.querySelector('.delete-board');
         if (deleteButton) {
-            deleteButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteBoard(boardId);
-            });
+            deleteButton.addEventListener('click', (e) => { e.stopPropagation(); deleteBoard(boardId); });
         }
-
         button.parentNode.replaceChild(newButton, button);
     });
 
-    // Add touch swiping for mobile
     let startX, startY;
-
-    document.querySelector('.boards-container').addEventListener('touchstart', (e) => {
-        // Don't track swipes if in mobile view
-        if (isMobileView) return; // isMobileView is in utils.js
-
+    const boardsContainer = document.querySelector('.boards-container');
+    boardsContainer.addEventListener('touchstart', (e) => {
+        if (isMobileView) return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
     });
-
-    document.querySelector('.boards-container').addEventListener('touchend', (e) => {
-        // Don't process swipes if in mobile view
-        if (isMobileView) return;
-
-        if (!startX) return;
-
+    boardsContainer.addEventListener('touchend', (e) => {
+        if (isMobileView || !startX) return;
         const endX = e.changedTouches[0].clientX;
         const endY = e.changedTouches[0].clientY;
-
         const diffX = startX - endX;
-        const diffY = startY - endY;
-
-        // Only register horizontal swipes if they're more horizontal than vertical
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-            if (diffX > 0 && currentBoardId < boardCount) { // currentBoardId, boardCount are in utils.js
-                // Swipe left - go to next board
-                switchToBoard(currentBoardId + 1);
-            } else if (diffX < 0 && currentBoardId > 1) {
-                // Swipe right - go to previous board
-                switchToBoard(currentBoardId - 1);
-            }
+        if (Math.abs(diffX) > Math.abs(startY - endY) && Math.abs(diffX) > 50) {
+            if (diffX > 0 && currentBoardId < boardCount) switchToBoard(currentBoardId + 1);
+            else if (diffX < 0 && currentBoardId > 1) switchToBoard(currentBoardId - 1);
         }
-
         startX = null;
-        startY = null;
     });
 
-    // Add keyboard navigation
     document.addEventListener('keydown', (e) => {
-        // Don't handle board navigation keyboard shortcuts on mobile
         if (isMobileView) return;
+        const targetTagName = e.target.tagName;
+        const isEditable = e.target.getAttribute('contenteditable') === 'true';
 
-        // Check for standalone Cmd (Mac) or Ctrl (Windows) key press to focus textarea
-        if ((e.key === 'Control' || e.key === 'Meta') &&
-            !e.altKey && !e.shiftKey &&
-            e.target.tagName !== 'TEXTAREA' && e.target.getAttribute('contenteditable') !== 'true') {
+        if ((e.key === 'Control' || e.key === 'Meta') && !e.altKey && !e.shiftKey && targetTagName !== 'TEXTAREA' && !isEditable) {
             e.preventDefault();
             document.querySelector('.note-input textarea').focus();
             return;
         }
-
-        // Avoid capturing keyboard events when focused on text areas or editable content
-        if (e.target.tagName === 'TEXTAREA' || e.target.getAttribute('contenteditable') === 'true') {
-            // Handle Cmd+Enter or Ctrl+Enter in textarea to add a note
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                e.preventDefault();
-                addNote(); // addNote is in note.js
-                return;
-            }
+        if (targetTagName === 'TEXTAREA' || isEditable) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); addNote(); }
             return;
         }
-
-        // Arrow left/right for navigation
-        if (e.key === 'ArrowLeft' && currentBoardId > 1) {
-            switchToBoard(currentBoardId - 1);
-        } else if (e.key === 'ArrowRight' && currentBoardId < boardCount) {
-            switchToBoard(currentBoardId + 1);
-        } else if (e.key === 'n' && e.ctrlKey) {
-            // Ctrl+N for new board
-            e.preventDefault();
-            createNewBoard();
-        } else if (e.key === 'd' && e.ctrlKey && currentBoardId > 1) {
-            // Ctrl+D to delete current board (except board 1)
-            e.preventDefault();
-            deleteBoard(currentBoardId);
-        }
-
-        // Number keys 1-9 for direct board access
+        if (e.key === 'ArrowLeft' && currentBoardId > 1) switchToBoard(currentBoardId - 1);
+        else if (e.key === 'ArrowRight' && currentBoardId < boardCount) switchToBoard(currentBoardId + 1);
+        else if (e.key === 'n' && e.ctrlKey) { e.preventDefault(); createNewBoard(); }
+        else if (e.key === 'd' && e.ctrlKey && currentBoardId > 1) { e.preventDefault(); deleteBoard(currentBoardId); }
         const keyNum = parseInt(e.key);
-        if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= 9 && keyNum <= boardCount) {
-            switchToBoard(keyNum);
-        }
+        if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= 9 && keyNum <= boardCount) switchToBoard(keyNum);
     });
-
-    // Add resize listener to handle switching between mobile and desktop
-    window.addEventListener('resize', () => {
-        checkMobileView(); // checkMobileView is in utils.js
-    });
+    window.addEventListener('resize', checkMobileView);
 }
 
-// Add a function to update add button state
 function updateAddButtonState() {
     const addButton = document.querySelector('.add-board-button');
-    if (boardCount >= MAX_BOARDS) { // boardCount, MAX_BOARDS are in utils.js
-        addButton.classList.add('disabled');
-        addButton.title = `Maximum number of boards (${MAX_BOARDS}) reached`;
-    } else {
-        addButton.classList.remove('disabled');
-        addButton.title = "Add new board";
-    }
-
-    // Update shortcut hint visibility based on board count
+    const disabled = boardCount >= MAX_BOARDS;
+    addButton.classList.toggle('disabled', disabled);
+    addButton.title = disabled ? `Maximum number of boards (${MAX_BOARDS}) reached` : "Add new board";
     updateShortcutHintVisibility();
 }
 
-// Function to update shortcut hint visibility
 function updateShortcutHintVisibility() {
     const shortcutHint = document.querySelector('.shortcut-hint');
-    if (shortcutHint) {
-        // Only show hint if there are 2 or more boards
-        if (boardCount >= 2) { // boardCount is in utils.js
-            shortcutHint.style.display = 'block';
-        } else {
-            shortcutHint.style.display = 'none';
-        }
-    }
+    if (shortcutHint) shortcutHint.style.display = boardCount >= 2 ? 'block' : 'none';
 }
 
-// Board Styling Functions
 function toggleBoardStyleMenu() {
     const styleMenu = document.querySelector('.board-style-menu');
-
-    if (!styleMenu.classList.contains('visible')) {
-        // Prepare menu before showing
+    const isVisible = styleMenu.classList.contains('visible');
+    if (!isVisible) {
         setActiveStyle();
         setupStyleOptions();
-
-        // Update pattern option buttons to match current board color
-        const patternOptions = document.querySelectorAll('.board-pattern-option');
-        patternOptions.forEach(option => {
-            option.style.backgroundColor = boardStyles.colors.current; // boardStyles is in utils.js
-        });
-
-        // Update pattern previews to match current board color
-        const patternPreviews = document.querySelectorAll('.pattern-preview');
-        patternPreviews.forEach(preview => {
-            preview.style.backgroundColor = boardStyles.colors.current;
-        });
-
-        // Force a layout reflow before adding the visible class
-        void styleMenu.offsetWidth;
-
-        // Show the menu
-        styleMenu.classList.add('visible');
-    } else {
-        // Add closing class for animation
-        styleMenu.classList.add('closing');
-        styleMenu.classList.remove('visible');
-
-        // Remove the closing class after animation completes
-        setTimeout(() => {
-            styleMenu.classList.remove('closing');
-        }, 300); // Match the animation duration in CSS
+        document.querySelectorAll('.board-pattern-option, .pattern-preview').forEach(el => el.style.backgroundColor = boardStyles.colors.current);
+        void styleMenu.offsetWidth; // Reflow
     }
+    styleMenu.classList.toggle('visible', !isVisible);
+    styleMenu.classList.toggle('closing', isVisible);
+    if (isVisible) setTimeout(() => styleMenu.classList.remove('closing'), 300);
 }
 
 function setupStyleOptions() {
-    // Setup only once
     if (document.querySelector('.board-color-option.initialized')) return;
-
-    // Setup color options
-    const colorOptions = document.querySelectorAll('.board-color-option');
-    colorOptions.forEach(option => {
+    document.querySelectorAll('.board-color-option, .board-pattern-option').forEach(option => {
         option.classList.add('initialized');
+        const type = option.classList.contains('board-color-option') ? 'color' : 'pattern';
+        const value = option.getAttribute(`data-${type}`);
         option.addEventListener('click', () => {
-            const color = option.getAttribute('data-color');
-            changeBoardColor(color);
-
-            // Update active state
-            colorOptions.forEach(opt => opt.classList.remove('active'));
-            option.classList.add('active');
-        });
-    });
-
-    // Setup pattern options
-    const patternOptions = document.querySelectorAll('.board-pattern-option');
-    patternOptions.forEach(option => {
-        option.classList.add('initialized');
-        option.addEventListener('click', () => {
-            const pattern = option.getAttribute('data-pattern');
-            changeBoardPattern(pattern);
-
-            // Update active state
-            patternOptions.forEach(opt => opt.classList.remove('active'));
+            if (type === 'color') changeBoardColor(value);
+            else changeBoardPattern(value);
+            document.querySelectorAll(`.board-${type}-option`).forEach(opt => opt.classList.remove('active'));
             option.classList.add('active');
         });
     });
 }
 
 function setActiveStyle() {
-    // Set active color
-    const colorOptions = document.querySelectorAll('.board-color-option');
-    colorOptions.forEach(option => {
-        if (option.getAttribute('data-color') === boardStyles.colors.current) { // boardStyles is in utils.js
-            option.classList.add('active');
-        } else {
-            option.classList.remove('active');
-        }
-    });
-
-    // Set active pattern
-    const patternOptions = document.querySelectorAll('.board-pattern-option');
-    patternOptions.forEach(option => {
-        if (option.getAttribute('data-pattern') === boardStyles.patterns.current) { // boardStyles is in utils.js
-            option.classList.add('active');
-        } else {
-            option.classList.remove('active');
-        }
+    ['color', 'pattern'].forEach(type => {
+        document.querySelectorAll(`.board-${type}-option`).forEach(option => {
+            option.classList.toggle('active', option.getAttribute(`data-${type}`) === boardStyles[`${type}s`].current);
+        });
     });
 }
 
 function changeBoardColor(color) {
-    // Store current color
-    boardStyles.colors.current = color; // boardStyles is in utils.js
-
-    // Apply to active board
+    boardStyles.colors.current = color;
     const activeBoard = document.querySelector('.board.active');
     activeBoard.style.backgroundColor = color;
-    
-    // Update pattern preview backgrounds to match the new board color
-    const patternPreviews = document.querySelectorAll('.pattern-preview');
-    patternPreviews.forEach(preview => {
-        preview.style.backgroundColor = color;
+    document.querySelectorAll('.pattern-preview, .board-pattern-option').forEach(el => {
+        el.style.backgroundColor = color;
+        if (el.classList.contains('board-pattern-option')) el.style.opacity = '0.8';
     });
-    
-    // Update the board pattern options background color
-    const patternOptions = document.querySelectorAll('.board-pattern-option');
-    patternOptions.forEach(option => {
-        option.style.backgroundColor = color;
-        option.style.opacity = '0.8'; // Add slight transparency
-    });
-
-    // Save to localStorage
-    saveBoardStyles(); // saveBoardStyles is in utils.js
-
-    // Update the board navigation buttons to match
+    saveBoardStyles();
     updateBoardIndicators();
-
-    // Apply animation
     activeBoard.style.transition = 'background-color 0.5s ease';
-    setTimeout(() => {
-        activeBoard.style.transition = '';
-    }, 500);
+    setTimeout(() => activeBoard.style.transition = '', 500);
+}
+
+function createPatternOverlay(pattern) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; transition:opacity 0.5s ease; opacity:0;';
+    if (pattern !== 'none') {
+        if (pattern === 'dots') overlay.style.cssText += 'background-image:radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size:20px 20px;';
+        else if (pattern === 'grid') overlay.style.cssText += 'background-image:linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px); background-size:20px 20px;';
+        else if (pattern === 'lines') overlay.style.cssText += 'background-image:linear-gradient(0deg, transparent 19px, rgba(255,255,255,0.4) 20px); background-size:20px 20px;';
+        else if (pattern === 'weekdays' || pattern === 'days') {
+            const header = document.createElement('div');
+            header.className = pattern === 'weekdays' ? 'weekday-header' : 'day-header';
+            const items = pattern === 'weekdays' ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : ['Day 1','Day 2','Day 3','Day 4','Day 5'];
+            items.forEach(item => header.innerHTML += `<span>${item}</span>`);
+            overlay.appendChild(header);
+        }
+    }
+    return overlay;
 }
 
 function changeBoardPattern(pattern) {
-    // Store current pattern
-    boardStyles.patterns.current = pattern; // boardStyles is in utils.js
-
-    // Apply to active board
+    boardStyles.patterns.current = pattern;
     const activeBoard = document.querySelector('.board.active');
-    
-    // Remove any existing pattern overlays first
-    const existingOverlays = activeBoard.querySelectorAll('.pattern-overlay');
-    existingOverlays.forEach(overlay => overlay.remove());
-
-    // Create an overlay element for the transition
-    const overlay = document.createElement('div');
-    overlay.style.position = 'absolute';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.pointerEvents = 'none';
-    overlay.style.zIndex = '0';
-    overlay.style.transition = 'opacity 0.5s ease';
-
-    // Set the background pattern on the overlay instead of directly on the board
-    if (pattern !== 'none') {
-        if (pattern === 'dots') {
-            overlay.style.backgroundImage = 'radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)';
-            overlay.style.backgroundSize = '20px 20px';
-        } else if (pattern === 'grid') {
-            overlay.style.backgroundImage = 'linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px)';
-            overlay.style.backgroundSize = '20px 20px';
-        } else if (pattern === 'lines') {
-            overlay.style.backgroundImage = 'linear-gradient(0deg, transparent 19px, rgba(255, 255, 255, 0.4) 20px)';
-            overlay.style.backgroundSize = '20px 20px';
-        } else if (pattern === 'weekdays') {
-            // Create weekday headers
-            const weekdayHeader = document.createElement('div');
-            weekdayHeader.className = 'weekday-header';
-            weekdayHeader.innerHTML = '<span>Monday</span><span>Tuesday</span><span>Wednesday</span><span>Thursday</span><span>Friday</span><span>Saturday</span>';
-            overlay.appendChild(weekdayHeader);
-        } else if (pattern === 'days') {
-            // Create day number headers
-            const dayHeader = document.createElement('div');
-            dayHeader.className = 'day-header';
-            dayHeader.innerHTML = '<span>Day 1</span><span>Day 2</span><span>Day 3</span><span>Day 4</span><span>Day 5</span>';
-            overlay.appendChild(dayHeader);
-        }
-    }
-
-    // Start with opacity 0
-    overlay.style.opacity = '0';
-
-    // Remove all pattern classes from the board
+    activeBoard.querySelectorAll('.pattern-overlay, .lines-overlay').forEach(el => el.remove());
     activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
-    
-    // Create a separate lines overlay for animated lines (only for weekdays and days patterns)
+
+    const patternOverlay = createPatternOverlay(pattern);
+    activeBoard.appendChild(patternOverlay);
+    void patternOverlay.offsetWidth; // Reflow
+    patternOverlay.style.opacity = '1';
+
     let linesOverlay = null;
     if (pattern === 'weekdays' || pattern === 'days') {
         linesOverlay = document.createElement('div');
-        linesOverlay.className = 'lines-overlay';
-        linesOverlay.style.position = 'absolute';
-        linesOverlay.style.top = '0';
-        linesOverlay.style.left = '0';
-        linesOverlay.style.width = '100%';
-        linesOverlay.style.height = '100%';
-        linesOverlay.style.pointerEvents = 'none';
-        linesOverlay.style.zIndex = '0';
-        linesOverlay.style.opacity = '0';
-        linesOverlay.style.transition = 'opacity 0.5s ease';
-        
-        // Add pattern-specific class for styling
-        linesOverlay.classList.add(`lines-overlay-${pattern}`);
-        
-        // Add to board
+        linesOverlay.className = `lines-overlay lines-overlay-${pattern}`;
+        linesOverlay.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; opacity:0; transition:opacity 0.5s ease;';
         activeBoard.appendChild(linesOverlay);
+        void linesOverlay.offsetWidth; // Reflow
+        linesOverlay.style.opacity = '1';
     }
 
-    // Add the header overlay to the board
-    activeBoard.appendChild(overlay);
-
-    // Force a reflow to ensure the transition works
-    void overlay.offsetWidth;
-    if (linesOverlay) void linesOverlay.offsetWidth;
-
-    // Fade in the pattern and lines
-    overlay.style.opacity = '1';
-    if (linesOverlay) linesOverlay.style.opacity = '1';
-
-    // After the transition completes, apply the pattern directly to the board
     setTimeout(() => {
-        // For weekdays and days patterns, keep the overlay with headers
         if (pattern === 'weekdays' || pattern === 'days') {
-            // Just add the pattern class without removing the overlay
             activeBoard.classList.add(`board-pattern-${pattern}`);
-            // Make sure the overlay stays in place
-            overlay.style.position = 'absolute';
-            overlay.style.top = '0';
-            overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = 'auto';
-            overlay.style.zIndex = '1';
-            // Give the overlay a class for easier reference
-            overlay.classList.add('pattern-overlay');
-            
-            // Keep the lines overlay as well
+            patternOverlay.style.height = 'auto';
+            patternOverlay.style.zIndex = '1';
+            patternOverlay.classList.add('pattern-overlay');
             if (linesOverlay) {
                 linesOverlay.style.zIndex = '0';
-                linesOverlay.classList.add('pattern-overlay');
+                linesOverlay.classList.add('pattern-overlay'); // Naming consistency
             }
         } else {
-            // For other patterns, remove the overlay and apply the pattern class
-            overlay.remove();
+            patternOverlay.remove();
             if (linesOverlay) linesOverlay.remove();
-            if (pattern !== 'none') {
-                activeBoard.classList.add(`board-pattern-${pattern}`);
-            }
+            if (pattern !== 'none') activeBoard.classList.add(`board-pattern-${pattern}`);
         }
-
-        // Update the board navigation buttons to match
         updateBoardIndicators();
     }, 500);
+    saveBoardStyles();
+}
 
-    // Save to localStorage
-    saveBoardStyles(); // saveBoardStyles is in utils.js
+function applyBoardSavedStyles(board, styles) {
+    board.style.backgroundColor = styles.color;
+    board.querySelectorAll('.pattern-overlay, .lines-overlay').forEach(el => el.remove());
+    board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
+
+    if (styles.pattern !== 'none') {
+        board.classList.add(`board-pattern-${styles.pattern}`);
+        if (styles.pattern === 'weekdays' || styles.pattern === 'days') {
+            const headerOverlay = document.createElement('div');
+            headerOverlay.className = `pattern-overlay ${styles.pattern === 'weekdays' ? 'weekday-header' : 'day-header'}`;
+            const items = styles.pattern === 'weekdays' ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : Array.from({length: 5}, (_, i) => `Day ${i+1}`);
+            items.forEach(item => headerOverlay.innerHTML += `<span>${item}</span>`);
+            board.appendChild(headerOverlay);
+
+            const linesOverlay = document.createElement('div');
+            linesOverlay.className = `pattern-overlay lines-overlay lines-overlay-${styles.pattern}`;
+            linesOverlay.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;';
+            board.appendChild(linesOverlay);
+        }
+    }
 }
 
 function loadBoardStyles(boardId) {
-    // Load board styles from localStorage
-    const boardStylesKey = `boardStyles_board_${boardId}`;
-    const savedStyles = localStorage.getItem(boardStylesKey);
+    const savedStyles = localStorage.getItem(`boardStyles_board_${boardId}`);
+    const board = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    if (!board) return;
 
+    let stylesToApply;
     if (savedStyles) {
-        const styles = JSON.parse(savedStyles);
-        // Apply to the board
-        const board = document.querySelector(`.board[data-board-id="${boardId}"]`);
-        if (board) {
-            // Apply color
-            board.style.backgroundColor = styles.color;
-
-            // Remove any existing pattern overlays first
-            const existingOverlays = board.querySelectorAll('.pattern-overlay');
-            existingOverlays.forEach(overlay => overlay.remove());
-
-            // Remove all pattern classes
-            board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
-            
-            // Apply pattern
-            if (styles.pattern !== 'none') {
-                board.classList.add(`board-pattern-${styles.pattern}`);
-                
-                // For weekdays pattern, create a header with day names
-                if (styles.pattern === 'weekdays') {
-                    const overlay = document.createElement('div');
-                    overlay.className = 'pattern-overlay weekday-header';
-                    
-                    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    days.forEach(day => {
-                        const span = document.createElement('span');
-                        span.textContent = day;
-                        overlay.appendChild(span);
-                    });
-                    
-                    board.appendChild(overlay);
-                    
-                    // Add lines overlay for weekdays
-                    const linesOverlay = document.createElement('div');
-                    linesOverlay.className = 'pattern-overlay lines-overlay lines-overlay-weekdays';
-                    linesOverlay.style.position = 'absolute';
-                    linesOverlay.style.top = '0';
-                    linesOverlay.style.left = '0';
-                    linesOverlay.style.width = '100%';
-                    linesOverlay.style.height = '100%';
-                    linesOverlay.style.pointerEvents = 'none';
-                    linesOverlay.style.zIndex = '0';
-                    board.appendChild(linesOverlay);
-                }
-                
-                // For days pattern, create a header with day numbers.
-                if (styles.pattern === 'days') {
-                    const overlay = document.createElement('div');
-                    overlay.className = 'pattern-overlay day-header';
-                    
-                    for (let i = 1; i <= 5; i++) {
-                        const span = document.createElement('span');
-                        span.textContent = `Day ${i}`;
-                        overlay.appendChild(span);
-                    }
-                    
-                    board.appendChild(overlay);
-                    
-                    // Add lines overlay for days
-                    const linesOverlay = document.createElement('div');
-                    linesOverlay.className = 'pattern-overlay lines-overlay lines-overlay-days';
-                    linesOverlay.style.position = 'absolute';
-                    linesOverlay.style.top = '0';
-                    linesOverlay.style.left = '0';
-                    linesOverlay.style.width = '100%';
-                    linesOverlay.style.height = '100%';
-                    linesOverlay.style.pointerEvents = 'none';
-                    linesOverlay.style.zIndex = '0';
-                    board.appendChild(linesOverlay);
-                }
-            }
-        }
-
-        // If loading styles for the current board, update the global state
+        stylesToApply = JSON.parse(savedStyles);
         if (boardId === currentBoardId) {
-            boardStyles.colors.current = styles.color;
-            boardStyles.patterns.current = styles.pattern;
+            boardStyles.colors.current = stylesToApply.color;
+            boardStyles.patterns.current = stylesToApply.pattern;
         }
-
     } else {
-        // If loading styles for the current board, reset to defaults
+        stylesToApply = { color: boardStyles.colors.default, pattern: boardStyles.patterns.default };
         if (boardId === currentBoardId) {
-            boardStyles.colors.current = boardStyles.colors.default;
-            boardStyles.patterns.current = boardStyles.patterns.default;
-        }
-        // Apply default styles to the board element
-        const board = document.querySelector(`.board[data-board-id="${boardId}"]`);
-        if (board) {
-            board.style.backgroundColor = boardStyles.colors.default;
-            board.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
+            boardStyles.colors.current = stylesToApply.color;
+            boardStyles.patterns.current = stylesToApply.pattern;
         }
     }
-
-    // Update board button styles to match
+    applyBoardSavedStyles(board, stylesToApply);
     updateBoardIndicators();
 }
 
-// Load all board titles when the script loads
 loadAllBoardTitles();
-
-// Close board style menu when clicking outside
 document.addEventListener('click', function(event) {
-    const styleButton = document.querySelector('.board-style-button');
     const styleMenu = document.querySelector('.board-style-menu');
-
-    // Check if the menu exists and is visible
-    if (styleMenu && styleMenu.classList.contains('visible') &&
-        styleButton && !styleButton.contains(event.target) &&
-        !styleMenu.contains(event.target)) { // Ensure click is not inside the menu itself
-
-        // Add closing class for animation
+    const styleButton = document.querySelector('.board-style-button');
+    if (styleMenu && styleMenu.classList.contains('visible') && styleButton &&
+        !styleButton.contains(event.target) && !styleMenu.contains(event.target)) {
         styleMenu.classList.add('closing');
         styleMenu.classList.remove('visible');
-
-        // Remove the closing class after animation completes
-        setTimeout(() => {
-            styleMenu.classList.remove('closing');
-        }, 300); // Match the animation duration in CSS
+        setTimeout(() => styleMenu.classList.remove('closing'), 300);
     }
 });
+document.querySelector('.board-style-menu').addEventListener('click', event => event.stopPropagation());
 
-
-// Prevent menu from closing when clicking inside it
-document.querySelector('.board-style-menu').addEventListener('click', function(event) {
-    event.stopPropagation();
-});
-
-// Board title functions
 function loadAllBoardTitles() {
-    // Load titles for all existing boards
-    document.querySelectorAll('.board').forEach(board => {
-        const boardId = board.dataset.boardId;
-        loadBoardTitle(boardId);
-    });
+    document.querySelectorAll('.board').forEach(board => loadBoardTitle(board.dataset.boardId));
 }
 
 function saveBoardTitle(boardId, title) {
-    // Save title to localStorage
     localStorage.setItem(`stickyNotes_boardTitle_${boardId}`, title);
-    
-    // Don't update button text - keep showing numbers only
-    // Still store the original number just in case we need it later
     const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
     if (buttonElement && !buttonElement.dataset.originalNumber) {
         buttonElement.dataset.originalNumber = buttonElement.textContent;
     }
 }
 
-// Function to update character counter
 function updateCharCounter(input) {
-    const maxLength = input.maxLength;
-    const currentLength = input.value.length;
-    input.setAttribute('data-counter', `${currentLength}/${maxLength}`);
+    input.setAttribute('data-counter', `${input.value.length}/${input.maxLength}`);
 }
 
 function loadBoardTitle(boardId) {
-    // Load title from localStorage
     const title = localStorage.getItem(`stickyNotes_boardTitle_${boardId}`);
-    
-    // Set input value if title exists
     const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
     if (boardElement) {
         const titleInput = boardElement.querySelector('.board-title-input');
-        if (titleInput && title) {
-            titleInput.value = title;
-        }
+        if (titleInput && title) titleInput.value = title;
     }
-    
-    // Store original number but don't update button text
     const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
     if (buttonElement && !buttonElement.dataset.originalNumber) {
         buttonElement.dataset.originalNumber = buttonElement.textContent;
     }
 }
 
-// Function to temporarily show the board title for 3 seconds
 function showBoardTitleTemporarily(boardId) {
-    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
-    if (!boardElement) return;
-    
-    const titleCircle = boardElement.querySelector('.board-title-circle');
-    if (!titleCircle) return;
-    
-    // Add a temporary class to show the title
-    titleCircle.classList.add('show-temporary');
-    
-    // After 3 seconds, remove the class
-    setTimeout(() => {
-        titleCircle.classList.remove('show-temporary');
-    }, 3000);
+    const titleCircle = document.querySelector(`.board[data-board-id="${boardId}"] .board-title-circle`);
+    if (titleCircle) {
+        titleCircle.classList.add('show-temporary');
+        setTimeout(() => titleCircle.classList.remove('show-temporary'), 3000);
+    }
 }
 
-// Add event listeners to board title circles
 function setupBoardTitleListeners() {
     document.querySelectorAll('.board-title-circle').forEach(circle => {
         let hoverTimeout;
-        
-        // On hover
-        circle.addEventListener('mouseenter', function() {
-            // Focus the input
-            const input = this.querySelector('.board-title-input');
-            if (input) {
-                input.focus();
-            }
-            
-            // Clear any existing timeout
-            clearTimeout(hoverTimeout);
-            
-            // Add delayed-close class
-            this.classList.add('delayed-close');
-        });
-
-        // On unhover
-        circle.addEventListener('mouseleave', function() {
-            hoverTimeout = setTimeout(() => {
-                this.classList.remove('delayed-close');
-            }, 2000); // 2 seconds delay
-            
-            const input = this.querySelector('.board-title-input');
-            if (input) {
-                input.blur();
-            }
-        });
-
-        // Add blur functionality when mouse leaves
-        circle.addEventListener('mouseleave', function() {
-            const input = this.querySelector('.board-title-input');
-            if (input) {
-                input.blur();
-            }
-        });
-
-        // On click
-        circle.addEventListener('click', function(e) {
-            const input = this.querySelector('.board-title-input');
-            if (input) {
-                input.focus();
-            }
-        });
-
-        // Add blur listener to handle input blur
         const input = circle.querySelector('.board-title-input');
+        const boardId = circle.closest('.board').dataset.boardId;
+
+        circle.addEventListener('mouseenter', () => {
+            if (input) input.focus();
+            clearTimeout(hoverTimeout);
+            circle.classList.add('delayed-close');
+        });
+        circle.addEventListener('mouseleave', () => {
+            hoverTimeout = setTimeout(() => circle.classList.remove('delayed-close'), 2000);
+            if (input) input.blur();
+        });
+        circle.addEventListener('click', () => { if (input) input.focus(); });
+
         if (input) {
-            // Add debounced title saving
             let titleSaveTimeout;
-            
             const saveTitleDebounced = () => {
                 const title = input.value.trim();
-                if (title.length === 0) {
-                    input.dataset.originalTitle = '';
-                    return;
-                }
-                saveBoardTitle(input.closest('.board').dataset.boardId, title);
+                if (title.length === 0) { input.dataset.originalTitle = ''; return; }
+                saveBoardTitle(boardId, title);
                 updateCharCounter(input);
             };
-
-            // Add event listener for title changes
             input.addEventListener('input', () => {
                 clearTimeout(titleSaveTimeout);
                 titleSaveTimeout = setTimeout(saveTitleDebounced, 500);
             });
-
-            // Initialize character counter
             updateCharCounter(input);
-
-            input.addEventListener('blur', function() {
-                // Don't set inline styles that would override hover
-                // The CSS will handle the collapse
-            });
         }
     });
 }
 
-// Add this function to update board indicators
 function updateBoardIndicators() {
-    // Loop through all boards
-    for (let i = 1; i <= boardCount; i++) { // boardCount is in utils.js
+    for (let i = 1; i <= boardCount; i++) {
         const boardElement = document.querySelector(`.board[data-board-id="${i}"]`);
         const buttonElement = document.querySelector(`.board-button[data-board-id="${i}"]`);
-
         if (!boardElement || !buttonElement) continue;
 
-        // Check if board has any notes
-        const hasNotes = boardElement.querySelectorAll('.sticky-note').length > 0;
-
-        // Update button class
-        if (hasNotes) {
-            buttonElement.classList.add('has-notes');
-        } else {
-            buttonElement.classList.remove('has-notes');
-        }
-
-        // Get board background color
-        const boardColor = boardElement.style.backgroundColor || boardStyles.colors.default; // Use default if not set
-
-        // Set button background color to match board
+        buttonElement.classList.toggle('has-notes', boardElement.querySelectorAll('.sticky-note').length > 0);
+        const boardColor = boardElement.style.backgroundColor || boardStyles.colors.default;
         buttonElement.style.backgroundColor = boardColor;
 
-        // Find if the board has a pattern and which one
-        let patternClass = '';
-        if (boardElement.classList.contains('board-pattern-dots')) {
-            patternClass = 'board-pattern-dots';
-        } else if (boardElement.classList.contains('board-pattern-grid')) {
-            patternClass = 'board-pattern-grid';
-        } else if (boardElement.classList.contains('board-pattern-lines')) {
-            patternClass = 'board-pattern-lines';
-        } else if (boardElement.classList.contains('board-pattern-weekdays')) {
-            patternClass = 'board-pattern-weekdays';
-        } else if (boardElement.classList.contains('board-pattern-days')) {
-            patternClass = 'board-pattern-days';
-        }
+        const patternClasses = ['board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days'];
+        let currentPatternClass = '';
+        patternClasses.forEach(pc => {
+            if (boardElement.classList.contains(pc)) currentPatternClass = pc;
+            buttonElement.classList.remove(pc.replace('board-pattern', 'button-pattern'));
+        });
+        if (currentPatternClass) buttonElement.classList.add(currentPatternClass.replace('board-pattern', 'button-pattern'));
 
-        // Remove any existing pattern classes from button
-        buttonElement.classList.remove('button-pattern-dots', 'button-pattern-grid', 'button-pattern-lines', 'button-pattern-weekdays', 'button-pattern-days');
-
-        // Apply matching pattern class to button if board has a pattern
-        if (patternClass) {
-            // Convert to button-specific pattern class
-            const buttonPatternClass = patternClass.replace('board-pattern', 'button-pattern');
-            buttonElement.classList.add(buttonPatternClass);
-            
-            // No need to add separator elements anymore as we're using CSS gradients
-        }
-
-        // Adjust text color based on background color brightness
-        const rgb = hexToRgb(boardColor) || { r: 26, g: 26, b: 26 }; // default to #1a1a1a, hexToRgb is in utils.js
-        const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-
-        // Use white text for dark backgrounds, black text for light backgrounds
-        buttonElement.style.color = brightness > 128 ? '#000' : '#fff';
+        const rgb = hexToRgb(boardColor) || { r: 26, g: 26, b: 26 };
+        buttonElement.style.color = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000 > 128 ? '#000' : '#fff';
     }
 }
