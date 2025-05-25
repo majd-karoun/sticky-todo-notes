@@ -84,7 +84,6 @@ function renderDeletedNotes() {
             <div class="deleted-note-content ${note.isBold ? 'bold' : ''}">${note.text}</div>
             <div class="deleted-note-actions">
                 <button class="restore-btn" onclick="restoreNote(${index})">Restore</button>
-                <button class="delete-btn" onclick="deleteNotePermanently(${index})">Delete</button>
             </div>
         </div>`).join('');
 }
@@ -101,18 +100,6 @@ function restoreNote(index) {
         saveActiveNotes();
         updateBoardIndicators();
     }, 300); // Match animation
-}
-
-function deleteNotePermanently(index) {
-    const noteElement = document.querySelectorAll('.deleted-note')[index];
-    noteElement.classList.add('note-deleting');
-    setTimeout(() => {
-        noteElement.remove(); // Remove from DOM first
-        deletedNotes.splice(index, 1);
-        saveDeletedNotes();
-        updateTrashCount();
-        renderDeletedNotes(); // Re-render if other notes are present
-    }, 400); // Match animation
 }
 
 function clearTrash() {
