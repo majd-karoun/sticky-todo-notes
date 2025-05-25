@@ -130,19 +130,23 @@ function continueWithBoardDeletion(boardId) {
         }
     }
 
+    // Remove all board-related data from localStorage
     localStorage.removeItem(`${ACTIVE_NOTES_KEY}_board_${boardId}`);
     localStorage.removeItem(`stickyNotes_boardTitle_${boardId}`);
     localStorage.removeItem(`boardColor_${boardId}`);
     localStorage.removeItem(`boardPattern_${boardId}`);
     localStorage.removeItem(`boardStyles_board_${boardId}`);
 
-    const nextBoardId = boardId + 1;
-    if (nextBoardId <= boardCount) {
+    // Shift style settings from next boards
+    for (let i = boardId + 1; i <= boardCount; i++) {
         ['boardColor', 'boardPattern', 'boardStyles_board'].forEach(keyPrefix => {
-            const oldKey = `${keyPrefix}_${nextBoardId}`;
-            const newKey = `${keyPrefix}_${boardId}`;
+            const oldKey = `${keyPrefix}_${i}`;
+            const newKey = `${keyPrefix}_${i-1}`;
             const data = localStorage.getItem(oldKey);
-            if (data) localStorage.setItem(newKey, data);
+            if (data) {
+                localStorage.setItem(newKey, data);
+            }
+            localStorage.removeItem(oldKey);
         });
     }
 
