@@ -1,3 +1,17 @@
+// Track note columns for weekday patterns
+let noteColumns = {};
+
+// Function to get a random offset for natural positioning
+function getRandomOffset() {
+    return (Math.random() * 40) - 20; // Random value between -20 and 20
+}
+
+// Function to get the column index based on date (0-4 for Monday-Friday, 0 for Sunday)
+function getDayColumnIndex(date = new Date()) {
+    const day = date.getDay(); // 0 = Sunday, ..., 6 = Saturday
+    return day === 0 ? 0 : (day - 1) % 5; // 0-4 = Monday-Friday, 0 = Sunday (treated as Monday)
+}
+
 // Note Creation and Management
 function addNote() {
     const textarea = document.querySelector('.note-input textarea');
@@ -8,8 +22,8 @@ function addNote() {
     const notes = Array.from(boardElement.querySelectorAll('.sticky-note'));
     const lastAddedNote = notes[notes.length - 1];
 
-    let { x: lastX, y: lastY } = lastNotePositions[currentBoardId];
-    let lastColor = lastNoteColors[currentBoardId];
+    let { x: lastX, y: lastY } = lastNotePositions[currentBoardId] || { x: 0, y: 0 };
+    let lastColor = lastNoteColors[currentBoardId] || getRandomColor();
     let positionX, positionY;
 
     const hasWeekdaysPattern = boardElement.classList.contains('board-pattern-weekdays');
@@ -18,30 +32,90 @@ function addNote() {
 
     if (hasNoNotes) {
         if (hasWeekdaysPattern) {
-            const today = new Date().getDay(); // 0 = Sunday, ..., 6 = Saturday
-            const adjustedDay = today === 0 ? 6 : today - 1; // 0 = Monday, ..., 6 = Sunday
-            if (adjustedDay < 6) { // Skip Sunday
-                const boardWidth = boardElement.offsetWidth;
-                const headerWidth = boardWidth / 6;
-                positionX = (adjustedDay * headerWidth) + (headerWidth / 2) - 100; // 100 = half note width
-                positionY = 60; // Below header
+            const columnIndex = getDayColumnIndex();
+            const boardWidth = boardElement.offsetWidth;
+            const headerWidth = boardWidth / 6;
+            
+            // Calculate base position for the column
+            const baseX = (columnIndex * headerWidth) + (headerWidth / 2) - 100;
+            
+            // Add a small random offset for natural look
+            const randomOffset = getRandomOffset();
+            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
+            positionY = 70; // Below header
+            
+            // Store the initial position for this column
+            if (!noteColumns[columnIndex]) {
+                noteColumns[columnIndex] = [];
             }
+            noteColumns[columnIndex].push({ x: positionX, y: positionY });
+            
         } else if (hasDaysPattern) {
             const boardWidth = boardElement.offsetWidth;
             const headerWidth = boardWidth / 5;
             positionX = (headerWidth / 2) - 100;
-            positionY = 60;
+            positionY = 70; // Initial position below header
         } else {
             if (window.innerWidth <= 1024) { // Mobile
                 positionX = 200;
-                positionY = 120;
+                positionY = 140; // 70 * 2 for mobile
             } else { // Desktop
                 const boardRect = boardElement.getBoundingClientRect();
                 positionX = Math.floor(Math.random() * (boardRect.width - 200));
                 positionY = Math.floor(Math.random() * (boardRect.height / 2));
             }
         }
+    } else if (hasWeekdaysPattern) {
+        const boardRect = boardElement.getBoundingClientRect();
+        const boardWidth = boardRect.width;
+        const columnWidth = boardWidth / 6; // 6 columns for 6 weekdays
+        
+        // Determine column based on current date
+        const columnIndex = getDayColumnIndex();
+        
+        // Initialize column if it doesn't exist
+        if (!noteColumns[columnIndex]) {
+            noteColumns[columnIndex] = [];
+        }
+        
+        // Get all notes in this column
+        const columnNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).filter(note => {
+            const noteRect = note.getBoundingClientRect();
+            const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
+            const noteColumn = Math.min(5, Math.max(0, Math.floor(noteCenterX / columnWidth)));
+            return noteColumn === columnIndex;
+        });
+        
+        // Find the last note in this column
+        let lastNoteInColumn = null;
+        let lastY = 60; // Start below header
+        
+        // Find the note with the highest Y position in this column
+        columnNotes.forEach(note => {
+            const noteY = parsePosition(note.style.top);
+            if (noteY >= lastY) {
+                lastY = noteY;
+                lastNoteInColumn = note;
+            }
+        });
+        
+        // Calculate base position for the column with random offset
+        const baseX = (columnIndex * columnWidth) + (columnWidth / 2) - 100;
+        const randomOffset = getRandomOffset();
+        positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
+        
+        // Position the new note with 70px spacing
+        positionY = lastNoteInColumn ? lastY + 70 : 60; // 70px below the last note
+        
+        // Update noteColumns for this column
+        if (!noteColumns[columnIndex]) {
+            noteColumns[columnIndex] = [];
+        }
+        noteColumns[columnIndex].push({ x: positionX, y: positionY });
+        
+        lastColor = lastAddedNote.style.backgroundColor;
     } else if (lastAddedNote) {
+        // For boards without headers, use the existing logic
         lastX = parsePosition(lastAddedNote.style.left);
         lastY = parsePosition(lastAddedNote.style.top);
         lastColor = lastAddedNote.style.backgroundColor;

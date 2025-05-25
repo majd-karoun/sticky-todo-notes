@@ -208,12 +208,13 @@ body {
     color: inherit;
     resize: none;
     padding: 0 8px 0 0;
-    line-height: 1.5;
+    line-height: 1.3; /* Reduced from 1.5 to 1.3 for more compact text */
     white-space: pre-wrap;
     font-family: 'Comic Neue', cursive;
     font-weight: 400;
     letter-spacing: 0.01em;
-    transition: font-size 0.3s ease; /* Last definition takes precedence */
+    transition: font-size 0.3s ease;
+    margin: -2px 0; /* Slight negative margin to reduce space between lines */
 }
 
 .sticky-content::-webkit-scrollbar { width: 6px; }
@@ -1143,17 +1144,7 @@ body {
     will-change: transform, opacity; /* Common */
     z-index: 1001; /* Common */
 }
-/* First .board-style-menu definition (near trash modal) - kept separate as positions differ */
-.trash-modal ~ .board-style-menu, .board-style-menu { /* Assuming the first one might be related to trash modal, being cautious. If always global, just .board-style-menu */
-    /* This rule is from near trash-modal section. It might be a general menu styling. */
-    /* position: absolute; top: 20px; right: 20px; background: rgba(0, 0, 0, 0.8); */
-    /* border-radius: 10px; padding: 15px; width: 250px; display: none; opacity: 0; */
-    /* transform: scale(0.95); transform-origin: top right; */
-    /* transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10; */
-    /* backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.1); */
-    /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
-    /* This seems like a distinct menu. I'll keep it separate. */
-}
+/* Board style menu definitions are handled in other rules */
 .board-style-menu-trashcontext { /* Renaming for clarity, assuming it's a different menu */
     position: absolute;
     top: 20px;
@@ -1274,6 +1265,13 @@ body {
 .pattern-weekdays::before { content: "Mon"; }
 .pattern-days::before { content: "Day 1"; }
 
+/* Add padding to the board when it has a header */
+.board.pattern-weekdays,
+.board.pattern-days {
+    position: relative;
+    padding-top: 60px; /* Space for the header */
+}
+
 .weekday-header, .day-header {
     position: absolute;
     top: 0; left: 0; right: 0;
@@ -1285,6 +1283,7 @@ body {
     background-color: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     z-index: 1;
+    pointer-events: none; /* Allow clicks to pass through to elements below */
 }
 .weekday-header span, .day-header span {
     position: relative;

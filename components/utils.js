@@ -27,7 +27,7 @@ function parsePosition(value) {
 
 function getNextNotePosition(lastX, lastY) {
     const horizontalOffset = Math.random() * 10 - 5;
-    let newX = lastX + horizontalOffset, newY = lastY + 55;
+    let newX = lastX + horizontalOffset, newY = lastY + 70; // 70px vertical spacing
     const padding = 5, maxX = window.innerWidth - 150, maxY = window.innerHeight - 100;
     if (newY > maxY) { newY = padding; newX = padding + Math.random() * (maxX - padding); }
     newX = Math.min(Math.max(newX, -padding), maxX);

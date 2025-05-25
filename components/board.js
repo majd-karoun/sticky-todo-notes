@@ -399,6 +399,18 @@ function createPatternOverlay(pattern) {
             const items = pattern === 'weekdays' ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : ['Day 1','Day 2','Day 3','Day 4','Day 5'];
             items.forEach(item => header.innerHTML += `<span>${item}</span>`);
             overlay.appendChild(header);
+            
+            // Add a class to the board to indicate it has a header
+            const board = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+            if (board) {
+                board.classList.add('has-header');
+            }
+        }
+    } else {
+        // Remove the has-header class when pattern is set to none
+        const board = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+        if (board) {
+            board.classList.remove('has-header');
         }
     }
     return overlay;

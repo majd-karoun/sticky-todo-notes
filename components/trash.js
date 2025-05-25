@@ -24,6 +24,26 @@ function markNoteAsDone(note) {
         timestamp: new Date().toLocaleString(),
         isBold: content.classList.contains('bold')
     };
+    
+    // Update noteColumns to remove this note's position
+    if (window.noteColumns) {
+        const boardElement = note.closest('.board');
+        if (boardElement && (boardElement.classList.contains('board-pattern-weekdays') || boardElement.classList.contains('board-pattern-days'))) {
+            const boardRect = boardElement.getBoundingClientRect();
+            const noteRect = note.getBoundingClientRect();
+            const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
+            const columnWidth = boardRect.width / 6; // 6 columns for weekdays
+            const columnIndex = Math.min(5, Math.max(0, Math.floor(noteCenterX / columnWidth)));
+            
+            if (window.noteColumns[columnIndex]) {
+                // Remove this note's position from the column
+                window.noteColumns[columnIndex] = window.noteColumns[columnIndex].filter(pos => 
+                    Math.abs(pos.x - parsePosition(note.style.left)) > 1 || 
+                    Math.abs(pos.y - parsePosition(note.style.top)) > 1
+                );
+            }
+        }
+    }
     deletedNotes.unshift(noteData);
     saveDeletedNotes();
     updateTrashCount();
