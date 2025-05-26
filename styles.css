@@ -182,6 +182,7 @@ body {
     border: #5a5a5a 1px solid;
     transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out;
     z-index: 1;
+    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out, z-index 0.1s ease;
 }
 
 .sticky-note.selected {
@@ -190,9 +191,17 @@ body {
 }
 
 .sticky-note:hover {
-    z-index: 100;
+    z-index: 100 !important; /* Important to override inline styles */
     transform: scale(1.03);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 8px 16px rgba(0,0,0,0.2);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25), 
+                0 12px 30px rgba(0,0,0,0.22),
+                0 18px 40px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease-out, box-shadow 0.3s ease-out, z-index 0.1s ease;
+}
+
+/* Class for active/selected notes */
+.sticky-note.active-note {
+    z-index: 50; /* High enough to be above regular notes but below hover */
 }
 
 .sticky-content {
@@ -651,16 +660,7 @@ body {
     font-family: 'Poppins', sans-serif;
     font-weight: 300;
 }
-.restore-all-btn {
-    color: #4CAF50;
-    border: 2px solid #4CAF50;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(5px);
-    width: 160px;
-}
-.restore-all-btn:hover {
-    background: rgba(76, 175, 80, 0.1);
-}
+
 .clear-trash-btn {
     color: #ff4444;
     border: 2px solid #ff4444;

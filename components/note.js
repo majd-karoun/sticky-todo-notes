@@ -140,13 +140,10 @@ function addNote() {
 function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
-    // Get all notes and find the maximum z-index
-    const allNotes = Array.from(document.querySelectorAll('.sticky-note'));
-    const maxZIndex = allNotes.length > 0 
-        ? Math.max(...allNotes.map(n => parseInt(window.getComputedStyle(n).zIndex) || 1))
-        : 1;
-    // Set the new note's z-index to be one higher than the current maximum
-    note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height}; z-index:${maxZIndex + 1};`;
+    // Add active-note class to new notes to ensure they're on top
+    document.querySelectorAll('.sticky-note').forEach(n => n.classList.remove('active-note'));
+    note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height};`;
+    note.classList.add('active-note');
     note.innerHTML = `
         <div class="sticky-content ${isBold ? 'bold' : ''}" contenteditable="true">${text}</div>
         <div class="note-controls">
@@ -223,10 +220,9 @@ function setupNote(note) {
         if (!e.shiftKey) clearSelection();
         else if (!selectedNotes.includes(note)) { selectedNotes.push(note); note.classList.add('selected'); }
 
-        // Set z-index to be on top when starting interaction
-        const allNotes = Array.from(document.querySelectorAll('.sticky-note'));
-        const maxZIndex = Math.max(...allNotes.map(n => parseInt(window.getComputedStyle(n).zIndex) || 1));
-        note.style.zIndex = maxZIndex + 1;
+        // Add active-note class to bring to front when starting interaction
+        document.querySelectorAll('.sticky-note').forEach(n => n.classList.remove('active-note'));
+        note.classList.add('active-note');
 
         startX = clientX; startY = clientY;
         if (e.target.closest('.resize-handle')) {
