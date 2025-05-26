@@ -212,12 +212,17 @@ function setupNote(note) {
         if (!e.shiftKey) clearSelection();
         else if (!selectedNotes.includes(note)) { selectedNotes.push(note); note.classList.add('selected'); }
 
+        // Set z-index to be on top when starting interaction
+        const allNotes = Array.from(document.querySelectorAll('.sticky-note'));
+        const maxZIndex = Math.max(...allNotes.map(n => parseInt(window.getComputedStyle(n).zIndex) || 1));
+        note.style.zIndex = maxZIndex + 1;
+
         startX = clientX; startY = clientY;
         if (e.target.closest('.resize-handle')) {
             isResizing = true; initialW = note.offsetWidth; initialH = note.offsetHeight;
         } else {
             initialX = parsePosition(note.style.left); initialY = parsePosition(note.style.top);
-            holdTimer = setTimeout(() => { isDragging = true; note.style.zIndex = '1000'; }, 150);
+            holdTimer = setTimeout(() => { isDragging = true; }, 150);
         }
         activeNote = note;
     };
@@ -251,7 +256,7 @@ function setupNote(note) {
             if (isDragging) { updateLastPosition(); checkTrashCollision(note); }
         }
         isDragging = false; isResizing = false;
-        note.style.zIndex = ''; activeNote = null;
+        activeNote = null;
     };
 
     note.addEventListener('mousedown', e => handleInteractionStart(e, e.clientX, e.clientY));
