@@ -180,7 +180,6 @@ body {
     animation: paperPop 0.3s ease-out forwards;
     touch-action: none;
     border: #5a5a5a 1px solid;
-    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out;
     z-index: 1;
     transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out, z-index 0.1s ease;
 }
@@ -196,7 +195,7 @@ body {
     box-shadow: 0 6px 20px rgba(0,0,0,0.25), 
                 0 12px 30px rgba(0,0,0,0.22),
                 0 18px 40px rgba(0,0,0,0.15);
-    transition: transform 0.2s ease-out, box-shadow 0.3s ease-out, z-index 0.1s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.3s ease-out, z-index 0.1s ease;
 }
 
 /* Class for active/selected notes */
