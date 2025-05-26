@@ -113,7 +113,12 @@ function addNote() {
         }
         noteColumns[columnIndex].push({ x: positionX, y: positionY });
         
-        lastColor = lastAddedNote.style.backgroundColor;
+        // Use the last note's color from this column if it exists
+        if (lastNoteInColumn) {
+            lastColor = lastNoteInColumn.style.backgroundColor;
+        } else if (lastAddedNote) {
+            lastColor = lastAddedNote.style.backgroundColor;
+        }
     } else if (lastAddedNote) {
         // For boards without headers, use the existing logic
         lastX = parsePosition(lastAddedNote.style.left);
