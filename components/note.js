@@ -140,7 +140,13 @@ function addNote() {
 function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
-    note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height};`;
+    // Get all notes and find the maximum z-index
+    const allNotes = Array.from(document.querySelectorAll('.sticky-note'));
+    const maxZIndex = allNotes.length > 0 
+        ? Math.max(...allNotes.map(n => parseInt(window.getComputedStyle(n).zIndex) || 1))
+        : 1;
+    // Set the new note's z-index to be one higher than the current maximum
+    note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height}; z-index:${maxZIndex + 1};`;
     note.innerHTML = `
         <div class="sticky-content ${isBold ? 'bold' : ''}" contenteditable="true">${text}</div>
         <div class="note-controls">
