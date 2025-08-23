@@ -103,9 +103,18 @@
 
     <div class="trash-bin">
         <div class="bin-lid"></div>
-        <div class="bin-body">
+        <div id="trash" class="trash" draggable="false">
+            <span>🗑️</span>
         </div>
         <div class="trash-count">0</div>
+    </div>
+    
+    <!-- Small Screen Popup - New version for Safari -->
+    <div id="smallScreenPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; -webkit-overflow-scrolling: touch;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <h2 style="color: #333; margin: 0 0 15px 0; font-size: 1.5em; font-weight: bold;">Screen Too Small</h2>
+            <p style="color: #555; margin: 0; line-height: 1.5; font-size: 1em;">This app is designed for larger screens like desktops or tablets. Please use a device with a larger screen for the best experience.</p>
+        </div>
     </div>
 
     <div class="status-bar">
@@ -288,6 +297,44 @@
             }
         }
 
+        function checkScreenSize() {
+            const popup = document.getElementById('smallScreenPopup');
+            const appContainer = document.querySelector('.container') || document.documentElement;
+            const isSmallScreen = window.innerWidth < 600; // Only show popup on screens smaller than 600px
+            
+            if (isSmallScreen) {
+                // Show popup and hide app content
+                if (popup) {
+                    popup.style.display = 'block';
+                    // Force browser to re-render
+                    void popup.offsetHeight;
+                }
+                // Hide all direct children of body except the popup
+                Array.from(document.body.children).forEach(child => {
+                    if (child !== popup) {
+                        child.style.display = 'none';
+                    }
+                });
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                return false;
+            } else {
+                // Hide popup and show app content
+                if (popup) {
+                    popup.style.display = 'none';
+                }
+                // Show all direct children of body
+                Array.from(document.body.children).forEach(child => {
+                    if (child.tagName !== 'SCRIPT' && child.id !== 'smallScreenPopup') {
+                        child.style.display = '';
+                    }
+                });
+                document.documentElement.style.overflow = 'auto';
+                document.body.style.overflow = 'auto';
+                return true;
+            }
+        }
+
         function updateWeatherIfEnabled() {
             if (isWeatherEnabled) {
                 updateWeather();
@@ -295,13 +342,23 @@
         }
         
 
-        // Update immediately and then every second
-        updateStatusBar();
-        setInterval(updateStatusBar, 1000);
+        // Check screen size on load and resize
+        window.addEventListener('load', checkScreenSize);
+        window.addEventListener('resize', checkScreenSize);
+
+        // Initial screen size check
+        checkScreenSize();
         
-        // Update weather every 30 minutes
-        updateWeatherIfEnabled();
-        setInterval(updateWeatherIfEnabled, 30 * 60 * 1000);
+        // Only set up app functionality if screen is large enough
+        if (window.innerWidth >= 768) {
+            // Update immediately and then every second
+            updateStatusBar();
+            setInterval(updateStatusBar, 1000);
+            
+            // Update weather every 30 minutes
+            updateWeatherIfEnabled();
+            setInterval(updateWeatherIfEnabled, 30 * 60 * 1000);
+        }
 
         // Load random station on page load
         loadRandomStation();
