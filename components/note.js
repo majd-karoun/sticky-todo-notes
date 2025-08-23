@@ -6,10 +6,11 @@ function getRandomOffset() {
     return (Math.random() * 40) - 20; // Random value between -20 and 20
 }
 
-// Function to get the column index based on date (0-4 for Monday-Friday, 0 for Sunday)
+// Function to get the column index based on date (0-5 for Monday-Saturday)
 function getDayColumnIndex(date = new Date()) {
-    const day = date.getDay(); // 0 = Sunday, ..., 6 = Saturday
-    return day === 0 ? 0 : (day - 1) % 5; // 0-4 = Monday-Friday, 0 = Sunday (treated as Monday)
+    const day = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    if (day === 0) return 0;  // Sunday -> Monday's column
+    return day - 1;           // Monday(1) -> 0, Tuesday(2) -> 1, ..., Saturday(6) -> 5
 }
 
 // Note Creation and Management
