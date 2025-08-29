@@ -1348,11 +1348,12 @@ body {
     height: 100%;
     background: transparent;
     border: none;
-    outline: none;
-    padding: 0 20px;
-    color: white;
-    font: 300 20px 'Poppins', sans-serif;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 18px;
     text-align: center;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: auto;

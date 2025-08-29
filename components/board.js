@@ -24,7 +24,7 @@ function createBoardUI(boardId) {
     const titleInput = document.createElement('input');
     titleInput.type = 'text';
     titleInput.className = 'board-title-input';
-    titleInput.placeholder = 'title...';
+    titleInput.placeholder = 'Title...';
     titleInput.maxLength = 30;
 
     let titleSaveTimeout;
@@ -238,7 +238,7 @@ function switchToBoard(boardId) {
                 const titleInput = document.createElement('input');
                 titleInput.type = 'text';
                 titleInput.className = 'board-title-input';
-                titleInput.placeholder = 'title...';
+                titleInput.placeholder = 'Title...';
                 titleInput.maxLength = 30;
                 const saveHandler = () => saveBoardTitle(id, titleInput.value);
                 titleInput.addEventListener('change', saveHandler);

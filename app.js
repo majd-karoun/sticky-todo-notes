@@ -62,4 +62,82 @@ document.addEventListener('DOMContentLoaded', function() {
         clearTrashButton.addEventListener('click', clearTrash); // clearTrash is in components/trash.js
     }
 
+    // Setup first letter capitalization for inputs
+    setupFirstLetterCapitalization();
+
 });
+
+// Function to capitalize only the first letter of text inputs
+function setupFirstLetterCapitalization() {
+    function capitalizeFirstLetter(input) {
+        const cursorPosition = input.selectionStart;
+        const value = input.value;
+        
+        if (value.length > 0) {
+            const newValue = value.charAt(0).toUpperCase() + value.slice(1);
+            if (newValue !== value) {
+                input.value = newValue;
+                input.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        }
+    }
+
+    // Handle board title inputs for all boards (including dynamically created ones)
+    function setupBoardTitleCapitalization(input) {
+        input.addEventListener('input', function(e) {
+            capitalizeFirstLetter(e.target);
+        });
+        input.addEventListener('keyup', function(e) {
+            capitalizeFirstLetter(e.target);
+        });
+        input.addEventListener('paste', function(e) {
+            setTimeout(() => capitalizeFirstLetter(e.target), 0);
+        });
+    }
+
+    // Setup for existing board title inputs
+    const boardTitleInputs = document.querySelectorAll('.board-title-input');
+    boardTitleInputs.forEach(input => {
+        setupBoardTitleCapitalization(input);
+    });
+
+    // Use MutationObserver to handle dynamically created board title inputs
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    // Check if the added node is a board or contains board title inputs
+                    const newBoardTitleInputs = node.querySelectorAll ? node.querySelectorAll('.board-title-input') : [];
+                    newBoardTitleInputs.forEach(input => {
+                        setupBoardTitleCapitalization(input);
+                    });
+                    
+                    // Also check if the node itself is a board title input
+                    if (node.classList && node.classList.contains('board-title-input')) {
+                        setupBoardTitleCapitalization(node);
+                    }
+                }
+            });
+        });
+    });
+
+    // Start observing the boards container for changes
+    const boardsContainer = document.querySelector('.boards-container');
+    if (boardsContainer) {
+        observer.observe(boardsContainer, { childList: true, subtree: true });
+    }
+
+    // Handle note textarea
+    const noteTextarea = document.querySelector('.note-input textarea');
+    if (noteTextarea) {
+        noteTextarea.addEventListener('input', function(e) {
+            capitalizeFirstLetter(e.target);
+        });
+        noteTextarea.addEventListener('keyup', function(e) {
+            capitalizeFirstLetter(e.target);
+        });
+        noteTextarea.addEventListener('paste', function(e) {
+            setTimeout(() => capitalizeFirstLetter(e.target), 0);
+        });
+    }
+}
