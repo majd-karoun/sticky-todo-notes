@@ -1181,7 +1181,7 @@ body {
     position: absolute;
     font-size: 120px;
     cursor: move;
-    z-index: 10;
+    z-index: 1000;
     transition: transform 0.2s ease;
     user-select: none;
     -webkit-user-select: none;
@@ -1507,7 +1507,7 @@ body {
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease;
-    z-index: 100;
+    z-index: 1001;
     display: flex;
     align-items: center;
     justify-content: center;
