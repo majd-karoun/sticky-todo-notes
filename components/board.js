@@ -240,6 +240,7 @@ function switchToBoard(boardId) {
             board.classList.add('active');
             board.style.visibility = 'visible';
             board.querySelectorAll('.sticky-note').forEach((note, index) => note.style.setProperty('--note-index', index));
+            board.querySelectorAll('.emoji-sticker').forEach((sticker, index) => sticker.style.setProperty('--sticker-index', index));
 
             if (!board.querySelector('.board-title-circle')) {
                 const titleCircle = document.createElement('div');

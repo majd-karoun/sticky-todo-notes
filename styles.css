@@ -1059,6 +1059,12 @@ body {
     animation: boardNoteReveal 0.4s ease-out forwards; /* Overrides paperPop if conditions match */
     animation-delay: calc(var(--note-index, 0) * 0.05s);
 }
+
+.board.active .emoji-sticker {
+    animation: paperPop 0.3s ease-out forwards;
+    animation-delay: calc(var(--sticker-index, 0) * 0.05s);
+}
+
 @keyframes boardNoteReveal {
     0% { opacity: 0; transform: scale(0.3) translateY(20px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
@@ -1209,16 +1215,17 @@ body {
     border-radius: 50%;
     font-size: 12px;
     cursor: pointer;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     z-index: 11;
-    transition: all 0.2s ease;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
     font-weight: bold;
 }
 
 .emoji-sticker:hover .delete-button {
-    display: flex;
+    opacity: 1;
 }
 
 .emoji-sticker .delete-button:hover {
