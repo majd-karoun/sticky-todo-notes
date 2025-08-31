@@ -1096,7 +1096,169 @@ body {
 }
 .board-button.removing {
     animation: boardButtonPopOut 0.25s cubic-bezier(0.45, -0.36, 0.2, 1) forwards;
+}
+
+/* Emoji Picker Styles */
+.emoji-picker-container {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.emoji-item.recent-emoji {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+}
+
+.emoji-picker {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 200px;
+    
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.emoji-picker::-webkit-scrollbar {
+    width: 6px;
+}
+
+.emoji-picker::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.emoji-picker::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.emoji-picker::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+
+
+
+.emoji-item {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.emoji-item:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.emoji-item:active {
+    transform: scale(0.95);
+}
+
+/* Emoji Sticker Styles */
+.emoji-sticker {
+    position: absolute;
+    font-size: 120px;
+    cursor: move;
+    z-index: 10;
+    transition: transform 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    text-shadow: 
+        -3px -3px 0 white,
+        3px -3px 0 white,
+        -3px 3px 0 white,
+        3px 3px 0 white,
+        -3px 0 0 white,
+        3px 0 0 white,
+        0 -3px 0 white,
+        0 3px 0 white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.emoji-sticker:hover {
+    transform: scale(1.1);
+}
+
+.emoji-sticker .delete-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 23px;
+    height: 23px;
+    background: rgba(255, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 11;
+    transition: all 0.2s ease;
+    font-weight: bold;
+}
+
+.emoji-sticker:hover .delete-button {
+    display: flex;
+}
+
+.emoji-sticker .delete-button:hover {
+    background: rgba(255, 68, 68, 1);
+    transform: scale(1.1);
+}
+
+.emoji-sticker.dragging {
+    z-index: 100;
+    transform: scale(1.1);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
     pointer-events: none;
+}
+
+@keyframes emojiPop {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(5deg); opacity: 0.8; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes emojiDelete {
+    0% { transform: scale(1) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.2) rotate(-5deg); opacity: 0.8; }
+    100% { transform: scale(0) rotate(0deg); opacity: 0; }
+}
+
+.emoji-sticker.new {
+    animation: emojiPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.emoji-sticker.deleting {
+    animation: emojiDelete 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+}
+
+.emoji-sticker.selected {
+    outline: 3px solid #ffffff;
+    outline-offset: 2px;
+    border-radius: 8px;
+   
 }
 
 .board-style-button {
@@ -1128,9 +1290,9 @@ body {
 
 .board-style-menu { /* Second definition, for board style button. Distinct from first one */
     position: absolute;
-    top: -350px;
+    top: -625px;
     left: 0; /* Different from first .board-style-menu */
-    width: 220px; /* Different width */
+    width: 220px; /* Increased width to accommodate emoji grid */
     background-color: rgba(0, 0, 0, 0.3); /* Common */
     border-radius: 8px; /* Common */
     padding: 15px; /* Common */
@@ -1180,6 +1342,14 @@ body {
     font-family: 'Poppins', sans-serif;
     font-weight: 300;
 }
+/* Add specific margin for Board Pattern and Add Stickers labels */
+.style-option-label:nth-of-type(2) {
+    margin-top: 15px;
+}
+.style-option-label:nth-of-type(3) {
+    margin-top: 20px;
+}
+
 .board-style-colors, .board-style-patterns { /* Combined common animation props */
     opacity: 0;
     transform: translateY(5px);
@@ -1194,6 +1364,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+    margin-bottom: 15px;
 }
 .board-style-menu.visible .board-style-colors { animation: menuItemFadeIn 0.3s ease forwards; }
 .board-style-menu.visible .board-style-patterns { animation: menuItemFadeIn 0.3s ease forwards 0.1s; }

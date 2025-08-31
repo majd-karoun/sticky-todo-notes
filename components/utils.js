@@ -1,14 +1,18 @@
 // Global Variables
 const colors = ['#f0e68c', '#98ff98', '#ff7eb9', '#7afcff', '#FE8801', '#ec0c39', '#AF65EF', '#ffd700', '#C1C1C1', '#FFFFFF'];
 const boardStyles = {
-    colors: { default: '#1a1a1a', current: '#1a1a1a' },
+    colors: { 
+        default: '#1a1a1a', 
+        current: '#1a1a1a',
+        available: ['#1a1a1a', '#500000', '#004000', '#000050', '#10253F', '#400040']
+    },
     patterns: { default: 'none', current: 'none' }
 };
 let deletedNotes = [];
 let holdTimer, activeNote = null, activePalette = null;
 let isSelecting = false, selectionBox = null, selectionStartX = 0, selectionStartY = 0;
-let selectedNotes = [], isMovingSelection = false, selectionMoveStartX = 0, selectionMoveStartY = 0;
-let notesInitialPositions = [];
+let selectedNotes = [], selectedStickers = [], isMovingSelection = false, selectionMoveStartX = 0, selectionMoveStartY = 0;
+let notesInitialPositions = [], stickersInitialPositions = [];
 const lastNotePositions = {}, lastNoteColors = {};
 lastNotePositions[1] = { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 75 };
 lastNoteColors[1] = colors[0];

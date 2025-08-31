@@ -68,6 +68,11 @@ function createBoardUI(boardId) {
     setTimeout(() => buttonElement.classList.remove('new-button'), 500);
     loadBoardStyles(boardId);
     loadBoardTitle(boardId);
+    
+    // Load emoji stickers for the new board
+    if (window.emojiStickers) {
+        window.emojiStickers.loadEmojiStickers(boardId);
+    }
 }
 
 function deleteBoard(boardId) {
@@ -136,6 +141,11 @@ function continueWithBoardDeletion(boardId) {
     localStorage.removeItem(`boardColor_${boardId}`);
     localStorage.removeItem(`boardPattern_${boardId}`);
     localStorage.removeItem(`boardStyles_board_${boardId}`);
+    
+    // Clean up emoji stickers
+    if (window.emojiStickers) {
+        window.emojiStickers.cleanupEmojiStickers(boardId);
+    }
 
     // Shift style settings from next boards
     for (let i = boardId + 1; i <= boardCount; i++) {
@@ -263,6 +273,12 @@ function switchToBoard(boardId) {
     setActiveStyle();
     document.querySelectorAll('.board-pattern-option, .pattern-preview').forEach(el => el.style.backgroundColor = boardStyles.colors.current);
     updateBoardIndicators();
+    
+    // Load emoji stickers for the current board
+    if (window.emojiStickers) {
+        window.emojiStickers.renderEmojiStickers(currentBoardId);
+    }
+    
     setTimeout(() => showBoardTitleTemporarily(currentBoardId), 300);
 }
 
@@ -311,6 +327,14 @@ function setupBoardNavigation() {
         if (targetTagName === 'TEXTAREA' || isEditable) {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); addNote(); }
             return;
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            // Delete selected stickers
+            if (selectedStickers.length > 0) {
+                e.preventDefault();
+                deleteSelectedStickers();
+                return;
+            }
         }
         if (e.key === 'ArrowLeft' && currentBoardId > 1) switchToBoard(currentBoardId - 1);
         else if (e.key === 'ArrowRight' && currentBoardId < boardCount) switchToBoard(currentBoardId + 1);

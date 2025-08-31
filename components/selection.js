@@ -21,7 +21,7 @@ function initBoardSelectionHandlers() {
 }
 
 function startSelection(e) {
-    if (e.target.closest('.sticky-note, .note-input, .trash-bin, .boards-navigation, .board-style-button')) return;
+    if (e.target.closest('.sticky-note, .note-input, .trash-bin, .boards-navigation, .board-style-button, .emoji-sticker')) return;
     e.preventDefault();
     const textarea = document.querySelector('.note-input textarea');
     if (textarea && document.activeElement === textarea) textarea.blur();
@@ -57,6 +57,7 @@ function checkNotesInSelection() {
     const currentBoardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
     if (!currentBoardElement) return; // Ensure board exists
 
+    // Check notes
     Array.from(currentBoardElement.querySelectorAll('.sticky-note')).forEach(note => {
         const noteRect = note.getBoundingClientRect();
         const intersects = !(noteRect.right < selectionRect.left || noteRect.left > selectionRect.right ||
@@ -68,11 +69,26 @@ function checkNotesInSelection() {
             selectedNotes.splice(index, 1); note.classList.remove('selected');
         }
     });
+
+    // Check stickers
+    Array.from(currentBoardElement.querySelectorAll('.emoji-sticker')).forEach(sticker => {
+        const stickerRect = sticker.getBoundingClientRect();
+        const intersects = !(stickerRect.right < selectionRect.left || stickerRect.left > selectionRect.right ||
+                             stickerRect.bottom < selectionRect.top || stickerRect.top > selectionRect.bottom);
+        const index = selectedStickers.indexOf(sticker);
+        if (intersects) {
+            if (index === -1) { selectedStickers.push(sticker); sticker.classList.add('selected'); }
+        } else if (!isMovingSelection && index !== -1) { // Only remove if not actively moving the selection
+            selectedStickers.splice(index, 1); sticker.classList.remove('selected');
+        }
+    });
 }
 
 function clearSelection() {
     selectedNotes.forEach(note => note.classList.remove('selected'));
     selectedNotes = [];
+    selectedStickers.forEach(sticker => sticker.classList.remove('selected'));
+    selectedStickers = [];
 }
 
 function handleSelectionMove(e) {
@@ -81,7 +97,10 @@ function handleSelectionMove(e) {
     selectionMoveStartX = e.clientX;
     selectionMoveStartY = e.clientY;
     notesInitialPositions = selectedNotes.map(note => ({
-        note, x: parsePosition(note.style.left), y: parsePosition(note.style.top)
+        element: note, x: parsePosition(note.style.left), y: parsePosition(note.style.top), type: 'note'
+    }));
+    stickersInitialPositions = selectedStickers.map(sticker => ({
+        element: sticker, x: parsePosition(sticker.style.left), y: parsePosition(sticker.style.top), type: 'sticker'
     }));
     document.addEventListener('mousemove', moveSelectionHandler);
     document.addEventListener('mouseup', endSelectionMoveHandler);
@@ -94,14 +113,26 @@ function moveSelectionHandler(e) {
     const padding = 5, minX = -padding, minY = -padding;
     const maxX = window.innerWidth - padding, maxY = window.innerHeight - padding;
 
+    // Move notes
     notesInitialPositions.forEach(item => {
         let newX = item.x + dx;
         let newY = item.y + dy;
         // Constrain to allow 3/4 of note off-screen, as per single note drag
-        newX = Math.min(Math.max(newX, minX), maxX - (item.note.offsetWidth / 4));
-        newY = Math.min(Math.max(newY, minY), maxY - (item.note.offsetHeight / 4));
-        item.note.style.left = `${newX}px`;
-        item.note.style.top = `${newY}px`;
+        newX = Math.min(Math.max(newX, minX), maxX - (item.element.offsetWidth / 4));
+        newY = Math.min(Math.max(newY, minY), maxY - (item.element.offsetHeight / 4));
+        item.element.style.left = `${newX}px`;
+        item.element.style.top = `${newY}px`;
+    });
+
+    // Move stickers
+    stickersInitialPositions.forEach(item => {
+        let newX = item.x + dx;
+        let newY = item.y + dy;
+        // Constrain to allow 3/4 of sticker off-screen
+        newX = Math.min(Math.max(newX, minX), maxX - (item.element.offsetWidth / 4));
+        newY = Math.min(Math.max(newY, minY), maxY - (item.element.offsetHeight / 4));
+        item.element.style.left = `${newX}px`;
+        item.element.style.top = `${newY}px`;
     });
 }
 
@@ -112,6 +143,22 @@ function endSelectionMoveHandler() {
     document.removeEventListener('mousemove', moveSelectionHandler);
     document.removeEventListener('mouseup', endSelectionMoveHandler);
     saveActiveNotes();
+    
+    // Update sticker positions in storage
+    selectedStickers.forEach(sticker => {
+        const boardId = document.querySelector('.board.active').dataset.boardId;
+        const stickerId = sticker.dataset.stickerId;
+        if (emojiStickers[boardId] && emojiStickers[boardId][stickerId]) {
+            emojiStickers[boardId][stickerId].x = parseInt(sticker.style.left);
+            emojiStickers[boardId][stickerId].y = parseInt(sticker.style.top);
+        }
+    });
+    
+    // Save sticker positions
+    const boardId = document.querySelector('.board.active').dataset.boardId;
+    if (selectedStickers.length > 0) {
+        saveEmojiStickers(boardId);
+    }
 
     // Iterate backwards when splicing to avoid index issues
     for (let i = selectedNotes.length - 1; i >= 0; i--) {
