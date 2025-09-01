@@ -1274,6 +1274,10 @@ body {
     left: 295px;
     z-index: 1000;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
 }
 .board-style-icon {
     width: 45px;
@@ -1284,12 +1288,14 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.3s ease, background-color 0.3s ease;
+    transition: all 0.2s ease;
     color: rgb(151, 151, 151);
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .board-style-icon svg { width: 27px; height: 27px; }
+
 .board-style-icon:hover {
     transform: scale(1.1);
     background-color: rgba(255, 255, 255, 0.1);
