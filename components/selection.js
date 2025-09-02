@@ -134,6 +134,11 @@ function moveSelectionHandler(e) {
         item.element.style.left = `${newX}px`;
         item.element.style.top = `${newY}px`;
     });
+    
+    // Check for board button hover during selection drag
+    if (selectedNotes.length > 0) {
+        checkBoardButtonHover(e.clientX, e.clientY);
+    }
 }
 
 function endSelectionMoveHandler() {
@@ -142,30 +147,38 @@ function endSelectionMoveHandler() {
     document.body.classList.remove('selecting');
     document.removeEventListener('mousemove', moveSelectionHandler);
     document.removeEventListener('mouseup', endSelectionMoveHandler);
-    saveActiveNotes();
     
-    // Update sticker positions in storage
-    selectedStickers.forEach(sticker => {
+    // Check for board drop before other operations
+    const dropResult = checkBoardButtonDrop();
+    if (!dropResult.moved) {
+        saveActiveNotes();
+        
+        // Update sticker positions in storage
+        selectedStickers.forEach(sticker => {
+            const boardId = document.querySelector('.board.active').dataset.boardId;
+            const stickerId = sticker.dataset.stickerId;
+            if (emojiStickers[boardId] && emojiStickers[boardId][stickerId]) {
+                emojiStickers[boardId][stickerId].x = parseInt(sticker.style.left);
+                emojiStickers[boardId][stickerId].y = parseInt(sticker.style.top);
+            }
+        });
+        
+        // Save sticker positions
         const boardId = document.querySelector('.board.active').dataset.boardId;
-        const stickerId = sticker.dataset.stickerId;
-        if (emojiStickers[boardId] && emojiStickers[boardId][stickerId]) {
-            emojiStickers[boardId][stickerId].x = parseInt(sticker.style.left);
-            emojiStickers[boardId][stickerId].y = parseInt(sticker.style.top);
+        if (selectedStickers.length > 0) {
+            saveEmojiStickers(boardId);
         }
-    });
-    
-    // Save sticker positions
-    const boardId = document.querySelector('.board.active').dataset.boardId;
-    if (selectedStickers.length > 0) {
-        saveEmojiStickers(boardId);
-    }
 
-    // Iterate backwards when splicing to avoid index issues
-    for (let i = selectedNotes.length - 1; i >= 0; i--) {
-        if (checkTrashCollision(selectedNotes[i])) {
-            selectedNotes.splice(i, 1); // Remove from selection if trashed
+        // Iterate backwards when splicing to avoid index issues
+        for (let i = selectedNotes.length - 1; i >= 0; i--) {
+            if (checkTrashCollision(selectedNotes[i])) {
+                selectedNotes.splice(i, 1); // Remove from selection if trashed
+            }
         }
+        // If all selected notes were trashed, selection should be empty.
+        // If some remain, they stay selected.
     }
-    // If all selected notes were trashed, selection should be empty.
-    // If some remain, they stay selected.
+    
+    // Clear any board button hover states
+    clearBoardButtonHover();
 }

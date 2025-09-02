@@ -19,6 +19,13 @@ body {
     overflow: hidden;
 }
 
+:root {
+    --note-shadow: 0 1px 1px rgba(0,0,0,0.15),
+                   0 2px 2px rgba(0,0,0,0.15),
+                   0 4px 4px rgba(0,0,0,0.15),
+                   0 8px 8px rgba(0,0,0,0.15);
+}
+
 .status-bar {
     position: fixed;
     bottom: 5px;
@@ -34,43 +41,18 @@ body {
     padding: 0 20px;
     z-index: 1000;
     border-radius: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-weight: 200;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
 }
 
-.status-time, .status-date {
-    color: white;
-    font-size: 14px;
-    font-weight: 100;
-}
 
 .status-date {
     margin-left: 50px;
 }
 
-.status-bar .status-weather { /* First definition, assumed specific to status-bar */
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: white;
-    font-weight: 100;
-    margin-right: -10px;
-}
 
-.weather-icon {
-    font-size: 18px;
-}
-
-.weather-temp {
-    font-size: 14px;
-    font-weight: 100;
-}
-
-:root {
-    --note-shadow: 0 1px 1px rgba(0,0,0,0.15),
-                   0 2px 2px rgba(0,0,0,0.15),
-                   0 4px 4px rgba(0,0,0,0.15),
-                   0 8px 8px rgba(0,0,0,0.15);
-}
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
@@ -89,11 +71,55 @@ body {
     100% { transform: scale(0.2) translate(var(--throwX), var(--throwY)) rotate(0deg); opacity: 0; }
 }
 
-@keyframes smoothBold {
-    0% { font-weight: 400; transform: scale(1); letter-spacing: 0.01em; }
-    50% { font-weight: 700; transform: scale(1); }
-    100% { font-weight: 900; transform: scale(1); letter-spacing: 0.2px; }
+@keyframes noteSuck {
+    0% { 
+        transform: scale(1) rotate(0deg); 
+        opacity: 1; 
+    }
+    50% { 
+        transform: scale(0.5) translate(calc(var(--suckX) * 0.5), calc(var(--suckY) * 0.5)) rotate(5deg); 
+        opacity: 0.5; 
+    }
+    100% { 
+        transform: scale(0.1) translate(var(--suckX), var(--suckY)) rotate(0deg); 
+        opacity: 0; 
+    }
 }
+
+@keyframes noteSuckHover {
+    0% {
+        transform: scale(1) translate(0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.5) translate(calc(var(--suckX) * 1), calc(var(--suckY) * 1));
+        opacity: 0.5;
+    }
+}
+
+@keyframes noteSuckComplete {
+    0% {
+        transform: scale(0.5) translate(calc(var(--suckX) * 1), calc(var(--suckY) * 1));
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(0.1) translate(calc(var(--suckX) * 3), calc(var(--suckY) * 3));
+        opacity: 0;
+    }
+}
+
+@keyframes noteSuckReverse {
+    0% {
+        transform: scale(0.5) translate(calc(var(--suckX) * 1), calc(var(--suckY) * 1));
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1) translate(0, 0);
+        opacity: 1;
+    }
+}
+
+
 
 @keyframes binShake {
     0% { transform: rotate(0deg); }
@@ -119,15 +145,7 @@ body {
   100% { opacity: 1; }
 }
 
-@keyframes weather-fade {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
 
-@keyframes weather-slide {
-  0% { transform: translateX(-100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
 
 @keyframes modalFadeIn {
     from { opacity: 0; transform: translateY(20px); }
@@ -140,11 +158,7 @@ body {
     100% { opacity: 0; }
 }
 
-@keyframes textBolden {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}
+
 
 @keyframes textareaExpand {
     0% { transform: scale(1); height: 50px; }
@@ -159,11 +173,7 @@ body {
 .board {
     width: 100vw;
     height: 100vh;
-    position: relative;
-    overflow: hidden;
-    background-color: #1a1a1a;
-    background-image: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
-    box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.3);
+   
 }
 
 .sticky-note {
@@ -172,35 +182,33 @@ body {
     min-width: 150px;
     min-height: 150px;
     padding: 8px;
-    padding-bottom: 0;
-    border-radius: 2px;
-    background: #ffd700;
+    padding-bottom: 2px;
+
+    border-radius: 0px;
     color: #000;
-    box-shadow: var(--note-shadow);
     animation: paperPop 0.3s ease-out forwards;
-    touch-action: none;
-    border: #5a5a5a 1px solid;
+    cursor: grab;
+    border: rgb(79, 79, 79) 1px solid;
     z-index: 1;
-    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out, z-index 0.1s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
 .sticky-note.selected {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), var(--note-shadow);
-    z-index: 2;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+   
 }
 
 .sticky-note:hover {
-    z-index: 100 !important; /* Important to override inline styles */
-    transform: scale(1.03);
+    z-index: 1000 !important;
     box-shadow: 0 6px 20px rgba(0,0,0,0.25), 
                 0 12px 30px rgba(0,0,0,0.22),
                 0 18px 40px rgba(0,0,0,0.15);
-    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.3s ease-out, z-index 0.1s ease;
+    transition:  box-shadow 0.3s ease-out;
 }
 
-/* Class for active/selected notes */
+/* change last moved note z-index to top */
 .sticky-note.active-note {
-    z-index: 50; /* High enough to be above regular notes but below hover */
+    z-index: 100; 
 }
 
 .sticky-content {
@@ -210,19 +218,21 @@ body {
     word-wrap: break-word;
     cursor: text;
     outline: none;
-    background: transparent;
     border: none;
     font-size: 1.2rem;
     color: inherit;
     resize: none;
     padding: 0 8px 0 0;
-    line-height: 1.3; /* Reduced from 1.5 to 1.3 for more compact text */
+    line-height: 1.1; 
     white-space: pre-wrap;
     font-family: 'Comic Neue', cursive;
     font-weight: 400;
     letter-spacing: 0.01em;
     transition: font-size 0.3s ease;
-    margin: -2px 0; /* Slight negative margin to reduce space between lines */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .sticky-content::-webkit-scrollbar { width: 6px; }
@@ -231,18 +241,21 @@ body {
 
 .sticky-content[contenteditable="true"] {
     border: 1px dashed rgba(0,0,0,0.2);
-    padding: 2px;
-    font-family: 'Comic Neue', cursive !important;
 }
 
 .sticky-content:hover { background: rgba(0,0,0,0.03); }
-.sticky-content:focus { background: rgba(0,0,0,0.05); }
+.sticky-content:focus { 
+    background: rgba(0,0,0,0.05);
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
 
 .sticky-content.bold {
-    animation: smoothBold 0.3s ease-in-out forwards;
-    text-shadow: 0 0 0.5px rgba(0,0,0,0.3);
+
+
     font-size: 1.6rem;
-    font-family: 'Comic Neue', cursive;
     font-weight: 700;
 }
 
@@ -251,33 +264,12 @@ body {
     bottom: 10px;
     left: 10px;
     display: flex;
-    gap: 8px;
+    gap: 5px;
     align-items: center;
-    z-index: 5;
+   
 }
 
-.bold-button {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(0,0,0,0.1);
-    color: rgba(0,0,0,0.6);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    font-weight: bold;
-}
-.bold-button:hover {
-    background: rgba(0,0,0,0.2);
-    transform: scale(1.1);
-}
-.bold-button.active {
-    background: rgba(0,0,0,0.3);
-    color: rgba(0,0,0,0.8);
-}
+
 
 .done-button, .bold-toggle {
     width: 24px;
@@ -291,43 +283,55 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
 }
+
 .done-button:hover, .bold-toggle:hover {
     background: rgba(0,0,0,0.2);
-    transform: scale(1.1);
 }
+
 .done-button {
     font-size: 1rem;
 }
 
+
 .bold-toggle {
     font-family: 'Comic Neue', cursive !important;
     font-weight: 700 !important;
-    font-size: 0.8rem !important;
+    
 }
+
 .bold-toggle.active {
     background: rgba(0,0,0,0.3) !important;
     color: rgba(0,0,0,1) !important;
-    transform: scale(1.1);
     font-size: 1rem !important;
 }
-.bold-toggle:hover { /* Specific hover for bold-toggle, overrides shared if properties conflict */
-    background: rgba(0,0,0,0.25); /* Overrides shared background */
-}
-.bold-toggle:active {
-    transform: scale(0.95);
-}
+
+
 
 .color-button {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    border: 2px solid rgba(0,0,0,0.2);
     cursor: pointer;
-    transition: transform 0.2s;
+    border: 2px solid rgba(0,0,0,0.1);
+    transition: transform 0.2s, background-color 0.3s ease;
     position: relative;
 }
-.color-button:hover, .done-button:hover { /* .done-button:hover already defined, this adds .color-button:hover */
+
+/* Smooth transition for color changes */
+.sticky-note.color-transition{
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.color-button.color-transition {
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.color-button:hover {
     transform: scale(1.1);
 }
 
@@ -341,9 +345,16 @@ body {
     display: none;
     grid-template-columns: repeat(5, 1fr);
     gap: 3px;
-    z-index: 10;
     animation: colorPopup 0.18s ease-out forwards;
+    
 }
+
+.color-palette.visible {
+    display: grid;
+}
+
+
+
 .color-palette.closing {
     animation: colorPopdown 0.18s ease-out forwards;
 }
@@ -353,12 +364,15 @@ body {
     height: 20px;
     border-radius: 50%;
     cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.3);
     transition: transform 0.2s;
 }
+
 .color-option:hover {
-    transform: scale(1.2);
-    border-color: rgba(255,255,255,0.8);
+    transform: scale(
+        1.1
+    );
+    border: 2px solid white;
+  
 }
 
 .resize-handle {
@@ -373,6 +387,7 @@ body {
     justify-content: center;
     z-index: 1;
 }
+
 .resize-handle::before {
     content: '';
     position: absolute;
@@ -396,6 +411,10 @@ body {
     backdrop-filter: blur(5px);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     z-index: 0;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
+    
 }
 
 .textarea-container {
@@ -418,15 +437,31 @@ body {
     font-weight: 300;
     transition: height 0.3s ease, background-color 0.3s ease;
     overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
+
 .note-input textarea:focus {
     outline: none;
     background: rgba(255,255,255,0.95);
     overflow: auto;
     height: 200px;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
 .note-input textarea:not(:focus) {
     height: 55px;
+}
+
+
+.textarea-container:hover .shortcut-icon {
+    opacity: 1;
+    transform: scale(1.05);
+    background: transparent;
 }
 
 .shortcut-icon {
@@ -458,11 +493,6 @@ body {
     font-weight: 300;
     font-size: 0.6rem;
     opacity: 0.8;
-}
-.textarea-container:hover .shortcut-icon {
-    opacity: 1;
-    transform: scale(1.05);
-    background: transparent;
 }
 
 @media screen and (max-width: 1024px) {
@@ -502,27 +532,12 @@ body {
     z-index: 1000;
     border-radius: 5px;
 }
-.trash-shortcut-hint {
-    position: absolute;
-    top: 20px;
-    left: -180px;
-    transform: translateX(0);
-    background: rgba(0, 0, 0, 0.3);
-    color: rgba(255, 255, 255, 0.5);
-    padding: 5px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    width: max-content;
-    backdrop-filter: blur(2px);
-    display: none;
-}
+
+
 .trash-bin:hover .trash-shortcut-hint {
     opacity: 1;
 }
+
 .trash-count {
     position: absolute;
     top: -10px;
@@ -670,21 +685,23 @@ body {
 .clear-trash-btn:hover {
     background: rgba(255, 68, 68, 0.1);
 }
+
 .close-modal-btn {
-    border: 2px solid rgb(200, 198, 198);
-    color: rgb(200, 198, 198);
-    width: 43px;
-    height: 43px;
+    border: 2px solid rgb(255, 255, 255);
+    color: rgb(255, 254, 254);
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    display: flex;
+    display: flex; 
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(154, 99, 99, 0.3);
     cursor: pointer;
     margin-left: 15px;
-    font-size: 1.5rem;
-    backdrop-filter: blur(5px);
+    font-size: 1.5rem !important;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif !important;
 }
+
 .close-modal-btn:hover {
     background: rgba(255,255,255,0.2);
 }
@@ -813,11 +830,15 @@ body {
     display: flex;
     flex-direction: row;
     gap: 10px;
-    z-index: 1000;
+    z-index: 1001;
     padding: 5px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 25px;
     backdrop-filter: blur(5px);
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
+
 }
 
 .status-weather { /* Second definition, for boards navigation. Will merge/override first if same classname target */
@@ -867,7 +888,6 @@ body {
 .weather-toggle:active::before, .weather-toggle.on:active::before { /* Combined */
     transform: scale(0.95);
 }
-/* .weather-toggle.on:active::before { transform: scale(0.95); } Redundant */
 
 .shortcut-hint {
     color: rgba(255, 255, 255, 0.5);
@@ -879,7 +899,7 @@ body {
     text-align: center;
     background: rgba(0, 0, 0, 0.3);
     padding: 5px 8px;
-    border-radius: 4px;
+    border-radius: 20px;
     backdrop-filter: blur(2px);
     opacity: 0;
     transition: opacity 0.3s;
@@ -907,20 +927,28 @@ body {
     border: 2px solid rgba(255, 255, 255, 0.3);
     font-family: 'Poppins', sans-serif;
     font-weight: 200;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
+    
 }
 .board-button {
     background-color: rgba(0, 0, 0, 0.1);
     font-size: 20px;
     line-height: 1;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
 }
 .board-button:hover {
-    transform: scale(1.05);
     background-color: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.5);
+  
+ 
 }
 .board-button.active {
     background-color: rgba(255, 255, 255, 0.2);
-    border-color: white; /* Simplified from border: 2px solid white */
+    border-color: white; 
     transform: scale(1.1);
 }
 .add-board-button {
@@ -928,9 +956,9 @@ body {
     font-size: 24px;
 }
 .add-board-button:hover {
-    transform: scale(1.1);
     background-color: rgba(255, 255, 255, 0.1);
 }
+
 .add-board-button.disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -1011,6 +1039,17 @@ body {
     0% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); backdrop-filter: blur(0px); }
     100% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); backdrop-filter: blur(10px); }
 }
+
+@keyframes fadeOut {
+    0% { 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    100% { 
+        opacity: 0; 
+        transform: scale(0.95);
+    }
+}
 .note-deleting {
     animation: diagonalFadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); /* Initial state for animation */
@@ -1060,9 +1099,9 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    padding: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
+    padding: 8px;
+    background: rgba(110, 110, 110, 0.2);;
+    border-radius: 10px;
     overflow-x: hidden;
     overflow-y: auto;
     max-height: 200px;
@@ -1093,8 +1132,8 @@ body {
 
 
 .emoji-item {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1107,9 +1146,11 @@ body {
 }
 
 .emoji-item:hover {
-    transform: scale(1.1);
+   
     background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    
+    
 }
 
 .emoji-item:active {
@@ -1139,9 +1180,7 @@ body {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-.emoji-sticker:hover {
-    transform: scale(1.1);
-}
+
 
 .emoji-sticker .delete-button {
     position: absolute;
@@ -1238,57 +1277,50 @@ body {
 .board-style-icon svg { width: 27px; height: 27px; }
 
 .board-style-icon:hover {
-    transform: scale(1.1);
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.board-style-menu { /* Second definition, for board style button. Distinct from first one */
+.board-style-menu {
     position: absolute;
-    top: -625px;
-    left: 0; /* Different from first .board-style-menu */
-    width: 220px; /* Increased width to accommodate emoji grid */
-    background-color: rgba(0, 0, 0, 0.3); /* Common */
-    border-radius: 8px; /* Common */
-    padding: 15px; /* Common */
-    display: none; /* Common */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Common */
-    backdrop-filter: blur(5px); /* Common */
-    transform-origin: bottom left; /* Different */
-    opacity: 0; /* Common */
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease; /* Common */
-    will-change: transform, opacity; /* Common */
-    z-index: 1001; /* Common */
-}
-/* Board style menu definitions are handled in other rules */
-.board-style-menu-trashcontext { /* Renaming for clarity, assuming it's a different menu */
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.8);
-    border-radius: 10px;
+    top: -660px;
+    width: 220px; 
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 15px;
     padding: 15px;
-    width: 250px;
     display: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    backdrop-filter: blur(15px) saturate(180%);
+
+    transform-origin: bottom left; 
     opacity: 0;
-    transform: scale(0.95);
-    transform-origin: top right;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10; /* Lower z-index than other menu */
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    will-change: transform, opacity;
+    z-index: 1001;
+}
+
+/* Backdrop blur with better browser support */
+@supports (backdrop-filter: blur(1px)) {
+    .board-style-menu {
+        background: rgba(0, 0, 0, 0.7);
+        -webkit-backdrop-filter: blur(15px) saturate(180%);
+        backdrop-filter: blur(15px) saturate(180%);
+    }
 }
 
 
 .board-style-menu.closing { /* Applies to the main board style menu */
     display: block; /* To allow animation */
-    animation: fadeOut 0.3s ease forwards; /* Ensure fadeOut is defined or use opacity transition */
+    animation: fadeOut 0.3s ease forwards; 
+    /* Ensure fadeOut is defined or use opacity transition */
 }
+
 .board-style-menu.visible {
     display: block;
     opacity: 1;
     transform: scale(1); /* Assuming default is not scaled or use specific transform */
 }
+
 .style-option-label {
     color: #ccc;
     margin-bottom: 8px;
@@ -1305,6 +1337,9 @@ body {
 }
 
 .board-style-colors, .board-style-patterns { /* Combined common animation props */
+    background: rgba(110, 110, 110, 0.2);
+    border-radius: 10px;
+    padding: 8px;
     opacity: 0;
     transform: translateY(5px);
 }
@@ -1312,13 +1347,13 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 .board-style-patterns {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 .board-style-menu.visible .board-style-colors { animation: menuItemFadeIn 0.3s ease forwards; }
 .board-style-menu.visible .board-style-patterns { animation: menuItemFadeIn 0.3s ease forwards 0.1s; }
@@ -1337,7 +1372,7 @@ body {
     transition: transform 0.2s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.board-color-option:hover, .board-pattern-option:hover { transform: scale(1.05); }
+.board-color-option:hover, .board-pattern-option:hover { border: 2px solid rgba(255, 255, 255, 0.3) }
 .board-color-option.active, .board-pattern-option.active { border: 2px solid white; }
 
 .board-pattern-option {
@@ -1346,10 +1381,10 @@ body {
     border-radius: 4px;
     cursor: pointer;
     transition: transform 0.2s ease, background-color 0.5s ease, border-color 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
 }
-.board-pattern-option:hover { background-color: rgba(60, 60, 60, 0.7); }
+
 
 .pattern-preview {
     width: 100%;
@@ -1408,7 +1443,11 @@ body {
     background-color: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     z-index: 1;
-    pointer-events: none; /* Allow clicks to pass through to elements below */
+    pointer-events: none;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important; /* Allow clicks to pass through to elements below */
 }
 .weekday-header span, .day-header span {
     position: relative;
@@ -1523,12 +1562,11 @@ body {
     overflow: hidden;
     pointer-events: auto;
 }
+
 .board-title-circle:hover, .board-title-circle.delayed-close, .board-title-circle.show-temporary {
     width: 250px !important;
-    height: 50px !important;
-    border-radius: 10px !important;
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 .board-title-input {
     width: 100%;
@@ -1544,6 +1582,7 @@ body {
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: auto;
+
 }
 .board-title-input::placeholder { opacity: 1; transition: opacity 0.3s ease; }
 .board-title-input:not(:focus)::placeholder { opacity: 1 !important; }
@@ -1601,6 +1640,26 @@ body {
 .board-button.has-notes::after {
     background-color: rgba(76, 175, 80, 0.8);
     transform: translateX(-50%) scale(1);
+}
+
+/* Drag-and-drop hover effect for board buttons */
+.board-button.drag-hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border-color: #4CAF50 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+    transition: all 0.2s ease;
+}
+
+.board-button.drag-hover::after {
+    background-color: rgba(76, 175, 80, 1) !important;
+    transform: translateX(-50%) scale(1.2) !important;
+}
+
+/* Proximity scaling effect for board buttons */
+.board-button.drag-proximity {
+    transform: scale(1.2) !important;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .button-pattern-dots { background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 6px 6px; }
