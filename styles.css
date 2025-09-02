@@ -1645,3 +1645,38 @@ body {
 body.selecting * {
     user-select: none !important;
 }
+
+@media not all and (max-width: 400px) and (min-resolution: 0.001dpcm) {
+    @supports (-webkit-appearance:none) and (stroke-color:transparent) {
+        .note-input textarea { font-size: 1.5rem; }
+        .shortcut-icon { font-size: 1.2rem; padding: 6px 12px; color: #777777; }
+        .shortcut-icon.focus-hint, .shortcut-icon.enter-hint { font-size: 1.2rem; }
+        .sticky-content { font-size: 1.5rem; }
+        .sticky-content.bold { font-size: 2rem; }
+        .bold-toggle {
+            font-size: 1.2rem !important;
+            font-family: 'Comic Neue', cursive !important;
+            -webkit-font-smoothing: antialiased;
+            width: 28px !important;
+            height: 28px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .bold-toggle.active {
+            font-size: 1.5rem !important;
+            font-family: 'Comic Neue', cursive !important;
+            font-weight: 800 !important; /* Was 700 in other definition, ensure consistency or specific override */
+            background-color: rgba(0,0,0,0.3) !important;
+        }
+        .note-input button { font-size: 1.2rem; }
+        .empty-state { font-size: 2.5rem; }
+        .restore-btn, .delete-btn { font-size: 1.2rem; }
+        .deleted-note-content { font-size: 1.5rem; }
+        .deleted-note-content.bold { font-size: 2rem; font-family: 'Comic Neue', cursive; font-weight: 700; }
+        .done-button { font-size: 1.2rem; }
+        .button-pattern-weekdays::before, .button-pattern-days::before { font-size: 12px; }
+        .status-bar { font-size: 1.2em; }
+        .status-time, .status-date, .weather-temp, .weather-icon { font-size: 1.2em; }
+    }
+}
