@@ -804,68 +804,6 @@ body {
     background: rgba(255, 68, 68, 0.1);
 }
 
-@media screen and (max-width: 400px) {
-    .sticky-note { width: 200px; min-width: 150px; min-height: 70px; padding: 10px; }
-    .sticky-content { font-size: 1.4rem; font-family: 'Comic Neue', cursive; line-height: 1.45; }
-    .sticky-content * { font-family: inherit !important; }
-    .sticky-content.bold { font-size: 1.8rem; font-family: 'Comic Neue', cursive; font-weight: 700; }
-    .note-controls { bottom: 12px; left: 12px; gap: 10px; }
-    .color-button, .done-button, .bold-toggle { width: 28px; height: 28px; font-size: 1.3rem; }
-    .bold-toggle { font-family: 'Comic Neue', cursive !important; } /* Ensure font-family from base is not overridden if not intended */
-    .bold-toggle.active { font-size: 1rem !important; font-family: 'Comic Neue', cursive !important; font-weight: 700 !important; }
-    .color-palette { bottom: 32px; padding: 6px; gap: 4px; }
-    .color-option { width: 22px; height: 22px; }
-    .note-input { width: 270px; padding: 12px; }
-    .note-input textarea { height: 50px; padding: 13px; font-size: 1.6rem; line-height: 1.45; }
-    .note-input button { padding: 13px; font-size: 1.3rem; }
-    .trash-bin { width: 65px; height: 85px; }
-    .trash-count { width: 26px; height: 26px; font-size: 1.3rem; }
-    .bin-lid { height: 16px; }
-    .bin-body { height: 65px; }
-    .modal-content { width: 95%; height: 80vh; padding: 22px; } /* Adjusted height */
-    .deleted-note { height: 220px; }
-    .deleted-note-content { font-size: 1.6rem; }
-    .deleted-note-content.bold { font-size: 2.1rem; }
-    .restore-btn, .delete-btn { padding: 7px 14px; font-size: 1.3rem; }
-    .modal-header h2 { font-size: 1rem; }
-    .modal-controls button { font-size: 1rem; padding: 9px 18px; }
-    .close-modal-btn { width: 44px; height: 44px; font-size: 2rem; }
-}
-
-@media not all and (max-width: 400px) and (min-resolution: 0.001dpcm) {
-    @supports (-webkit-appearance:none) and (stroke-color:transparent) {
-        .note-input textarea { font-size: 1.5rem; }
-        .shortcut-icon { font-size: 1.2rem; padding: 6px 12px; color: #777777; }
-        .shortcut-icon.focus-hint, .shortcut-icon.enter-hint { font-size: 1.2rem; }
-        .sticky-content { font-size: 1.5rem; }
-        .sticky-content.bold { font-size: 2rem; }
-        .bold-toggle {
-            font-size: 1.2rem !important;
-            font-family: 'Comic Neue', cursive !important;
-            -webkit-font-smoothing: antialiased;
-            width: 28px !important;
-            height: 28px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-        .bold-toggle.active {
-            font-size: 1.5rem !important;
-            font-family: 'Comic Neue', cursive !important;
-            font-weight: 800 !important; /* Was 700 in other definition, ensure consistency or specific override */
-            background-color: rgba(0,0,0,0.3) !important;
-        }
-        .note-input button { font-size: 1.2rem; }
-        .empty-state { font-size: 2.5rem; }
-        .restore-btn, .delete-btn { font-size: 1.2rem; }
-        .deleted-note-content { font-size: 1.5rem; }
-        .deleted-note-content.bold { font-size: 2rem; font-family: 'Comic Neue', cursive; font-weight: 700; }
-        .done-button { font-size: 1.2rem; }
-        .button-pattern-weekdays::before, .button-pattern-days::before { font-size: 12px; }
-        .status-bar { font-size: 1.2em; }
-        .status-time, .status-date, .weather-temp, .weather-icon { font-size: 1.2em; }
-    }
-}
 
 .boards-navigation {
     position: fixed;
@@ -1108,6 +1046,8 @@ body {
 .emoji-picker-container {
     margin-top: 10px;
     width: 100%;
+    opacity: 0;
+    transform: translateY(5px);
 }
 
 .emoji-item.recent-emoji {
@@ -1381,6 +1321,7 @@ body {
 }
 .board-style-menu.visible .board-style-colors { animation: menuItemFadeIn 0.3s ease forwards; }
 .board-style-menu.visible .board-style-patterns { animation: menuItemFadeIn 0.3s ease forwards 0.1s; }
+.board-style-menu.visible .emoji-picker-container { animation: menuItemFadeIn 0.3s ease forwards 0.1s; }
 
 @keyframes menuItemFadeIn {
     from { opacity: 0; transform: translateY(5px); }
@@ -1497,10 +1438,62 @@ body {
     background-size: 100% 100%;
 }
 
-@media screen and (max-width: 768px) { /* Mobile optimizations for board style */
-    .board-style-button { top: auto; bottom: 85px; left: 20px; }
-    .board-style-menu { top: auto; bottom: 130px; left: 0; right: auto; }
+/* Small Screen Error Message */
+.small-screen-error {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    
 }
+.error-content {
+    text-align: center;
+    padding: 40px;
+    max-width: 350px;
+    background: black;
+    border-radius: 12px;
+
+    font-weight: 200;
+}
+
+.error-content h2 {
+    color: #fff;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: 200;
+}
+
+.error-content p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.error-content p:last-child {
+    margin-bottom: 0;
+}
+
+@media screen and (max-width: 768px) {
+    .small-screen-error {
+        display: flex;
+    }
+    
+    /* Hide main app content on small screens */
+    .boards-container,
+    .boards-navigation,
+    .board-style-button,
+    .status-bar {
+        display: none !important;
+    }
+}
+
 
 .board-title-circle {
     position: absolute;
