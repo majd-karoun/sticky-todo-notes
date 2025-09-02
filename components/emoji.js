@@ -64,6 +64,23 @@ function createEmojiSticker(emoji) {
         }
     });
     
+    // Add hover functionality to show delete buttons for all selected stickers
+    deleteButton.addEventListener('mouseenter', () => {
+        if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
+            selectedStickers.forEach(sticker => {
+                sticker.classList.add('show-delete-button');
+            });
+        }
+    });
+    
+    deleteButton.addEventListener('mouseleave', () => {
+        if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
+            selectedStickers.forEach(sticker => {
+                sticker.classList.remove('show-delete-button');
+            });
+        }
+    });
+    
     stickerElement.appendChild(deleteButton);
     
     // Add drag functionality
@@ -293,6 +310,23 @@ function renderEmojiStickers(boardId) {
             }
         });
         
+        // Add hover functionality to show delete buttons for all selected stickers
+        deleteButton.addEventListener('mouseenter', () => {
+            if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
+                selectedStickers.forEach(sticker => {
+                    sticker.classList.add('show-delete-button');
+                });
+            }
+        });
+        
+        deleteButton.addEventListener('mouseleave', () => {
+            if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
+                selectedStickers.forEach(sticker => {
+                    sticker.classList.remove('show-delete-button');
+                });
+            }
+        });
+        
         stickerElement.appendChild(deleteButton);
         
         // Add drag functionality
@@ -303,25 +337,28 @@ function renderEmojiStickers(boardId) {
 }
 
 function updateEmojiUsageOrder(emoji) {
-    // Remove emoji if it already exists in the order
+    // Add emoji to the beginning only if it's not already in the top 12
     const existingIndex = emojiUsageOrder.indexOf(emoji);
-    if (existingIndex > -1) {
-        emojiUsageOrder.splice(existingIndex, 1);
+    if (existingIndex < 0 || existingIndex >= 12) {
+        // Remove from current position if it exists
+        if (existingIndex > -1) {
+            emojiUsageOrder.splice(existingIndex, 1);
+        }
+        
+        // Add emoji to the beginning of the array
+        emojiUsageOrder.unshift(emoji);
+        
+        // Keep only the last 16 used emojis to prevent the array from growing too large
+        if (emojiUsageOrder.length > 16) {
+            emojiUsageOrder = emojiUsageOrder.slice(0, 16);
+        }
+        
+        // Save to localStorage
+        saveEmojiUsageOrder();
+        
+        // Reorder the picker
+        reorderEmojiPicker();
     }
-    
-    // Add emoji to the beginning of the array
-    emojiUsageOrder.unshift(emoji);
-    
-    // Keep only the last 16 used emojis to prevent the array from growing too large
-    if (emojiUsageOrder.length > 16) {
-        emojiUsageOrder = emojiUsageOrder.slice(0, 16);
-    }
-    
-    // Save to localStorage
-    saveEmojiUsageOrder();
-    
-    // Reorder the picker
-    reorderEmojiPicker();
 }
 
 function loadEmojiUsageOrder() {
@@ -354,7 +391,7 @@ function reorderEmojiPicker() {
     
     // Add recent emojis at the beginning if we have any
     if (emojiUsageOrder.length > 0) {
-        const recentEmojis = emojiUsageOrder.slice(0, 4); // Limit to 4 recent emojis (1 full row)
+        const recentEmojis = emojiUsageOrder.slice(0, 12); // Limit to 12 recent emojis (3 full rows)
         
         // Insert recent emojis at the beginning
         recentEmojis.reverse().forEach(emoji => {

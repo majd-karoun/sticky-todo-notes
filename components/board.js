@@ -1,3 +1,46 @@
+// Global variable to store test date override
+// Helper function to get current date
+function getCurrentDate() {
+    return new Date();
+}
+
+// Helper function to check if a weekday index matches the current day
+function isCurrentDay(weekdayIndex) {
+    const today = getCurrentDate().getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    // Convert Sunday (0) to be index 6, and shift Monday-Saturday to be 0-5
+    const currentDayIndex = today === 0 ? 5 : today - 1; // Monday=0, Tuesday=1, ..., Saturday=5
+    return weekdayIndex === currentDayIndex;
+}
+
+// Helper function to save the start date when days pattern is first applied
+function saveDaysPatternStartDate(boardId) {
+    const key = `daysPatternStartDate_${boardId}`;
+    if (!localStorage.getItem(key)) {
+        const today = getCurrentDate().toISOString().split('T')[0]; // YYYY-MM-DD format
+        localStorage.setItem(key, today);
+    }
+}
+
+// Helper function to calculate current day number based on start date
+function getCurrentDayNumber(boardId) {
+    const key = `daysPatternStartDate_${boardId}`;
+    const startDate = localStorage.getItem(key);
+    if (!startDate) return -1;
+    
+    const start = new Date(startDate);
+    const today = getCurrentDate();
+    const diffTime = today - start;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Return day number (0-4 for Day 1-5), cycling every 5 days
+    return diffDays % 5;
+}
+
+// Helper function to clean up days pattern data
+function cleanupDaysPatternData(boardId) {
+    localStorage.removeItem(`daysPatternStartDate_${boardId}`);
+}
+
 // Board Management Functions
 function createNewBoard() {
     if (isMobileView || boardCount >= MAX_BOARDS) {
@@ -141,6 +184,7 @@ function continueWithBoardDeletion(boardId) {
     localStorage.removeItem(`boardColor_${boardId}`);
     localStorage.removeItem(`boardPattern_${boardId}`);
     localStorage.removeItem(`boardStyles_board_${boardId}`);
+    cleanupDaysPatternData(boardId);
     
     // Clean up emoji stickers
     if (window.emojiStickers) {
@@ -422,7 +466,16 @@ function createPatternOverlay(pattern) {
             const header = document.createElement('div');
             header.className = pattern === 'weekdays' ? 'weekday-header' : 'day-header';
             const items = pattern === 'weekdays' ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : ['Day 1','Day 2','Day 3','Day 4','Day 5'];
-            items.forEach(item => header.innerHTML += `<span>${item}</span>`);
+            items.forEach((item, index) => {
+                const span = document.createElement('span');
+                span.textContent = item;
+                if (pattern === 'weekdays' && isCurrentDay(index)) {
+                    span.classList.add('current-day');
+                } else if (pattern === 'days' && getCurrentDayNumber(currentBoardId) === index) {
+                    span.classList.add('current-day');
+                }
+                header.appendChild(span);
+            });
             overlay.appendChild(header);
             
             // Add a class to the board to indicate it has a header
@@ -444,8 +497,21 @@ function createPatternOverlay(pattern) {
 function changeBoardPattern(pattern) {
     boardStyles.patterns.current = pattern;
     const activeBoard = document.querySelector('.board.active');
+    const boardId = activeBoard.dataset.boardId;
+    
+    // Clean up days pattern data if switching away from days pattern
+    const currentPattern = boardStyles.patterns.current;
+    if (currentPattern === 'days' && pattern !== 'days') {
+        cleanupDaysPatternData(boardId);
+    }
+    
     activeBoard.querySelectorAll('.pattern-overlay, .lines-overlay').forEach(el => el.remove());
     activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
+
+    // Save start date when days pattern is first applied
+    if (pattern === 'days') {
+        saveDaysPatternStartDate(boardId);
+    }
 
     const patternOverlay = createPatternOverlay(pattern);
     activeBoard.appendChild(patternOverlay);
@@ -493,7 +559,16 @@ function applyBoardSavedStyles(board, styles) {
             const headerOverlay = document.createElement('div');
             headerOverlay.className = `pattern-overlay ${styles.pattern === 'weekdays' ? 'weekday-header' : 'day-header'}`;
             const items = styles.pattern === 'weekdays' ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : Array.from({length: 5}, (_, i) => `Day ${i+1}`);
-            items.forEach(item => headerOverlay.innerHTML += `<span>${item}</span>`);
+            items.forEach((item, index) => {
+                const span = document.createElement('span');
+                span.textContent = item;
+                if (styles.pattern === 'weekdays' && isCurrentDay(index)) {
+                    span.classList.add('current-day');
+                } else if (styles.pattern === 'days' && getCurrentDayNumber(parseInt(board.dataset.boardId)) === index) {
+                    span.classList.add('current-day');
+                }
+                headerOverlay.appendChild(span);
+            });
             board.appendChild(headerOverlay);
 
             const linesOverlay = document.createElement('div');

@@ -1164,7 +1164,8 @@ body {
     font-weight: bold;
 }
 
-.emoji-sticker:hover .delete-button {
+.emoji-sticker:hover .delete-button,
+.emoji-sticker.show-delete-button .delete-button {
     opacity: 1;
 }
 
@@ -1414,7 +1415,16 @@ body {
     padding: 5px; /* Combined top/bottom */
     flex: 1;
     text-align: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+.weekday-header span.current-day, .day-header span.current-day {
+    color: rgba(255, 255, 255, 1);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
 
 .board-pattern-weekdays, .board-pattern-days { /* Actual board styling */
     background-image: none !important; /* Clears any other BG image */

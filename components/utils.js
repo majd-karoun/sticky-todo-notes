@@ -62,7 +62,9 @@ function saveActiveNotes() {
         color: note.style.backgroundColor,
         x: note.style.left, y: note.style.top,
         width: note.style.width || '200px', height: note.style.height || '150px',
-        isBold: note.querySelector('.sticky-content').classList.contains('bold')
+        isBold: note.querySelector('.sticky-content').classList.contains('bold'),
+        noteId: note.dataset.noteId
+        // Don't save repositioned status - it should reset after refresh
     }));
     saveToLocalStorage(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData);
     if (typeof updateBoardIndicators === 'function') updateBoardIndicators();
@@ -139,7 +141,13 @@ function loadSavedData() {
             JSON.parse(savedBoardNotes).forEach(note => {
                 lastNotePositions[i] = { x: parsePosition(note.x), y: parsePosition(note.y) };
                 lastNoteColors[i] = note.color;
-                if (typeof createNote === 'function') createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold, i);
+                if (typeof createNote === 'function') {
+                    const createdNote = createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold, i);
+                    // Restore note ID but not repositioned status (resets after refresh)
+                    if (createdNote && note.noteId) {
+                        createdNote.dataset.noteId = note.noteId;
+                    }
+                }
             });
         }
         if (typeof loadBoardStyles === 'function') loadBoardStyles(i);

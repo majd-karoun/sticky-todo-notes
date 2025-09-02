@@ -1,13 +1,21 @@
 // Track note columns for weekday patterns
 let noteColumns = {};
 
+// Track repositioned notes that should use normal logic
+let repositionedNotes = new Set();
+
+// Function to generate unique note ID
+function generateNoteId(note) {
+    return `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 // Function to get a random offset for natural positioning
 function getRandomOffset() {
     return (Math.random() * 40) - 20; // Random value between -20 and 20
 }
 
 // Function to get the column index based on date (0-5 for Monday-Saturday)
-function getDayColumnIndex(date = new Date()) {
+function getDayColumnIndex(date = getCurrentDate()) {
     const day = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
     if (day === 0) return 0;  // Sunday -> Monday's column
     return day - 1;           // Monday(1) -> 0, Tuesday(2) -> 1, ..., Saturday(6) -> 5
@@ -52,10 +60,24 @@ function addNote() {
             noteColumns[columnIndex].push({ x: positionX, y: positionY });
             
         } else if (hasDaysPattern) {
+            const columnIndex = getCurrentDayNumber(currentBoardId);
             const boardWidth = boardElement.offsetWidth;
             const headerWidth = boardWidth / 5;
-            positionX = (headerWidth / 2) - 100;
-            positionY = 70; // Initial position below header
+            
+            // Calculate base position for the current day column
+            const baseX = (columnIndex * headerWidth) + (headerWidth / 2) - 100;
+            
+            // Add a small random offset for natural look
+            const randomOffset = getRandomOffset();
+            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
+            positionY = 70; // Below header
+            
+            // Store the initial position for this column
+            if (!noteColumns[columnIndex]) {
+                noteColumns[columnIndex] = [];
+            }
+            noteColumns[columnIndex].push({ x: positionX, y: positionY });
+            
         } else {
             if (window.innerWidth <= 1024) { // Mobile
                 positionX = 200;
@@ -67,58 +89,136 @@ function addNote() {
             }
         }
     } else if (hasWeekdaysPattern) {
-        const boardRect = boardElement.getBoundingClientRect();
-        const boardWidth = boardRect.width;
-        const columnWidth = boardWidth / 6; // 6 columns for 6 weekdays
+        // Check if any note on this board was repositioned
+        const hasRepositionedNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).some(note => note.dataset.repositioned === 'true');
         
-        // Determine column based on current date
-        const columnIndex = getDayColumnIndex();
-        
-        // Initialize column if it doesn't exist
-        if (!noteColumns[columnIndex]) {
-            noteColumns[columnIndex] = [];
-        }
-        
-        // Get all notes in this column
-        const columnNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).filter(note => {
-            const noteRect = note.getBoundingClientRect();
-            const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
-            const noteColumn = Math.min(5, Math.max(0, Math.floor(noteCenterX / columnWidth)));
-            return noteColumn === columnIndex;
-        });
-        
-        // Find the last note in this column
-        let lastNoteInColumn = null;
-        let lastY = 60; // Start below header
-        
-        // Find the note with the highest Y position in this column
-        columnNotes.forEach(note => {
-            const noteY = parsePosition(note.style.top);
-            if (noteY >= lastY) {
-                lastY = noteY;
-                lastNoteInColumn = note;
-            }
-        });
-        
-        // Calculate base position for the column with random offset
-        const baseX = (columnIndex * columnWidth) + (columnWidth / 2) - 100;
-        const randomOffset = getRandomOffset();
-        positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
-        
-        // Position the new note with 70px spacing
-        positionY = lastNoteInColumn ? lastY + 70 : 60; // 70px below the last note
-        
-        // Update noteColumns for this column
-        if (!noteColumns[columnIndex]) {
-            noteColumns[columnIndex] = [];
-        }
-        noteColumns[columnIndex].push({ x: positionX, y: positionY });
-        
-        // Use the last note's color from this column if it exists
-        if (lastNoteInColumn) {
-            lastColor = lastNoteInColumn.style.backgroundColor;
-        } else if (lastAddedNote) {
+        if (hasRepositionedNotes && lastAddedNote) {
+            // Use existing normal logic from all boards
+            lastX = parsePosition(lastAddedNote.style.left);
+            lastY = parsePosition(lastAddedNote.style.top);
             lastColor = lastAddedNote.style.backgroundColor;
+            ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
+        } else {
+            const boardRect = boardElement.getBoundingClientRect();
+            const boardWidth = boardRect.width;
+            const columnWidth = boardWidth / 6; // 6 columns for 6 weekdays
+            
+            // Determine column based on current date
+            const columnIndex = getDayColumnIndex();
+            
+            // Initialize column if it doesn't exist
+            if (!noteColumns[columnIndex]) {
+                noteColumns[columnIndex] = [];
+            }
+            
+            // Get all notes in this column (excluding repositioned ones)
+            const columnNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).filter(note => {
+                if (note.dataset.repositioned === 'true') return false;
+                const noteRect = note.getBoundingClientRect();
+                const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
+                const noteColumn = Math.min(5, Math.max(0, Math.floor(noteCenterX / columnWidth)));
+                return noteColumn === columnIndex;
+            });
+            
+            // Find the last note in this column
+            let lastNoteInColumn = null;
+            let lastY = 60; // Start below header
+            
+            // Find the note with the highest Y position in this column
+            columnNotes.forEach(note => {
+                const noteY = parsePosition(note.style.top);
+                if (noteY >= lastY) {
+                    lastY = noteY;
+                    lastNoteInColumn = note;
+                }
+            });
+            
+            // Calculate base position for the column with random offset
+            const baseX = (columnIndex * columnWidth) + (columnWidth / 2) - 100;
+            const randomOffset = getRandomOffset();
+            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
+            
+            // Position the new note with 70px spacing
+            positionY = lastNoteInColumn ? lastY + 70 : 60; // 70px below the last note
+            
+            // Update noteColumns for this column
+            if (!noteColumns[columnIndex]) {
+                noteColumns[columnIndex] = [];
+            }
+            noteColumns[columnIndex].push({ x: positionX, y: positionY });
+            
+            // Use the last note's color from this column if it exists
+            if (lastNoteInColumn) {
+                lastColor = lastNoteInColumn.style.backgroundColor;
+            } else if (lastAddedNote) {
+                lastColor = lastAddedNote.style.backgroundColor;
+            }
+        }
+    } else if (hasDaysPattern) {
+        // Check if any note on this board was repositioned
+        const hasRepositionedNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).some(note => note.dataset.repositioned === 'true');
+        
+        if (hasRepositionedNotes && lastAddedNote) {
+            // Use existing normal logic from all boards
+            lastX = parsePosition(lastAddedNote.style.left);
+            lastY = parsePosition(lastAddedNote.style.top);
+            lastColor = lastAddedNote.style.backgroundColor;
+            ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
+        } else {
+            const boardRect = boardElement.getBoundingClientRect();
+            const boardWidth = boardRect.width;
+            const columnWidth = boardWidth / 5; // 5 columns for 5 days
+            
+            // Determine column based on current day number
+            const columnIndex = getCurrentDayNumber(currentBoardId);
+            
+            // Initialize column if it doesn't exist
+            if (!noteColumns[columnIndex]) {
+                noteColumns[columnIndex] = [];
+            }
+            
+            // Get all notes in this column (excluding repositioned ones)
+            const columnNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).filter(note => {
+                if (note.dataset.repositioned === 'true') return false;
+                const noteRect = note.getBoundingClientRect();
+                const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
+                const noteColumn = Math.min(4, Math.max(0, Math.floor(noteCenterX / columnWidth)));
+                return noteColumn === columnIndex;
+            });
+            
+            // Find the last note in this column
+            let lastNoteInColumn = null;
+            let lastY = 60; // Start below header
+            
+            // Find the note with the highest Y position in this column
+            columnNotes.forEach(note => {
+                const noteY = parsePosition(note.style.top);
+                if (noteY >= lastY) {
+                    lastY = noteY;
+                    lastNoteInColumn = note;
+                }
+            });
+            
+            // Calculate base position for the column with random offset
+            const baseX = (columnIndex * columnWidth) + (columnWidth / 2) - 100;
+            const randomOffset = getRandomOffset();
+            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
+            
+            // Position the new note with 70px spacing
+            positionY = lastNoteInColumn ? lastY + 70 : 60; // 70px below the last note
+            
+            // Update noteColumns for this column
+            if (!noteColumns[columnIndex]) {
+                noteColumns[columnIndex] = [];
+            }
+            noteColumns[columnIndex].push({ x: positionX, y: positionY });
+            
+            // Use the last note's color from this column if it exists
+            if (lastNoteInColumn) {
+                lastColor = lastNoteInColumn.style.backgroundColor;
+            } else if (lastAddedNote) {
+                lastColor = lastAddedNote.style.backgroundColor;
+            }
         }
     } else if (lastAddedNote) {
         // For boards without headers, use the existing logic
@@ -138,13 +238,23 @@ function addNote() {
     updateBoardIndicators();
 }
 
-function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId) {
+function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId, repositioned = false) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
     // Add active-note class to new notes to ensure they're on top
     document.querySelectorAll('.sticky-note').forEach(n => n.classList.remove('active-note'));
     note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height};`;
     note.classList.add('active-note');
+    
+    // Generate and assign note ID
+    const noteId = generateNoteId(note);
+    note.dataset.noteId = noteId;
+    
+    // Mark as repositioned if specified
+    if (repositioned) {
+        note.dataset.repositioned = 'true';
+        repositionedNotes.add(noteId);
+    }
     note.innerHTML = `
         <div class="sticky-content ${isBold ? 'bold' : ''}" contenteditable="true">${text}</div>
         <div class="note-controls">
@@ -261,19 +371,29 @@ function setupNote(note) {
         clearTimeout(holdTimer);
         if (isDragging || isResizing) {
             saveActiveNotes();
-            if (isDragging) { updateLastPosition(); checkTrashCollision(note); }
+            if (isDragging) { 
+                updateLastPosition(); 
+                checkTrashCollision(note);
+                // Mark note as repositioned when manually dragged
+                let noteId = note.dataset.noteId;
+                if (!noteId) {
+                    noteId = generateNoteId(note);
+                    note.dataset.noteId = noteId;
+                }
+                repositionedNotes.add(noteId);
+                note.dataset.repositioned = 'true';
+            }
         }
         isDragging = false; isResizing = false;
         activeNote = null;
     };
 
     note.addEventListener('mousedown', e => handleInteractionStart(e, e.clientX, e.clientY));
-    document.addEventListener('mousemove', e => handleInteractionMove(e.clientX, e.clientY));
-    document.addEventListener('mouseup', handleInteractionEnd);
-    note.addEventListener('touchstart', e => handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY), { passive: false });
-    document.addEventListener('touchmove', e => handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY), { passive: false });
-    document.addEventListener('touchend', handleInteractionEnd);
-    note.addEventListener('remove', () => document.removeEventListener('click', cancelEditing));
+document.addEventListener('mousemove', e => handleInteractionMove(e.clientX, e.clientY));
+document.addEventListener('mouseup', handleInteractionEnd);
+note.addEventListener('touchstart', e => handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY), { passive: false });
+document.addEventListener('touchmove', e => handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY), { passive: false });
+document.addEventListener('touchend', handleInteractionEnd);
 }
 
 function hideAllColorPalettes() {

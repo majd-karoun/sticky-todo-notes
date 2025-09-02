@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup first letter capitalization for inputs
     setupFirstLetterCapitalization();
 
+
 });
 
 // Function to capitalize only the first letter of text inputs
@@ -141,3 +142,5 @@ function setupFirstLetterCapitalization() {
         });
     }
 }
+
+
