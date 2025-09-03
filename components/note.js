@@ -447,15 +447,7 @@ colorPalette.addEventListener('mouseleave', hidePalette);
 
     const handleInteractionStart = (e, clientX, clientY) => {
         if (e.target.closest('.color-palette, .done-button')) return;
-        if (selectedNotes.includes(note) && selectedNotes.length > 1) { 
-            // Add drag-proximity class to all board buttons immediately for multi-select drag
-            const boardButtons = document.querySelectorAll('.board-button:not(.disabled)');
-            boardButtons.forEach(button => {
-                button.classList.add('drag-proximity');
-            });
-            handleSelectionMove(e); 
-            return; 
-        }
+        if (selectedNotes.includes(note) && selectedNotes.length > 1) { handleSelectionMove(e); return; }
         if (!e.shiftKey) clearSelection();
         else if (!selectedNotes.includes(note)) { selectedNotes.push(note); note.classList.add('selected'); }
 
@@ -473,11 +465,6 @@ colorPalette.addEventListener('mouseleave', hidePalette);
             isResizing = true; initialW = note.offsetWidth; initialH = note.offsetHeight;
         } else {
             initialX = parsePosition(note.style.left); initialY = parsePosition(note.style.top);
-            // Add drag-proximity class to all board buttons immediately
-            const boardButtons = document.querySelectorAll('.board-button:not(.disabled)');
-            boardButtons.forEach(button => {
-                button.classList.add('drag-proximity');
-            });
             holdTimer = setTimeout(() => { isDragging = true; }, 150);
         }
         activeNote = note;
@@ -818,10 +805,10 @@ function checkBoardButtonDrop() {
     }
     
     const targetBoardId = parseInt(hoveredBoardButton.dataset.boardId);
+    const notesToMove = selectedNotes.length > 0 ? [...selectedNotes] : [activeNote];
     
-    // If dropped on the current board, move notes up by 250px
+    // If dropped on the active board, move notes up by 250px
     if (targetBoardId === currentBoardId) {
-        const notesToMove = selectedNotes.length > 0 ? [...selectedNotes] : [activeNote];
         notesToMove.forEach(note => {
             if (note) {
                 const currentTop = parseInt(note.style.top) || 0;
@@ -832,8 +819,6 @@ function checkBoardButtonDrop() {
     }
     
     // Move the note(s) to the target board
-    const notesToMove = selectedNotes.length > 0 ? [...selectedNotes] : [activeNote];
-    
     notesToMove.forEach(note => {
         if (note) {
             moveNoteToBoard(note, targetBoardId);
