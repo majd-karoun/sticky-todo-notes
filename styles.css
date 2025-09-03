@@ -938,9 +938,11 @@ body {
     background-color: rgba(0, 0, 0, 0.1);
     font-size: 20px;
     line-height: 1;
-    -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10+ */
     user-select: none;
+    transform: scale(1);
+    transition: all 0.2s ease-out;
+    will-change: transform;
 }
 .board-button:hover {
     background-color: rgba(255, 255, 255, 0.1);
@@ -1662,11 +1664,10 @@ body {
 
 /* Proximity scaling effect for board buttons */
 .board-button.drag-proximity {
-    transform: scale(1.3) !important;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 1001 !important;
-    margin: 0 2px !important;
-
+    transform: scale(1.3);
+    z-index: 1001;
+    margin: 0 2px;
+    transition: transform 0.2s ease-out !important;
 }
 
 .button-pattern-dots { background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 6px 6px; }
