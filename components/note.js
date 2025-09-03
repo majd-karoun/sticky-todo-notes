@@ -721,7 +721,6 @@ function startHoverAnimation() {
     if (!hoveredBoardButton) return;
     
     const targetBoardId = parseInt(hoveredBoardButton.dataset.boardId);
-    if (targetBoardId === currentBoardId) return;
     
     const buttonRect = hoveredBoardButton.getBoundingClientRect();
     const notesToAnimate = selectedNotes.length > 0 ? selectedNotes : (activeNote ? [activeNote] : []);

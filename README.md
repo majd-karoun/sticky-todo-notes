@@ -10,13 +10,12 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 - ➕ Enter text to create notes
 - 🖱️ Click notes to edit content
 - 🎨 Color picker for notes and boards
-- 🖐️ Drag notes around or select multiple
+- 🖐️ select multiple Notes with the mouse and Drag notes around.
 - 🖊️ Bold text with (B) button
 - ↘️ Resize notes from corner
-- 🗑️ Delete by dragging to bin
+- 🗑️ Delete a Note by clicking done sign.
 - 🔢 Switch boards with arrow keys or 1-9
 - 🔄 Transfer notes between boards by dragging them over the board numbers.
-
 
 
 ## 🚀 Quick Start
