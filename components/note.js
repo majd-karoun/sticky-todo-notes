@@ -819,8 +819,15 @@ function checkBoardButtonDrop() {
     
     const targetBoardId = parseInt(hoveredBoardButton.dataset.boardId);
     
-    // Don't move to the same board
+    // If dropped on the current board, move notes up by 250px
     if (targetBoardId === currentBoardId) {
+        const notesToMove = selectedNotes.length > 0 ? [...selectedNotes] : [activeNote];
+        notesToMove.forEach(note => {
+            if (note) {
+                const currentTop = parseInt(note.style.top) || 0;
+                note.style.top = `${currentTop - 250}px`;
+            }
+        });
         return { moved: false };
     }
     
