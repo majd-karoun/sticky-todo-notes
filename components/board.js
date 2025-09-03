@@ -495,15 +495,17 @@ function createPatternOverlay(pattern) {
 }
 
 function changeBoardPattern(pattern) {
-    boardStyles.patterns.current = pattern;
     const activeBoard = document.querySelector('.board.active');
     const boardId = activeBoard.dataset.boardId;
+    const currentPattern = boardStyles.patterns.current;
     
     // Clean up days pattern data if switching away from days pattern
-    const currentPattern = boardStyles.patterns.current;
     if (currentPattern === 'days' && pattern !== 'days') {
         cleanupDaysPatternData(boardId);
     }
+    
+    // Update the current pattern after cleanup
+    boardStyles.patterns.current = pattern;
     
     activeBoard.querySelectorAll('.pattern-overlay, .lines-overlay').forEach(el => el.remove());
     activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
