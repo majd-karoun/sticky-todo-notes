@@ -995,6 +995,10 @@ body {
 .board-button:hover .delete-board {
     opacity: 1;
 }
+.board-button.drag-hover .delete-board {
+    opacity: 0;
+    pointer-events: none;
+}
 .board-button:first-child .delete-board {
     display: none;
 }

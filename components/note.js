@@ -744,6 +744,21 @@ function checkBoardButtonHover(clientX, clientY) {
             hoveredBoardButton = closestButton;
             if (closestButton) {
                 closestButton.classList.add('drag-hover');
+                // Hide transfer message when hovering over board button
+                hideDragTransferMessage();
+                // Hide shortcut hint when hovering over board button
+                const shortcutHint = document.querySelector('.shortcut-hint');
+                if (shortcutHint) {
+                    shortcutHint.classList.add('hidden-during-drag');
+                }
+            } else {
+                // Show transfer message again when not hovering over any board button
+                showDragTransferMessage();
+                // Show shortcut hint again when not hovering over any board button
+                const shortcutHint = document.querySelector('.shortcut-hint');
+                if (shortcutHint && !dragTransferMessageVisible) {
+                    shortcutHint.classList.remove('hidden-during-drag');
+                }
             }
         }
     }
@@ -821,8 +836,8 @@ function clearHoverAnimations() {
 }
 
 function showDragTransferMessage() {
-    // Only show if there are multiple boards and message isn't already visible
-    if (boardCount > 1 && !dragTransferMessageVisible) {
+    // Only show if there are multiple boards, message isn't already visible, and not hovering over a board button
+    if (boardCount > 1 && !dragTransferMessageVisible && !hoveredBoardButton) {
         const transferMessage = document.getElementById('dragTransferMessage');
         if (transferMessage) {
             transferMessage.classList.add('visible');
