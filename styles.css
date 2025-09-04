@@ -1827,5 +1827,11 @@ body.selecting * {
         .button-pattern-weekdays::before, .button-pattern-days::before { font-size: 12px; }
         .status-bar { font-size: 1.2em; }
         .status-time, .status-date, .weather-temp, .weather-icon { font-size: 1.2em; }
+        .transfer-text { font-size: 1.1rem; }
+        .transfer-arrow { font-size: 2.3rem; }
+        .shortcut-hint { font-size: 1.1rem; }
+        .day-header { font-size: 1.2rem; }
+        .weekday-header { font-size: 1.2rem; }
+
     }
 }
