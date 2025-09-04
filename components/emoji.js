@@ -31,6 +31,12 @@ function createEmojiSticker(emoji) {
     if (!activeBoard) return;
     
     const boardId = activeBoard.dataset.boardId;
+    
+    // Check if emoji limit is reached
+    if (getEmojiCount(boardId) >= 10) {
+        showEmojiLimitMessage();
+        return;
+    }
     const stickerId = generateStickerId();
     
     // Create sticker element
@@ -56,30 +62,9 @@ function createEmojiSticker(emoji) {
     deleteButton.textContent = '×';
     deleteButton.addEventListener('click', (e) => {
         e.stopPropagation();
-        // If this sticker is selected and there are multiple selected stickers, delete all selected
-        if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
-            deleteSelectedStickers();
-        } else {
-            deleteEmojiSticker(stickerId, boardId);
-        }
+        deleteEmojiSticker(stickerId, boardId);
     });
     
-    // Add hover functionality to show delete buttons for all selected stickers
-    deleteButton.addEventListener('mouseenter', () => {
-        if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
-            selectedStickers.forEach(sticker => {
-                sticker.classList.add('show-delete-button');
-            });
-        }
-    });
-    
-    deleteButton.addEventListener('mouseleave', () => {
-        if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
-            selectedStickers.forEach(sticker => {
-                sticker.classList.remove('show-delete-button');
-            });
-        }
-    });
     
     stickerElement.appendChild(deleteButton);
     
@@ -115,7 +100,6 @@ function setupEmojiDrag(stickerElement) {
     
     stickerElement.addEventListener('mousedown', startDrag);
     stickerElement.addEventListener('touchstart', startDrag, { passive: false });
-    stickerElement.addEventListener('click', handleStickerClick);
     
     function startDrag(e) {
         if (e.target.classList.contains('delete-button')) return;
@@ -123,16 +107,6 @@ function setupEmojiDrag(stickerElement) {
         e.preventDefault();
         e.stopPropagation();
         
-        // Check if this sticker is selected and we're starting a multi-selection drag
-        if (stickerElement.classList.contains('selected') && (selectedStickers.length > 1 || selectedNotes.length > 0)) {
-            handleSelectionMove(e);
-            return;
-        }
-        
-        // Clear selection if not holding shift and this sticker isn't selected
-        if (!e.shiftKey && !stickerElement.classList.contains('selected')) {
-            clearSelection();
-        }
         
         isDragging = true;
         draggedEmoji = stickerElement;
@@ -197,6 +171,9 @@ function setupEmojiDrag(stickerElement) {
         document.onselectstart = null;
         document.ondragstart = null;
         
+        // Check bottom corner collision before saving position
+        checkEmojiBottomCornerCollision(draggedEmoji);
+        
         // Update stored position
         const boardId = document.querySelector('.board.active').dataset.boardId;
         const stickerId = draggedEmoji.dataset.stickerId;
@@ -234,23 +211,6 @@ function deleteEmojiSticker(stickerId, boardId) {
     }
 }
 
-function deleteSelectedStickers() {
-    const boardId = document.querySelector('.board.active').dataset.boardId;
-    
-    // Delete each selected sticker with staggered animation
-    selectedStickers.forEach((sticker, index) => {
-        const stickerId = sticker.dataset.stickerId;
-        if (stickerId) {
-            // Add a slight delay for each sticker to create a staggered effect
-            setTimeout(() => {
-                deleteEmojiSticker(stickerId, boardId);
-            }, index * 100); // 100ms delay between each deletion
-        }
-    });
-    
-    // Clear the selection
-    selectedStickers = [];
-}
 
 function saveEmojiStickers(boardId) {
     const key = `emojiStickers_board_${boardId}`;
@@ -302,30 +262,9 @@ function renderEmojiStickers(boardId) {
         deleteButton.textContent = '×';
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            // If this sticker is selected and there are multiple selected stickers, delete all selected
-            if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
-                deleteSelectedStickers();
-            } else {
-                deleteEmojiSticker(stickerData.id, boardId);
-            }
+            deleteEmojiSticker(stickerData.id, boardId);
         });
         
-        // Add hover functionality to show delete buttons for all selected stickers
-        deleteButton.addEventListener('mouseenter', () => {
-            if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
-                selectedStickers.forEach(sticker => {
-                    sticker.classList.add('show-delete-button');
-                });
-            }
-        });
-        
-        deleteButton.addEventListener('mouseleave', () => {
-            if (stickerElement.classList.contains('selected') && selectedStickers.length > 1) {
-                selectedStickers.forEach(sticker => {
-                    sticker.classList.remove('show-delete-button');
-                });
-            }
-        });
         
         stickerElement.appendChild(deleteButton);
         
@@ -405,33 +344,41 @@ function reorderEmojiPicker() {
     }
 }
 
-function handleStickerClick(e) {
-    if (e.target.classList.contains('delete-button')) return;
-    
-    e.stopPropagation();
-    
-    const sticker = e.currentTarget;
-    const isSelected = sticker.classList.contains('selected');
-    
-    if (e.shiftKey) {
-        // Toggle selection with shift key
-        if (isSelected) {
-            const index = selectedStickers.indexOf(sticker);
-            if (index > -1) {
-                selectedStickers.splice(index, 1);
-                sticker.classList.remove('selected');
-            }
-        } else {
-            selectedStickers.push(sticker);
-            sticker.classList.add('selected');
-        }
-    } else {
-        // Single selection without shift
-        if (!isSelected) {
-            clearSelection();
-            selectedStickers.push(sticker);
-            sticker.classList.add('selected');
-        }
+
+function getEmojiCount(boardId) {
+    if (!emojiStickers[boardId]) return 0;
+    return Object.keys(emojiStickers[boardId]).length;
+}
+
+function showEmojiLimitMessage() {
+    const emojiLimitMessage = document.getElementById('emojiLimitMessage');
+    if (emojiLimitMessage) {
+        emojiLimitMessage.classList.add('visible');
+        setTimeout(() => {
+            emojiLimitMessage.classList.remove('visible');
+        }, 1500); // Show for 3 seconds
+    }
+}
+
+function checkEmojiBottomCornerCollision(emoji) {
+    if (!emoji) return;
+    const emojiRect = emoji.getBoundingClientRect();
+    const screenHeight = window.innerHeight;
+    const restrictedWidth = 250, restrictedHeight = 150;
+    const restrictedTop = screenHeight - restrictedHeight;
+
+    const overlapsVertically = emojiRect.bottom > restrictedTop;
+    const overlapsBottomLeft = emojiRect.left < restrictedWidth && overlapsVertically;
+
+    if (overlapsBottomLeft) {
+        const moveUpDistance = emojiRect.bottom - restrictedTop + 20;
+        const activeBoard = document.querySelector('.board.active');
+        const boardRect = activeBoard.getBoundingClientRect();
+        const currentTop = parseInt(emoji.style.top);
+        const newTop = Math.max(60, currentTop - moveUpDistance);
+        emoji.style.transition = 'top 0.3s ease-out';
+        emoji.style.top = `${newTop}px`;
+        setTimeout(() => emoji.style.transition = '', 300);
     }
 }
 
@@ -460,5 +407,3 @@ window.emojiStickers = {
     initializeEmojiPicker
 };
 
-// Make deleteSelectedStickers globally available
-window.deleteSelectedStickers = deleteSelectedStickers;

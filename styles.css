@@ -1204,6 +1204,25 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
+/* Emoji Limit Message Styles */
+.emoji-limit-message {
+    position: fixed;
+    bottom: 95px;
+    left: 60%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.emoji-limit-message.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
 .transfer-content {
     
     background-color: rgba(0, 0, 0, 0.3);
@@ -1269,7 +1288,7 @@ body {
     position: absolute;
     font-size: 120px;
     cursor: move;
-    z-index: 1000;
+    z-index: 10000;
     transition: transform 0.2s ease;
     user-select: none;
     -webkit-user-select: none;
@@ -1321,7 +1340,7 @@ body {
 }
 
 .emoji-sticker.dragging {
-    z-index: 100;
+    z-index: 1001;
     transform: scale(1.1);
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
     pointer-events: none;
@@ -1346,13 +1365,6 @@ body {
 .emoji-sticker.deleting {
     animation: emojiDelete 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
     pointer-events: none;
-}
-
-.emoji-sticker.selected {
-    outline: 3px solid #ffffff;
-    outline-offset: 2px;
-    border-radius: 8px;
-   
 }
 
 .board-style-button {
