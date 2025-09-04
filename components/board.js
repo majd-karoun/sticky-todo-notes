@@ -108,7 +108,11 @@ function createBoardUI(boardId) {
     const addButton = document.querySelector('.add-board-button');
     document.querySelector('.boards-navigation').insertBefore(buttonElement, addButton);
 
-    setTimeout(() => buttonElement.classList.remove('new-button'), 500);
+    setTimeout(() => {
+        buttonElement.classList.remove('new-button');
+        // Add transitions-ready class to ensure proper CSS transitions
+        buttonElement.classList.add('transitions-ready');
+    }, 500);
     loadBoardStyles(boardId);
     loadBoardTitle(boardId);
     
@@ -247,7 +251,11 @@ function continueWithBoardDeletion(boardId) {
         });
 
         setTimeout(() => {
-            document.querySelectorAll('.board-button.new-button').forEach(button => button.classList.remove('new-button'));
+            document.querySelectorAll('.board-button.new-button').forEach(button => {
+                button.classList.remove('new-button');
+                // Add transitions-ready class to ensure proper CSS transitions
+                button.classList.add('transitions-ready');
+            });
         }, 500);
 
         boardCount--;

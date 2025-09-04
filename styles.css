@@ -1093,6 +1093,18 @@ body {
 .board-button.new-button {
     transition: transform 0.2s ease-out !important;
 }
+
+@keyframes kickstart-animation {
+  from { opacity: 0.99; }
+  to { opacity: 1; }
+}
+
+/* Force transition initialization for all board buttons */
+.board-button.transitions-ready {
+    transition: transform 0.2s ease-out !important;
+    will-change: transform;
+    animation: kickstart-animation 0.1s;
+}
 .board-button.removing {
     animation: boardButtonPopOut 0.25s cubic-bezier(0.45, -0.36, 0.2, 1) forwards;
 }
@@ -1754,6 +1766,7 @@ body {
     transform: scale(1.4) !important;
     z-index: 1000 !important;
     transition: transform 0.2s ease-out !important;
+    will-change: transform !important;
 }
 
 /* Pause animation when dragging over new buttons instead of removing it */

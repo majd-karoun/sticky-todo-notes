@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show the board title temporarily for 3 seconds on page load
     setTimeout(() => showBoardTitleTemporarily(currentBoardId), 500);
+    
+    // Initialize board button animations
+    initializeBoardButtonAnimations();
 
     // Add event listener for the board style button
     const styleButton = document.querySelector('.board-style-button');
@@ -143,4 +146,23 @@ function setupFirstLetterCapitalization() {
     }
 }
 
+// Function to initialize board button animations on page load
+function initializeBoardButtonAnimations() {
+    // Use setTimeout to ensure DOM is fully rendered and CSS is applied
+    setTimeout(() => {
+        const boardButtons = document.querySelectorAll('.board-button');
+        boardButtons.forEach(button => {
+            // Add the transitions-ready class to ensure proper CSS transitions
+            button.classList.add('transitions-ready');
+            
+            // Trigger a reflow to ensure properties are applied
+            button.offsetHeight;
+            
+            // Force another reflow after a brief moment to ensure transitions are ready
+            requestAnimationFrame(() => {
+                button.style.transform = 'scale(1)';
+            });
+        });
+    }, 100);
+}
 
