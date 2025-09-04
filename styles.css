@@ -1859,3 +1859,7 @@ body.selecting * {
 
     }
 }
+
+.debug-modal{
+    display: none;
+}
