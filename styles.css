@@ -1752,9 +1752,9 @@ body {
     transition: transform 0.2s ease-out !important;
 }
 
-/* Override animation completely when dragging over new buttons */
+/* Pause animation when dragging over new buttons instead of removing it */
 .board-button.new-button.drag-proximity {
-    animation: none !important;
+    animation-play-state: paused !important;
     transform: scale(1.4) !important;
     transition: transform 0.2s ease-out !important;
 }
