@@ -1,34 +1,15 @@
-// Track note columns for weekday patterns
-let noteColumns = {};
+// Global state variables
+let noteColumns = {}; // Tracks note columns for weekday/day patterns
+let repositionedNotes = new Set(); // Stores IDs of manually repositioned notes
+let hoveredBoardButton = null; // Tracks board button hover state for drag-and-drop
+let dragTransferMessageVisible = false; // Tracks drag transfer message visibility
+let globalZIndex = 1000; // Global z-index counter for note layering
+let hoverDetectionDisabled = false; // Disables hover detection temporarily
 
-// Track repositioned notes that should use normal logic
-let repositionedNotes = new Set();
-
-// Track board button hover state for drag-and-drop
-let hoveredBoardButton = null;
-
-// Track drag transfer message visibility
-let dragTransferMessageVisible = false;
-
-// Global z-index counter for proper note layering
-let globalZIndex = 1000;
-
-// Function to generate unique note ID
-function generateNoteId(note) {
-    return `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-// Function to get a random offset for natural positioning
-function getRandomOffset() {
-    return (Math.random() * 40) - 20; // Random value between -20 and 20
-}
-
-// Function to get the column index based on date (0-5 for Monday-Saturday)
-function getDayColumnIndex(date = getCurrentDate()) {
-    const day = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    if (day === 0) return 0;  // Sunday -> Monday's column
-    return day - 1;           // Monday(1) -> 0, Tuesday(2) -> 1, ..., Saturday(6) -> 5
-}
+// Utility functions
+const generateNoteId = () => `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const getRandomOffset = () => (Math.random() * 40) - 20; // Random between -20 and 20
+const getDayColumnIndex = (date = getCurrentDate()) => date.getDay() === 0 ? 0 : date.getDay() - 1; // 0=Mon, 5=Sat
 
 // Note Creation and Management
 function addNote() {
@@ -39,232 +20,116 @@ function addNote() {
     const boardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
     const notes = Array.from(boardElement.querySelectorAll('.sticky-note'));
     const lastAddedNote = notes[notes.length - 1];
-
     let { x: lastX, y: lastY } = lastNotePositions[currentBoardId] || { x: 0, y: 0 };
     let lastColor = lastNoteColors[currentBoardId] || getRandomColor();
     let positionX, positionY;
 
-    const hasWeekdaysPattern = boardElement.classList.contains('board-pattern-weekdays');
-    const hasDaysPattern = boardElement.classList.contains('board-pattern-days');
-    const hasNoNotes = notes.length === 0;
+    const [hasWeekdaysPattern, hasDaysPattern, hasNoNotes] = [
+        boardElement.classList.contains('board-pattern-weekdays'),
+        boardElement.classList.contains('board-pattern-days'),
+        notes.length === 0
+    ];
+
+    const calculateColumnPosition = (columnIndex, columnCount) => {
+        const headerWidth = boardElement.offsetWidth / columnCount;
+        const baseX = (columnIndex * headerWidth) + (headerWidth / 2) - 100;
+        return Math.max(10, Math.min(boardElement.offsetWidth - 210, baseX + getRandomOffset()));
+    };
+
+    const getColumnNotes = (columnIndex, columnCount) => {
+        const boardRect = boardElement.getBoundingClientRect();
+        const columnWidth = boardRect.width / columnCount;
+        return notes.filter(note => {
+            if (note.dataset.repositioned === 'true') return false;
+            const noteCenterX = note.getBoundingClientRect().left + (note.offsetWidth / 2) - boardRect.left;
+            return Math.min(columnCount - 1, Math.max(0, Math.floor(noteCenterX / columnWidth))) === columnIndex;
+        });
+    };
+
+    const setColumnNotePosition = (columnIndex, columnCount) => {
+        const columnNotes = getColumnNotes(columnIndex, columnCount);
+        let lastYInColumn = 60, lastNoteInColumn = null;
+        columnNotes.forEach(note => {
+            const noteY = parsePosition(note.style.top);
+            if (noteY >= lastYInColumn) { lastYInColumn = noteY; lastNoteInColumn = note; }
+        });
+        
+        const bottomThreshold = window.innerHeight - 300; // Break line when reaching 300px from bottom
+        let newY = lastNoteInColumn ? lastYInColumn + 70 : 60;
+        
+        // If the new position would be too close to the bottom, move to next column
+        if (newY > bottomThreshold) {
+            // Find the next available column (cycling through all columns)
+            let nextColumnIndex = (columnIndex + 1) % columnCount;
+            let attempts = 0;
+            
+            // Try to find a column with space, or use the next one if all are full
+            while (attempts < columnCount) {
+                const nextColumnNotes = getColumnNotes(nextColumnIndex, columnCount);
+                let nextColumnLastY = 60;
+                nextColumnNotes.forEach(note => {
+                    const noteY = parsePosition(note.style.top);
+                    if (noteY >= nextColumnLastY) { nextColumnLastY = noteY; }
+                });
+                
+                const nextColumnNewY = nextColumnNotes.length > 0 ? nextColumnLastY + 70 : 60;
+                if (nextColumnNewY <= bottomThreshold) {
+                    // Found a column with space
+                    columnIndex = nextColumnIndex;
+                    newY = nextColumnNewY;
+                    break;
+                } else {
+                    // This column is also full, try the next one
+                    nextColumnIndex = (nextColumnIndex + 1) % columnCount;
+                    attempts++;
+                }
+            }
+            
+            // If all columns are full, start a new row in the original column
+            if (attempts >= columnCount) {
+                newY = 60; // Start from top of the original column
+            }
+        }
+        
+        positionX = calculateColumnPosition(columnIndex, columnCount);
+        positionY = newY;
+        (noteColumns[columnIndex] = noteColumns[columnIndex] || []).push({ x: positionX, y: positionY });
+        lastColor = (lastNoteInColumn || lastAddedNote)?.style.backgroundColor || lastColor;
+    };
 
     if (hasNoNotes) {
-        if (hasWeekdaysPattern) {
-            const columnIndex = getDayColumnIndex();
-            const boardWidth = boardElement.offsetWidth;
-            const headerWidth = boardWidth / 6;
-            
-            // Calculate base position for the column
-            const baseX = (columnIndex * headerWidth) + (headerWidth / 2) - 100;
-            
-            // Add a small random offset for natural look
-            const randomOffset = getRandomOffset();
-            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
-            positionY = 70; // Below header
-            
-            // Store the initial position for this column
-            if (!noteColumns[columnIndex]) {
-                noteColumns[columnIndex] = [];
-            }
-            noteColumns[columnIndex].push({ x: positionX, y: positionY });
-            
-        } else if (hasDaysPattern) {
-            const columnIndex = getCurrentDayNumber(currentBoardId);
-            const boardWidth = boardElement.offsetWidth;
-            const headerWidth = boardWidth / 5;
-            
-            // Calculate base position for the current day column
-            const baseX = (columnIndex * headerWidth) + (headerWidth / 2) - 100;
-            
-            // Add a small random offset for natural look
-            const randomOffset = getRandomOffset();
-            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
-            positionY = 70; // Below header
-            
-            // Store the initial position for this column
-            if (!noteColumns[columnIndex]) {
-                noteColumns[columnIndex] = [];
-            }
-            noteColumns[columnIndex].push({ x: positionX, y: positionY });
-            
-        } else {
-            if (window.innerWidth <= 1024) { // Mobile
-                positionX = 200;
-                positionY = 140; // 70 * 2 for mobile
-            } else { // Desktop
-                const boardRect = boardElement.getBoundingClientRect();
-                positionX = Math.floor(Math.random() * (boardRect.width - 200));
-                positionY = Math.floor(Math.random() * (boardRect.height / 2));
-            }
+        if (hasWeekdaysPattern) { setColumnNotePosition(getDayColumnIndex(), 6); }
+        else if (hasDaysPattern) { setColumnNotePosition(getCurrentDayNumber(currentBoardId), 5); }
+        else {
+            // Place first note at top-left corner (50px from edges)
+            positionX = 50;
+            positionY = 50;
         }
-    } else if (hasWeekdaysPattern) {
-        // Check if any note on this board was repositioned
-        const hasRepositionedNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).some(note => note.dataset.repositioned === 'true');
-        
+    } else if (hasWeekdaysPattern || hasDaysPattern) {
+        const hasRepositionedNotes = notes.some(note => note.dataset.repositioned === 'true');
         if (hasRepositionedNotes && lastAddedNote) {
-            // Use existing normal logic from all boards
-            lastX = parsePosition(lastAddedNote.style.left);
-            lastY = parsePosition(lastAddedNote.style.top);
-            lastColor = lastAddedNote.style.backgroundColor;
+            [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
             ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
-        } else {
-            const boardRect = boardElement.getBoundingClientRect();
-            const boardWidth = boardRect.width;
-            const columnWidth = boardWidth / 6; // 6 columns for 6 weekdays
-            
-            // Determine column based on current date
-            const columnIndex = getDayColumnIndex();
-            
-            // Initialize column if it doesn't exist
-            if (!noteColumns[columnIndex]) {
-                noteColumns[columnIndex] = [];
-            }
-            
-            // Get all notes in this column (excluding repositioned ones)
-            const columnNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).filter(note => {
-                if (note.dataset.repositioned === 'true') return false;
-                const noteRect = note.getBoundingClientRect();
-                const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
-                const noteColumn = Math.min(5, Math.max(0, Math.floor(noteCenterX / columnWidth)));
-                return noteColumn === columnIndex;
-            });
-            
-            // Find the last note in this column
-            let lastNoteInColumn = null;
-            let lastY = 60; // Start below header
-            
-            // Find the note with the highest Y position in this column
-            columnNotes.forEach(note => {
-                const noteY = parsePosition(note.style.top);
-                if (noteY >= lastY) {
-                    lastY = noteY;
-                    lastNoteInColumn = note;
-                }
-            });
-            
-            // Calculate base position for the column with random offset
-            const baseX = (columnIndex * columnWidth) + (columnWidth / 2) - 100;
-            const randomOffset = getRandomOffset();
-            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
-            
-            // Position the new note with 70px spacing
-            positionY = lastNoteInColumn ? lastY + 70 : 60; // 70px below the last note
-            
-            // Update noteColumns for this column
-            if (!noteColumns[columnIndex]) {
-                noteColumns[columnIndex] = [];
-            }
-            noteColumns[columnIndex].push({ x: positionX, y: positionY });
-            
-            // Use the last note's color from this column if it exists
-            if (lastNoteInColumn) {
-                lastColor = lastNoteInColumn.style.backgroundColor;
-            } else if (lastAddedNote) {
-                lastColor = lastAddedNote.style.backgroundColor;
-            }
-        }
-    } else if (hasDaysPattern) {
-        // Check if any note on this board was repositioned
-        const hasRepositionedNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).some(note => note.dataset.repositioned === 'true');
-        
-        if (hasRepositionedNotes && lastAddedNote) {
-            // Use existing normal logic from all boards
-            lastX = parsePosition(lastAddedNote.style.left);
-            lastY = parsePosition(lastAddedNote.style.top);
-            lastColor = lastAddedNote.style.backgroundColor;
-            ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
-        } else {
-            const boardRect = boardElement.getBoundingClientRect();
-            const boardWidth = boardRect.width;
-            const columnWidth = boardWidth / 5; // 5 columns for 5 days
-            
-            // Determine column based on current day number
-            const columnIndex = getCurrentDayNumber(currentBoardId);
-            
-            // Initialize column if it doesn't exist
-            if (!noteColumns[columnIndex]) {
-                noteColumns[columnIndex] = [];
-            }
-            
-            // Get all notes in this column (excluding repositioned ones)
-            const columnNotes = Array.from(boardElement.querySelectorAll('.sticky-note')).filter(note => {
-                if (note.dataset.repositioned === 'true') return false;
-                const noteRect = note.getBoundingClientRect();
-                const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
-                const noteColumn = Math.min(4, Math.max(0, Math.floor(noteCenterX / columnWidth)));
-                return noteColumn === columnIndex;
-            });
-            
-            // Find the last note in this column
-            let lastNoteInColumn = null;
-            let lastY = 60; // Start below header
-            
-            // Find the note with the highest Y position in this column
-            columnNotes.forEach(note => {
-                const noteY = parsePosition(note.style.top);
-                if (noteY >= lastY) {
-                    lastY = noteY;
-                    lastNoteInColumn = note;
-                }
-            });
-            
-            // Calculate base position for the column with random offset
-            const baseX = (columnIndex * columnWidth) + (columnWidth / 2) - 100;
-            const randomOffset = getRandomOffset();
-            positionX = Math.max(10, Math.min(boardWidth - 210, baseX + randomOffset));
-            
-            // Position the new note with 70px spacing
-            positionY = lastNoteInColumn ? lastY + 70 : 60; // 70px below the last note
-            
-            // Update noteColumns for this column
-            if (!noteColumns[columnIndex]) {
-                noteColumns[columnIndex] = [];
-            }
-            noteColumns[columnIndex].push({ x: positionX, y: positionY });
-            
-            // Use the last note's color from this column if it exists
-            if (lastNoteInColumn) {
-                lastColor = lastNoteInColumn.style.backgroundColor;
-            } else if (lastAddedNote) {
-                lastColor = lastAddedNote.style.backgroundColor;
-            }
-        }
+        } else if (hasWeekdaysPattern) setColumnNotePosition(getDayColumnIndex(), 6);
+        else if (hasDaysPattern) setColumnNotePosition(getCurrentDayNumber(currentBoardId), 5);
     } else if (lastAddedNote) {
-        // For boards without headers, use the existing logic
-        lastX = parsePosition(lastAddedNote.style.left);
-        lastY = parsePosition(lastAddedNote.style.top);
-        lastColor = lastAddedNote.style.backgroundColor;
+        [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
         ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
-    } else {
-        ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
-    }
+    } else ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
 
     createNote(text.replace(/\n/g, '<br>'), lastColor, positionX, positionY, false, '200px', '150px', false, currentBoardId);
-    lastNotePositions[currentBoardId] = { x: positionX, y: positionY };
-    lastNoteColors[currentBoardId] = lastColor;
-    textarea.value = '';
+    [lastNotePositions[currentBoardId], lastNoteColors[currentBoardId], textarea.value] = [{ x: positionX, y: positionY }, lastColor, ''];
     saveActiveNotes();
     updateBoardIndicators();
 }
 
 function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId, repositioned = false) {
     const note = document.createElement('div');
-    note.className = 'sticky-note';
-    // Set z-index for new notes to bring them to the front
-    globalZIndex++;
-    note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height}; z-index:${globalZIndex};`;
+    const noteId = generateNoteId();
     
-    // Generate and assign note ID
-    const noteId = generateNoteId(note);
-    note.dataset.noteId = noteId;
-    
-    // Mark as repositioned if specified
-    if (repositioned) {
-        note.dataset.repositioned = 'true';
-        repositionedNotes.add(noteId);
-    }
-    note.innerHTML = `
-        <div class="sticky-content ${isBold ? 'bold' : ''}" contenteditable="true">${text}</div>
+    Object.assign(note, {
+        className: 'sticky-note',
+        innerHTML: `<div class="sticky-content ${isBold ? 'bold' : ''}" contenteditable="true">${text}</div>
         <div class="note-controls">
             <div class="color-button" style="background-color: ${color}">
                 <div class="color-palette">${colors.map(c => `<div class="color-option" style="background-color: ${c}" onclick="changeNoteColor(this, '${c}')"></div>`).join('')}</div>
@@ -272,11 +137,18 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
             <button class="bold-toggle ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</button>
             <button class="done-button" onclick="markAsDone(this.closest('.sticky-note'))">✓</button>
         </div>
-        <div class="resize-handle"></div>`;
+        <div class="resize-handle"></div>`
+    });
+    
+    note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${++globalZIndex};`;
+    note.dataset.noteId = noteId;
+    if (repositioned) { note.dataset.repositioned = 'true'; repositionedNotes.add(noteId); }
+
     setupNote(note);
     const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
-    if (boardElement) boardElement.appendChild(note);
-    else { console.error(`Board element with ID ${boardId} not found.`); return null; }
+    if (!boardElement) { console.error(`Board element with ID ${boardId} not found.`); return null; }
+    
+    boardElement.appendChild(note);
     note.style.animation = 'paperPop 0.3s ease-out forwards';
     if (!isRestored) saveActiveNotes();
     return note;
@@ -285,65 +157,79 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
 function setupNote(note) {
     let isDragging = false, isResizing = false, isEditing = false;
     let startX, startY, initialX, initialY, initialW, initialH, holdTimer;
-    const colorButton = note.querySelector('.color-button');
-    const colorPalette = note.querySelector('.color-palette');
-    const content = note.querySelector('.sticky-content');
-    activeNote = null; // Ensure activeNote is scoped or defined globally
-
+    const [colorButton, colorPalette, content] = ['.color-button', '.color-palette', '.sticky-content'].map(s => note.querySelector(s));
     const saveContent = () => saveActiveNotes();
-    content.addEventListener('blur', saveContent);
-    content.addEventListener('input', saveContent);
+    
+    [content.addEventListener('blur', saveContent), content.addEventListener('input', saveContent)];
 
     const cancelEditing = (e) => {
         if (isEditing && !content.contains(e.target)) {
-            isEditing = false; content.blur();
+            [isEditing, content.contentEditable] = [false, "false"];
+            content.blur();
             document.removeEventListener('click', cancelEditing);
         }
     };
+
     content.addEventListener('click', (e) => {
         if (!isEditing) {
-            isEditing = true;
-            content.contentEditable = "true"; 
+            [isEditing, content.contentEditable] = [true, "true"];
             content.focus();
-            // Select all text for easier editing
             const range = document.createRange();
-            range.selectNodeContents(content);
             const selection = window.getSelection();
+            range.selectNodeContents(content);
             selection.removeAllRanges();
             selection.addRange(range);
             setTimeout(() => document.addEventListener('click', cancelEditing), 0);
-            e.stopPropagation(); // Prevent triggering parent click handlers
+            e.stopPropagation();
         }
     });
 
-    // Add click handler to bring note to front when clicked anywhere on the note
-    note.addEventListener('click', (e) => {
-        // Don't interfere with editing or control interactions
-        if (e.target.closest('.sticky-content[contenteditable="true"]') || 
-            e.target.closest('.color-palette') || 
-            e.target.closest('.done-button') ||
-            e.target.closest('.bold-toggle') ||
-            e.target.closest('.resize-handle')) {
-            return;
+    // Add hover functionality to bring note to top temporarily
+    let originalZIndex = null;
+    let isHovering = false;
+    
+    note.addEventListener('mouseenter', () => {
+        if (!isHovering) {
+            originalZIndex = note.style.zIndex;
+            note.style.zIndex = ++globalZIndex;
+            isHovering = true;
         }
-        
-        // Bring note to front
-        globalZIndex++;
-        note.style.zIndex = globalZIndex;
-        e.stopPropagation();
     });
-    content.addEventListener('blur', () => content.contentEditable = "false"); // Already have saveContent on blur
+    
+    note.addEventListener('mouseleave', () => {
+        if (isHovering && originalZIndex !== null) {
+            note.style.zIndex = originalZIndex;
+            isHovering = false;
+        }
+    });
+
+    note.addEventListener('click', (e) => {
+        if (!e.target.closest('.sticky-content[contenteditable="true"], .color-palette, .done-button, .bold-toggle, .resize-handle')) {
+            // Permanently change z-index on click
+            note.style.zIndex = ++globalZIndex;
+            originalZIndex = note.style.zIndex; // Update the stored original z-index
+            e.stopPropagation();
+        }
+    });
+
+    content.addEventListener('blur', () => content.contentEditable = "false");
     content.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if (e.shiftKey) { content.contentEditable = "false"; saveActiveNotes(); }
+            if (e.shiftKey) { content.contentEditable = "false"; saveContent(); }
             else {
-                const selection = window.getSelection(); const range = selection.getRangeAt(0);
-                const newLine = document.createElement('span');
-                newLine.style.fontFamily = "'Comic Neue', cursive"; newLine.innerHTML = '<br>';
-                range.deleteContents(); range.insertNode(newLine);
-                range.setStartAfter(newLine); range.collapse(true);
-                selection.removeAllRanges(); selection.addRange(range);
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const newLine = Object.assign(document.createElement('span'), { 
+                    innerHTML: '<br>', 
+                    style: { fontFamily: "'Comic Neue', cursive" }
+                });
+                range.deleteContents();
+                range.insertNode(newLine);
+                range.setStartAfter(newLine);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
             }
         }
     });
@@ -353,119 +239,51 @@ function setupNote(note) {
         lastNotePositions[currentBoardId] = { x: rect.left, y: rect.top };
     };
 
-    // Track mouse position for palette hover behavior
-let mouseX = 0;
-let mouseY = 0;
-let hoverTimeout = null;
-
-// Track mouse position and manage palette visibility
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    
-    // Check all visible palettes
-    document.querySelectorAll('.color-palette.visible').forEach(palette => {
-        const rect = palette.getBoundingClientRect();
-        const padding = 10; // Reduced padding for more precise control
-        const button = palette.closest('.note-controls')?.querySelector('.color-button');
-        
-        if (!button) return;
-        
-        const buttonRect = button.getBoundingClientRect();
-        
-        // Check if mouse is near the palette or its button
-        const isNearPalette = mouseX >= rect.left - padding && 
-                            mouseX <= rect.right + padding && 
-                            mouseY >= rect.top - padding && 
-                            mouseY <= rect.bottom + padding;
-                            
-        const isOverButton = mouseX >= buttonRect.left && 
-                           mouseX <= buttonRect.right && 
-                           mouseY >= buttonRect.top && 
-                           mouseY <= buttonRect.bottom;
-        
-        if (isNearPalette || isOverButton) {
-            // Keep palette open if mouse is near it or over its button
-            clearTimeout(hoverTimeout);
-        } else if (palette.classList.contains('visible')) {
-            // If palette is visible but mouse is not near it or its button, start hiding
-            hidePalette();
-        }
+    let mouseX = 0, mouseY = 0, hoverTimeout = null;
+    document.addEventListener('mousemove', (e) => {
+        [mouseX, mouseY] = [e.clientX, e.clientY];
+        document.querySelectorAll('.color-palette.visible').forEach(palette => {
+            const rect = palette.getBoundingClientRect();
+            const button = palette.closest('.note-controls')?.querySelector('.color-button');
+            if (!button) return;
+            const buttonRect = button.getBoundingClientRect();
+            const isNearPalette = mouseX >= rect.left - 10 && mouseX <= rect.right + 10 && mouseY >= rect.top - 10 && mouseY <= rect.bottom + 10;
+            const isOverButton = mouseX >= buttonRect.left && mouseX <= buttonRect.right && mouseY >= buttonRect.top && mouseY <= buttonRect.bottom;
+            if (isNearPalette || isOverButton) clearTimeout(hoverTimeout);
+            else if (palette.classList.contains('visible')) hidePalette();
+        });
     });
-});
 
-// Show/hide palette on hover with proximity detection
-const showPalette = () => {
-    clearTimeout(hoverTimeout);
-    // Remove closing class if it exists
-    if (colorPalette.classList.contains('closing')) {
+    const showPalette = () => {
+        clearTimeout(hoverTimeout);
         colorPalette.classList.remove('closing');
-    }
-    colorPalette.classList.add('visible');
-    // Hide other palettes
-    document.querySelectorAll('.color-palette').forEach(p => {
-        if (p !== colorPalette) {
-            p.classList.add('closing');
-            setTimeout(() => {
-                p.classList.remove('visible', 'closing');
-            }, 180);
-        }
+        colorPalette.classList.add('visible');
+        document.querySelectorAll('.color-palette').forEach(p => {
+            if (p !== colorPalette) {
+                p.classList.add('closing');
+                setTimeout(() => p.classList.remove('visible', 'closing'), 180);
+            }
+        });
+    };
+
+    const hidePalette = () => {
+        clearTimeout(hoverTimeout);
+        hoverTimeout = setTimeout(() => {
+            const [rect, buttonRect] = [colorPalette.getBoundingClientRect(), colorButton.getBoundingClientRect()];
+            const isMouseOutside = mouseX < rect.left - 10 || mouseX > rect.right + 10 || mouseY < rect.top - 10 || mouseY > rect.bottom + 10;
+            const isMouseOverButton = mouseX >= buttonRect.left && mouseX <= buttonRect.right && mouseY >= buttonRect.top && mouseY <= buttonRect.bottom;
+            if (isMouseOutside && !isMouseOverButton) {
+                colorPalette.classList.add('closing');
+                setTimeout(() => colorPalette.classList.contains('closing') && colorPalette.classList.remove('visible', 'closing'), 180);
+            }
+        }, 50);
+    };
+
+    colorButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        colorPalette.classList.contains('visible') ? hidePalette() : showPalette();
     });
-};
-
-const hidePalette = () => {
-    // Clear any existing timeouts to prevent multiple triggers
-    clearTimeout(hoverTimeout);
-    
-    // Start a new timeout to check if we should close
-    hoverTimeout = setTimeout(() => {
-        const rect = colorPalette.getBoundingClientRect();
-        const padding = 10; // Reduced from 20px to make it less sticky
-        
-        // Check if mouse is outside the extended area
-        const isMouseOutside = mouseX < rect.left - padding || 
-                             mouseX > rect.right + padding || 
-                             mouseY < rect.top - padding || 
-                             mouseY > rect.bottom + padding;
-        
-        // Also check if mouse is not over the color button
-        const buttonRect = colorButton.getBoundingClientRect();
-        const isMouseOverButton = mouseX >= buttonRect.left && 
-                                mouseX <= buttonRect.right && 
-                                mouseY >= buttonRect.top && 
-                                mouseY <= buttonRect.bottom;
-        
-        if (isMouseOutside && !isMouseOverButton) {
-            // Add closing class and remove visible after animation
-            colorPalette.classList.add('closing');
-            setTimeout(() => {
-                if (colorPalette.classList.contains('closing')) {
-                    colorPalette.classList.remove('visible', 'closing');
-                }
-            }, 180);
-        }
-    }, 50); // Reduced delay for more responsive closing
-};
-
-// Show palette on button click
-colorButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (colorPalette.classList.contains('visible')) {
-        // If already visible, hide it
-        hidePalette();
-    } else {
-        // Show the palette
-        showPalette();
-    }
-});
-
-// Keep palette open when hovering over it
-colorPalette.addEventListener('mouseenter', () => {
-    clearTimeout(hoverTimeout);
-});
-
-// Hide palette when leaving it (with proximity check)
-colorPalette.addEventListener('mouseleave', hidePalette);
+    [colorPalette.addEventListener('mouseenter', () => clearTimeout(hoverTimeout)), colorPalette.addEventListener('mouseleave', hidePalette)];
 
     const handleInteractionStart = (e, clientX, clientY) => {
         if (e.target.closest('.color-palette, .done-button')) return;
@@ -473,104 +291,79 @@ colorPalette.addEventListener('mouseleave', hidePalette);
         if (!e.shiftKey) clearSelection();
         else if (!selectedNotes.includes(note)) { selectedNotes.push(note); note.classList.add('selected'); }
 
-        // Prevent text selection during drag
         e.preventDefault();
-        document.body.style.userSelect = 'none';
-        document.body.style.webkitUserSelect = 'none';
-
-        // Bring note to front by incrementing z-index when starting interaction
-        globalZIndex++;
-        note.style.zIndex = globalZIndex;
-
-        startX = clientX; startY = clientY;
+        [document.body.style.userSelect, document.body.style.webkitUserSelect, note.style.zIndex] = ['none', 'none', ++globalZIndex];
+        [startX, startY] = [clientX, clientY];
+        
         if (e.target.closest('.resize-handle')) {
-            isResizing = true; initialW = note.offsetWidth; initialH = note.offsetHeight;
+            [isResizing, initialW, initialH] = [true, note.offsetWidth, note.offsetHeight];
         } else {
-            initialX = parsePosition(note.style.left); initialY = parsePosition(note.style.top);
-            holdTimer = setTimeout(() => { isDragging = true; }, 150);
+            [initialX, initialY] = [parsePosition(note.style.left), parsePosition(note.style.top)];
+            [note.dataset.originalX, note.dataset.originalY] = [initialX, initialY];
+            holdTimer = setTimeout(() => isDragging = true, 150);
         }
         activeNote = note;
     };
+
     const handleInteractionMove = (clientX, clientY) => {
         if (!activeNote || activeNote !== note) return;
         if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) clearTimeout(holdTimer);
 
         if (isDragging) {
-            let newX = initialX + clientX - startX;
-            let newY = initialY + clientY - startY;
             const padding = 5;
-            const minX = -padding, minY = -padding;
-            const maxX = window.innerWidth - (note.offsetWidth / 4);
-            const maxY = window.innerHeight - (note.offsetHeight / 4);
-            newX = Math.min(Math.max(newX, minX), maxX);
-            newY = Math.min(Math.max(newY, minY), maxY);
-            note.style.left = `${newX}px`; note.style.top = `${newY}px`;
-            
-            // Show transfer message if multiple boards exist and not already shown
+            let [newX, newY] = [
+                Math.min(Math.max(initialX + clientX - startX, -padding), window.innerWidth - (note.offsetWidth / 4)),
+                Math.min(Math.max(initialY + clientY - startY, -padding), window.innerHeight - (note.offsetHeight / 4))
+            ];
+            [note.style.left, note.style.top] = [`${newX}px`, `${newY}px`];
             showDragTransferMessage();
-            
-            // Check for board button hover during drag
             checkBoardButtonHover(clientX, clientY);
         }
         if (isResizing) {
-            const minW = 150, minH = 150;
-            const maxW = window.innerWidth - parsePosition(note.style.left) + 50;
-            const maxH = window.innerHeight - parsePosition(note.style.top) + 50;
+            const [minW, minH] = [150, 150];
+            const [maxW, maxH] = [window.innerWidth - parsePosition(note.style.left) + 50, window.innerHeight - parsePosition(note.style.top) + 50];
             note.style.width = `${Math.min(Math.max(initialW + clientX - startX, minW), maxW)}px`;
             note.style.height = `${Math.min(Math.max(initialH + clientY - startY, minH), maxH)}px`;
         }
     };
+
     const handleInteractionEnd = () => {
         clearTimeout(holdTimer);
-        
-        // Re-enable text selection
-        document.body.style.userSelect = '';
-        document.body.style.webkitUserSelect = '';
-        
+        [document.body.style.userSelect, document.body.style.webkitUserSelect] = ['', ''];
+
         if (isDragging || isResizing) {
-            if (isDragging) { 
-                // Hide transfer message when drag ends
+            if (isDragging) {
                 hideDragTransferMessage();
-                
-                // Check for board drop before other operations
                 const dropResult = checkBoardButtonDrop();
                 if (!dropResult.moved) {
-                    updateLastPosition(); 
+                    updateLastPosition();
                     checkTrashCollision(note);
-                    // Mark note as repositioned when manually dragged
-                    let noteId = note.dataset.noteId;
-                    if (!noteId) {
-                        noteId = generateNoteId(note);
-                        note.dataset.noteId = noteId;
-                    }
+                    checkBottomCornerCollision(note);
+                    const noteId = note.dataset.noteId || generateNoteId();
+                    [note.dataset.noteId, note.dataset.repositioned] = [noteId, 'true'];
                     repositionedNotes.add(noteId);
-                    note.dataset.repositioned = 'true';
-                    // Update board indicators
                     updateBoardIndicators();
-                    
-                    // Clear board button hover effects after transfer
                     clearBoardButtonHover();
-                    
-                    // Clear activeNote after successful transfer
                     activeNote = null;
                 }
                 saveActiveNotes();
             }
         }
-        isDragging = false; isResizing = false;
-        
-        // Hide transfer message if drag ended without successful transfer
+        [isDragging, isResizing] = [false, false];
         hideDragTransferMessage();
-        
-        // Don't clear activeNote here - it's needed for board drop detection
     };
 
-    note.addEventListener('mousedown', e => handleInteractionStart(e, e.clientX, e.clientY));
-document.addEventListener('mousemove', e => handleInteractionMove(e.clientX, e.clientY));
-document.addEventListener('mouseup', handleInteractionEnd);
-note.addEventListener('touchstart', e => handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY), { passive: false });
-document.addEventListener('touchmove', e => handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY), { passive: false });
-document.addEventListener('touchend', handleInteractionEnd);
+    [
+        ['mousedown', e => handleInteractionStart(e, e.clientX, e.clientY)],
+        ['touchstart', e => handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY), { passive: false }]
+    ].forEach(([event, handler, options]) => note.addEventListener(event, handler, options));
+    
+    [
+        ['mousemove', e => handleInteractionMove(e.clientX, e.clientY)],
+        ['mouseup', handleInteractionEnd],
+        ['touchmove', e => handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY), { passive: false }],
+        ['touchend', handleInteractionEnd]
+    ].forEach(([event, handler, options]) => document.addEventListener(event, handler, options));
 }
 
 function hideAllColorPalettes() {
@@ -583,14 +376,6 @@ function hideAllColorPalettes() {
     activePalette = null;
 }
 
-function showColorPalette(palette) {
-    palette.classList.remove('closing', 'opening');
-    void palette.offsetWidth; // Reflow
-    palette.style.display = 'grid';
-    palette.classList.add('opening');
-    activePalette = palette;
-}
-
 document.addEventListener('click', (e) => {
     if (activePalette && !e.target.closest('.color-button')) hideAllColorPalettes();
 });
@@ -598,167 +383,96 @@ document.addEventListener('click', (e) => {
 function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
     const notesToChange = note.classList.contains('selected') ? document.querySelectorAll('.sticky-note.selected') : [note];
-    
+
     notesToChange.forEach(n => {
-        // Add transition class for smooth color change
-        n.classList.add('color-transition');
-        n.querySelector('.color-button').classList.add('color-transition');
-        
-        // Apply the new color
-        n.style.backgroundColor = color;
-        n.querySelector('.color-button').style.backgroundColor = color;
-        
-        // Remove transition class after animation completes
-        setTimeout(() => {
-            n.classList.remove('color-transition');
-            n.querySelector('.color-button').classList.remove('color-transition');
-        }, 300); // Match this with the CSS transition duration
+        const colorButton = n.querySelector('.color-button');
+        [n, colorButton].forEach(el => el.classList.add('color-transition'));
+        [n.style.backgroundColor, colorButton.style.backgroundColor] = [color, color];
+        setTimeout(() => [n, colorButton].forEach(el => el.classList.remove('color-transition')), 300);
     });
-    
-    lastNoteColors[currentBoardId] = color;
+
+    [lastNoteColors[currentBoardId]] = [color];
     saveActiveNotes();
 }
 
 function toggleBold(button) {
     const content = button.closest('.sticky-note').querySelector('.sticky-content');
-    content.classList.toggle('bold');
-    button.classList.toggle('active');
+    [content.classList.toggle('bold'), button.classList.toggle('active')];
     saveActiveNotes();
 }
 
-let shortcutIcon = document.getElementById('shortcutIcon');
-if (!shortcutIcon) {
-    shortcutIcon = document.createElement('div');
-    shortcutIcon.className = 'shortcut-icon';
-    shortcutIcon.id = 'shortcutIcon';
-    document.querySelector('.textarea-container').appendChild(shortcutIcon);
-}
-function updateShortcutIcon() {
+let shortcutIcon = document.getElementById('shortcutIcon') || 
+    document.querySelector('.textarea-container').appendChild(
+        Object.assign(document.createElement('div'), {
+            className: 'shortcut-icon',
+            id: 'shortcutIcon'
+        })
+    );
+
+const updateShortcutIcon = () => {
     const isMobile = window.innerWidth <= 1024;
-    shortcutIcon.style.display = isMobile ? 'none' : 'block';
-    if (!isMobile) shortcutIcon.textContent = navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl';
-}
-window.addEventListener('resize', updateShortcutIcon);
-updateShortcutIcon();
+    [shortcutIcon.style.display, shortcutIcon.textContent] = [
+        isMobile ? 'none' : 'block',
+        isMobile ? '' : (navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl')
+    ];
+};
+[window.addEventListener('resize', updateShortcutIcon), updateShortcutIcon()];
 
 document.querySelector('.note-input textarea').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.shiftKey || e.metaKey || e.ctrlKey)) {
-        e.preventDefault(); addNote();
+        [e.preventDefault(), addNote()];
     }
 });
 
 // Board button drag-and-drop functionality
 function checkBoardButtonHover(clientX, clientY) {
+    if (hoverDetectionDisabled) return;
     const statusBar = document.querySelector('.status-bar');
     if (!statusBar) return;
     
     const statusBarRect = statusBar.getBoundingClientRect();
-    
-    // Calculate distance from mouse to closest edge of status bar
-    const distanceX = Math.max(0, Math.max(statusBarRect.left - clientX, clientX - statusBarRect.right));
-    const distanceY = Math.max(0, Math.max(statusBarRect.top - clientY, clientY - statusBarRect.bottom));
+    const [distanceX, distanceY] = [
+        Math.max(0, Math.max(statusBarRect.left - clientX, clientX - statusBarRect.right)),
+        Math.max(0, Math.max(statusBarRect.top - clientY, clientY - statusBarRect.bottom))
+    ];
     const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-    
-    // Use hysteresis to prevent flickering - different thresholds for entering and exiting
-    const enterThreshold = 120; // Larger threshold to enter
-    const exitThreshold = 80;   // Smaller threshold to exit
-    
-    const wasNearMenu = hoveredBoardButton !== null;
+    const [enterThreshold, exitThreshold, wasNearMenu] = [120, 80, hoveredBoardButton !== null];
     const isNearMenu = wasNearMenu ? (distance <= enterThreshold) : (distance <= exitThreshold);
-    
-    // Update hover state
+
+    const findClosestButton = () => {
+        let [closestButton, closestDistance] = [null, Infinity];
+        document.querySelectorAll('.board-button:not(.disabled)').forEach(button => {
+            const rect = button.getBoundingClientRect();
+            const buttonDistance = Math.sqrt(Math.pow(clientX - (rect.left + rect.width / 2), 2) + Math.pow(clientY - (rect.top + rect.height / 2), 2));
+            if (buttonDistance < closestDistance) [closestButton, closestDistance] = [button, buttonDistance];
+        });
+        return closestButton;
+    };
+
     if (isNearMenu !== wasNearMenu) {
         if (isNearMenu) {
-            // Find closest button for drop targeting
             const boardButtons = document.querySelectorAll('.board-button:not(.disabled)');
-            let closestButton = null;
-            let closestDistance = Infinity;
-            
-            boardButtons.forEach(button => {
-                const rect = button.getBoundingClientRect();
-                const buttonCenterX = rect.left + (rect.width / 2);
-                const buttonCenterY = rect.top + (rect.height / 2);
-                
-                const buttonDistance = Math.sqrt(
-                    Math.pow(clientX - buttonCenterX, 2) + 
-                    Math.pow(clientY - buttonCenterY, 2)
-                );
-                
-                if (buttonDistance < closestDistance) {
-                    closestButton = button;
-                    closestDistance = buttonDistance;
-                }
-            });
-            
-            hoveredBoardButton = closestButton;
-            
-            // Scale all board buttons uniformly
-            boardButtons.forEach(button => {
-                button.classList.add('drag-proximity');
-            });
-            
-            // Add hover effect to closest button
-            if (closestButton) {
-                closestButton.classList.add('drag-hover');
-            }
-            
-            // Start hover animation on dragged notes
+            hoveredBoardButton = findClosestButton();
+            boardButtons.forEach(button => button.classList.add('drag-proximity'));
+            if (hoveredBoardButton) hoveredBoardButton.classList.add('drag-hover');
             startHoverAnimation();
         } else {
-            // Clear all effects
-            const boardButtons = document.querySelectorAll('.board-button');
-            boardButtons.forEach(button => {
-                button.classList.remove('drag-hover', 'drag-proximity');
-            });
-            
-            hoveredBoardButton = null;
+            document.querySelectorAll('.board-button').forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
+            [hoveredBoardButton] = [null];
             clearHoverAnimations();
         }
     } else if (isNearMenu && hoveredBoardButton) {
-        // Update which button is the closest for drop targeting
-        const boardButtons = document.querySelectorAll('.board-button:not(.disabled)');
-        let closestButton = null;
-        let closestDistance = Infinity;
-        
-        boardButtons.forEach(button => {
-            const rect = button.getBoundingClientRect();
-            const buttonCenterX = rect.left + (rect.width / 2);
-            const buttonCenterY = rect.top + (rect.height / 2);
-            
-            const buttonDistance = Math.sqrt(
-                Math.pow(clientX - buttonCenterX, 2) + 
-                Math.pow(clientY - buttonCenterY, 2)
-            );
-            
-            if (buttonDistance < closestDistance) {
-                closestButton = button;
-                closestDistance = buttonDistance;
-            }
-        });
-        
-        // Update hover highlight on closest button
+        const closestButton = findClosestButton();
         if (closestButton !== hoveredBoardButton) {
-            if (hoveredBoardButton) {
-                hoveredBoardButton.classList.remove('drag-hover');
-            }
+            hoveredBoardButton?.classList.remove('drag-hover');
             hoveredBoardButton = closestButton;
             if (closestButton) {
                 closestButton.classList.add('drag-hover');
-                // Hide transfer message when hovering over board button
                 hideDragTransferMessage();
-                // Hide shortcut hint when hovering over board button
-                const shortcutHint = document.querySelector('.shortcut-hint');
-                if (shortcutHint) {
-                    shortcutHint.classList.add('hidden-during-drag');
-                }
+                document.querySelector('.shortcut-hint')?.classList.add('hidden-during-drag');
             } else {
-                // Show transfer message again when not hovering over any board button
                 showDragTransferMessage();
-                // Show shortcut hint again when not hovering over any board button
-                const shortcutHint = document.querySelector('.shortcut-hint');
-                if (shortcutHint && !dragTransferMessageVisible) {
-                    shortcutHint.classList.remove('hidden-during-drag');
-                }
+                if (!dragTransferMessageVisible) document.querySelector('.shortcut-hint')?.classList.remove('hidden-during-drag');
             }
         }
     }
@@ -766,36 +480,22 @@ function checkBoardButtonHover(clientX, clientY) {
 
 function startHoverAnimation() {
     if (!hoveredBoardButton) return;
-    
-    const targetBoardId = parseInt(hoveredBoardButton.dataset.boardId);
-    
     const buttonRect = hoveredBoardButton.getBoundingClientRect();
     const notesToAnimate = selectedNotes.length > 0 ? selectedNotes : (activeNote ? [activeNote] : []);
-    
+
     notesToAnimate.forEach(note => {
         if (note && !note.classList.contains('reverse-animating') && !note.classList.contains('hover-animating')) {
-            // Disable text selection during drag
-            const textareas = note.querySelectorAll('textarea, [contenteditable]');
-            textareas.forEach(textarea => {
+            note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
                 textarea.style.userSelect = 'none';
-                textarea.style.webkitUserSelect = 'none';
-                textarea.style.mozUserSelect = 'none';
-                textarea.style.msUserSelect = 'none';
                 textarea.style.pointerEvents = 'none';
             });
-            
+
             const noteRect = note.getBoundingClientRect();
             const boardRect = note.closest('.board').getBoundingClientRect();
-            
-            // Calculate relative positions within the board
-            const noteRelativeX = noteRect.left - boardRect.left;
-            const noteRelativeY = noteRect.top - boardRect.top;
-            const buttonRelativeX = buttonRect.left - boardRect.left + (buttonRect.width / 2);
-            const buttonRelativeY = buttonRect.top - boardRect.top + (buttonRect.height / 2);
-            
-            const targetX = buttonRelativeX - noteRelativeX - (noteRect.width / 2);
-            const targetY = buttonRelativeY - noteRelativeY - (noteRect.height / 2);
-            
+
+            const targetX = (buttonRect.left - boardRect.left + (buttonRect.width / 2)) - (noteRect.left - boardRect.left) - (noteRect.width / 2);
+            const targetY = (buttonRect.top - boardRect.top + (buttonRect.height / 2)) - (noteRect.top - boardRect.top) - (noteRect.height / 2);
+
             note.style.setProperty('--suckX', `${targetX}px`);
             note.style.setProperty('--suckY', `${targetY}px`);
             note.style.animation = 'noteSuckHover 0.3s ease-out forwards';
@@ -805,28 +505,17 @@ function startHoverAnimation() {
 }
 
 function clearHoverAnimations() {
-    const animatingNotes = document.querySelectorAll('.hover-animating');
-    animatingNotes.forEach(note => {
-        // Re-enable text selection when clearing hover
-        const textareas = note.querySelectorAll('textarea, [contenteditable]');
-        textareas.forEach(textarea => {
+    document.querySelectorAll('.hover-animating').forEach(note => {
+        note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
             textarea.style.removeProperty('user-select');
-            textarea.style.removeProperty('-webkit-user-select');
-            textarea.style.removeProperty('-moz-user-select');
-            textarea.style.removeProperty('-ms-user-select');
             textarea.style.removeProperty('pointer-events');
         });
-        
-        // Play reverse animation instead of abrupt reset
         note.style.animation = 'noteSuckReverse 0.3s ease-out forwards';
         note.classList.remove('hover-animating');
-        note.classList.add('reverse-animating'); // Prevent re-triggering
-        
-        // Clean up after reverse animation completes
+        note.classList.add('reverse-animating');
         setTimeout(() => {
-            // Only clean up if still reverse-animating (not interrupted)
             if (note.classList.contains('reverse-animating')) {
-                note.style.animation = 'none'; // Explicitly disable any animation
+                note.style.animation = 'none';
                 note.style.removeProperty('--suckX');
                 note.style.removeProperty('--suckY');
                 note.classList.remove('reverse-animating');
@@ -836,19 +525,13 @@ function clearHoverAnimations() {
 }
 
 function showDragTransferMessage() {
-    // Only show if there are multiple boards, message isn't already visible, and not hovering over a board button
     if (boardCount > 1 && !dragTransferMessageVisible && !hoveredBoardButton) {
         const transferMessage = document.getElementById('dragTransferMessage');
         if (transferMessage) {
             transferMessage.classList.add('visible');
             dragTransferMessageVisible = true;
         }
-        
-        // Hide shortcut hint while dragging
-        const shortcutHint = document.querySelector('.shortcut-hint');
-        if (shortcutHint) {
-            shortcutHint.classList.add('hidden-during-drag');
-        }
+        document.querySelector('.shortcut-hint')?.classList.add('hidden-during-drag');
     }
 }
 
@@ -859,53 +542,54 @@ function hideDragTransferMessage() {
             transferMessage.classList.remove('visible');
             dragTransferMessageVisible = false;
         }
-        
-        // Show shortcut hint again when drag ends
-        const shortcutHint = document.querySelector('.shortcut-hint');
-        if (shortcutHint) {
-            shortcutHint.classList.remove('hidden-during-drag');
-        }
+        document.querySelector('.shortcut-hint')?.classList.remove('hidden-during-drag');
     }
 }
 
 function clearBoardButtonHover() {
-    // Clear all board button effects, not just the hovered one
-    const allBoardButtons = document.querySelectorAll('.board-button');
-    allBoardButtons.forEach(button => {
-        button.classList.remove('drag-hover', 'drag-proximity');
-    });
-    
+    document.querySelectorAll('.board-button').forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
     hoveredBoardButton = null;
     clearHoverAnimations();
-    
-    // Also hide transfer message when clearing hover
     hideDragTransferMessage();
 }
 
-function checkBoardButtonDrop() {
-    if (!hoveredBoardButton) {
-        return { moved: false };
+function checkBottomCornerCollision(note) {
+    if (!note) return;
+    const noteRect = note.getBoundingClientRect();
+    const screenHeight = window.innerHeight;
+    const restrictedWidth = 250, restrictedHeight = 150;
+    const restrictedTop = screenHeight - restrictedHeight;
+
+    const overlapsVertically = noteRect.bottom > restrictedTop;
+    const overlapsBottomLeft = noteRect.left < restrictedWidth && overlapsVertically;
+
+    if (overlapsBottomLeft) {
+        const moveUpDistance = noteRect.bottom - restrictedTop + 20;
+        const currentTop = parsePosition(note.style.top);
+        const newTop = Math.max(60, currentTop - moveUpDistance);
+        note.style.transition = 'top 0.3s ease-out';
+        note.style.top = `${newTop}px`;
+        setTimeout(() => note.style.transition = '', 300);
     }
-    
+}
+
+function checkBoardButtonDrop() {
+    if (!hoveredBoardButton) return { moved: false };
+
     const targetBoardId = parseInt(hoveredBoardButton.dataset.boardId);
     const notesToMove = selectedNotes.length > 0 ? [...selectedNotes] : [activeNote];
-    
-    // If dropped on the active board, move notes up by 250px
+
     if (targetBoardId === currentBoardId) {
         notesToMove.forEach(note => {
             if (note) {
-                const currentTop = parseInt(note.style.top) || 0;
-                note.style.top = `${currentTop - 250}px`;
+                note.style.top = `${parseInt(note.style.top || 0) - 250}px`;
             }
         });
         return { moved: false };
     }
-    
-    // Calculate relative positions for multiple notes to preserve spacing
-    // Use original positions from before drag started, not current edge-constrained positions
+
     let relativePositions = new Map();
     if (notesToMove.length > 1 && typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
-        // Find the reference point from original positions (leftmost, topmost note)
         let minLeft = Infinity, minTop = Infinity;
         notesInitialPositions.forEach(notePos => {
             if (notePos && notesToMove.includes(notePos.element)) {
@@ -913,167 +597,106 @@ function checkBoardButtonDrop() {
                 minTop = Math.min(minTop, notePos.y);
             }
         });
-        
-        // Calculate relative positions from the reference point using original positions
         notesInitialPositions.forEach(notePos => {
             if (notePos && notesToMove.includes(notePos.element)) {
-                relativePositions.set(notePos.element, {
-                    offsetX: notePos.x - minLeft,
-                    offsetY: notePos.y - minTop
-                });
+                relativePositions.set(notePos.element, { offsetX: notePos.x - minLeft, offsetY: notePos.y - minTop });
             }
         });
     }
-    
-    // Move the note(s) to the target board
+
     notesToMove.forEach(note => {
-        if (note) {
-            const relativePos = relativePositions.size > 0 ? relativePositions.get(note) : null;
-            moveNoteToBoard(note, targetBoardId, relativePos);
-        }
+        if (note) moveNoteToBoard(note, targetBoardId, relativePositions.size > 0 ? relativePositions.get(note) : null);
     });
-    
-    // Clear selection after moving
-    if (selectedNotes.length > 0) {
-        clearSelection();
-    }
-    
+
+    if (selectedNotes.length > 0) clearSelection();
     return { moved: true };
 }
 
 function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
-    // Store current position before moving
     const currentLeft = note.style.left;
-    const currentTop = parsePosition(note.style.top);
-    
-    // If note is already hover-animating, complete the animation
+
     if (note.classList.contains('hover-animating')) {
-        // Continue with the completion animation using existing suck variables
         note.style.animation = 'noteSuckComplete 0.3s ease-in forwards';
         note.classList.remove('hover-animating');
     } else {
-        // Get board button position for full animation
         const targetButton = document.querySelector(`.board-button[data-board-id="${targetBoardId}"]`);
         if (!targetButton) return;
-        
+
         const buttonRect = targetButton.getBoundingClientRect();
         const noteRect = note.getBoundingClientRect();
         const boardRect = note.closest('.board').getBoundingClientRect();
-        
-        // Calculate relative positions within the board (same as hover animation)
-        const noteRelativeX = noteRect.left - boardRect.left;
-        const noteRelativeY = noteRect.top - boardRect.top;
-        const buttonRelativeX = buttonRect.left - boardRect.left + (buttonRect.width / 2);
-        const buttonRelativeY = buttonRect.top - boardRect.top + (buttonRect.height / 2);
-        
-        const targetX = buttonRelativeX - noteRelativeX - (noteRect.width / 2);
-        const targetY = buttonRelativeY - noteRelativeY - (noteRect.height / 2);
-        
-        // Set CSS variables for animation
+
+        const targetX = (buttonRect.left - boardRect.left + (buttonRect.width / 2)) - (noteRect.left - boardRect.left) - (noteRect.width / 2);
+        const targetY = (buttonRect.top - boardRect.top + (buttonRect.height / 2)) - (noteRect.top - boardRect.top) - (noteRect.height / 2);
+
         note.style.setProperty('--suckX', `${targetX}px`);
         note.style.setProperty('--suckY', `${targetY}px`);
-        
-        // Start the hover animation first, then complete
         note.style.animation = 'noteSuckHover 0.3s ease-out forwards';
         note.classList.add('hover-animating');
     }
-    
-    // Wait for hover animation, then start completion
+
     setTimeout(() => {
         if (note.classList.contains('hover-animating')) {
             note.style.animation = 'noteSuckComplete 0.3s ease-in forwards';
             note.classList.remove('hover-animating');
         }
     }, 300);
-    
-    // After both animations complete, move to target board
-    const animationDuration = 600; // Total time for both animations
+
     setTimeout(() => {
-        // Re-enable text selection after transfer
-        const textareas = note.querySelectorAll('textarea, [contenteditable]');
-        textareas.forEach(textarea => {
+        note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
             textarea.style.removeProperty('user-select');
-            textarea.style.removeProperty('-webkit-user-select');
-            textarea.style.removeProperty('-moz-user-select');
-            textarea.style.removeProperty('-ms-user-select');
             textarea.style.removeProperty('pointer-events');
         });
-        
-        // Remove note from current board
-        const currentBoard = note.closest('.board');
-        if (currentBoard) {
-            note.remove();
-        }
-        
-        // Add note to target board
+
+        note.remove(); // Remove from current board
+
         const targetBoard = document.querySelector(`.board[data-board-id="${targetBoardId}"]`);
         if (targetBoard) {
-            // Reset animation and position
             note.style.animation = '';
             note.style.removeProperty('--suckX');
             note.style.removeProperty('--suckY');
-            
-            // Position notes at their original positions (before drag) in the new board
+
             if (relativePosition) {
-                // Find the original position of this note from notesInitialPositions
-                let originalPosition = null;
-                if (typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
-                    originalPosition = notesInitialPositions.find(pos => pos.element === note);
-                }
-                
+                let originalPosition = notesInitialPositions?.find(pos => pos.element === note);
                 if (originalPosition) {
-                    // Use the exact original position from before drag started
                     note.style.left = `${originalPosition.x}px`;
                     note.style.top = `${Math.max(60, originalPosition.y)}px`;
                 } else {
-                    // Fallback: use relative positioning
-                    const baseLeft = 100;
-                    const baseTop = 80;
+                    const baseLeft = 100, baseTop = 80;
                     note.style.left = `${baseLeft + relativePosition.offsetX}px`;
                     note.style.top = `${Math.max(60, baseTop + relativePosition.offsetY)}px`;
                 }
             } else {
-                // Single note: use original position if available, otherwise keep current horizontal
-                let originalPosition = null;
-                if (typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
-                    originalPosition = notesInitialPositions.find(pos => pos.element === note);
-                }
-                
-                if (originalPosition) {
-                    note.style.left = `${originalPosition.x}px`;
-                    note.style.top = `${Math.max(60, originalPosition.y)}px`;
+                const originalX = parseFloat(note.dataset.originalX);
+                const originalY = parseFloat(note.dataset.originalY);
+                if (!isNaN(originalX) && !isNaN(originalY)) {
+                    note.style.left = `${originalX}px`;
+                    note.style.top = `${Math.max(60, originalY)}px`;
                 } else {
                     note.style.left = currentLeft;
                     note.style.top = '80px';
                 }
             }
-            
-            // Mark as repositioned since it was manually moved
-            let noteId = note.dataset.noteId;
-            if (!noteId) {
-                noteId = generateNoteId(note);
-                note.dataset.noteId = noteId;
-            }
+
+            const noteId = note.dataset.noteId || generateNoteId();
+            note.dataset.noteId = noteId;
             repositionedNotes.add(noteId);
             note.dataset.repositioned = 'true';
-            
+
             targetBoard.appendChild(note);
-            
-            // Fade in animation for the note in new position
             note.style.animation = 'paperPop 0.3s ease-out forwards';
-            
-            // Update board indicators
+
             updateBoardIndicators();
-            
-            // Clear board button hover effects after transfer
             clearBoardButtonHover();
-            
-            // Save both source and target boards after transfer
-            saveActiveNotes(); // Save current board (source)
+
+            hoverDetectionDisabled = true;
+            setTimeout(() => hoverDetectionDisabled = false, 500);
+
             const originalBoardId = currentBoardId;
             currentBoardId = targetBoardId;
-            saveActiveNotes(); // Save target board
-            currentBoardId = originalBoardId; // Restore original board
+            saveActiveNotes();
+            currentBoardId = originalBoardId;
+            saveActiveNotes();
         }
-    }, 600); // Match animation duration
+    }, 600);
 }
