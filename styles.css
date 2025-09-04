@@ -944,7 +944,7 @@ body {
     -ms-user-select: none; /* IE 10+ */
     user-select: none;
     transform: scale(1);
-    transition: all 0.2s ease-out;
+    transition: transform 0.2s ease-out, background-color 0.2s ease-out, border-color 0.2s ease-out;
     will-change: transform;
 }
 .board-button:hover {
@@ -1083,6 +1083,11 @@ body {
 }
 .board-button.new-button {
     animation: boardButtonPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Ensure new buttons can transition after animation completes */
+.board-button.new-button {
+    transition: transform 0.2s ease-out !important;
 }
 .board-button.removing {
     animation: boardButtonPopOut 0.25s cubic-bezier(0.45, -0.36, 0.2, 1) forwards;
@@ -1744,7 +1749,13 @@ body {
 .board-button.drag-proximity {
     transform: scale(1.4) !important;
     z-index: 1000 !important;
-    
+    transition: transform 0.2s ease-out !important;
+}
+
+/* Override animation completely when dragging over new buttons */
+.board-button.new-button.drag-proximity {
+    animation: none !important;
+    transform: scale(1.4) !important;
     transition: transform 0.2s ease-out !important;
 }
 
