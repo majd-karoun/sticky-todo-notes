@@ -660,7 +660,7 @@ function checkBoardButtonHover(clientX, clientY) {
             
             hoveredBoardButton = closestButton;
             
-            // Scale all board buttons
+            // Scale all board buttons uniformly
             boardButtons.forEach(button => {
                 button.classList.add('drag-proximity');
             });

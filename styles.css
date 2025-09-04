@@ -1641,6 +1641,7 @@ body {
     transition: background-color 0.3s ease, transform 0.3s ease;
     z-index: 2;
 }
+
 .board-button.has-notes::after {
     background-color: rgba(76, 175, 80, 0.8);
     transform: translateX(-50%) scale(1);
@@ -1648,23 +1649,21 @@ body {
 
 /* Drag-and-drop hover effect for board buttons */
 .board-button.drag-hover {
-    background-color: rgba(255, 255, 255, 0.4) !important;
-    border-color: #4CAF50 !important;
-    border-width: 3px !important;
+    border-color: rgba(76, 175, 80, 1) !important;
+   
     z-index: 1002 !important;
-    transform: scale(1.6) !important;
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+    
     transition: all 0.2s ease;
 }
 
-.board-button.drag-hover::after {
+.board-button.drag-hover.has-notes::after {
     background-color: rgba(76, 175, 80, 1) !important;
-    transform: translateX(-50%) scale(1.2) !important;
+    transform: translateX(-50%)  !important;
 }
 
 /* Proximity scaling effect for board buttons */
 .board-button.drag-proximity {
-    transform: scale(1.3);
+    transform: scale(1.3) !important;
     z-index: 1001;
     margin: 0 2px;
     transition: transform 0.2s ease-out !important;
