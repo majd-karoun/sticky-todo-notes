@@ -1835,8 +1835,8 @@ body.selecting * {
         .note-input textarea { font-size: 1.5rem; }
         .shortcut-icon { font-size: 1.2rem; padding: 6px 12px; color: #777777; }
         .shortcut-icon.focus-hint, .shortcut-icon.enter-hint { font-size: 1.2rem; }
-        .sticky-content { font-size: 1.5rem; }
-        .sticky-content.bold { font-size: 2rem; }
+        .sticky-content { font-size: 2rem; }
+        .sticky-content.bold { font-size: 2.5rem; }
         .bold-toggle {
             font-size: 1.2rem !important;
             font-family: 'Comic Neue', cursive !important;
