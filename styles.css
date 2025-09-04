@@ -1295,18 +1295,21 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     text-shadow: 
-        -3px -3px 0 white,
-        3px -3px 0 white,
-        -3px 3px 0 white,
-        3px 3px 0 white,
-        -3px 0 0 white,
-        3px 0 0 white,
-        0 -3px 0 white,
-        0 3px 0 white;
+        -3px -3px 0 rgba(255, 255, 255, 0.8),
+        3px -3px 0 rgba(255, 255, 255, 0.8),
+        -3px 3px 0 rgba(255, 255, 255, 0.8),
+        3px 3px 0 rgba(255, 255, 255, 0.8),
+        -3px 0 0 rgba(255, 255, 255, 0.8),
+        3px 0 0 rgba(255, 255, 255, 0.8),
+        0 -3px 0 rgba(255, 255, 255, 0.8),
+        0 3px 0 rgba(255, 255, 255, 0.8);
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
-
-
 
 .emoji-sticker .delete-button {
     position: absolute;
@@ -1339,12 +1342,7 @@ body {
     transform: scale(1.1);
 }
 
-.emoji-sticker.dragging {
-    z-index: 1001;
-    transform: scale(1.1);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
-    pointer-events: none;
-}
+
 
 @keyframes emojiPop {
     0% { transform: scale(0) rotate(0deg); opacity: 0; }
@@ -1836,7 +1834,7 @@ body.selecting * {
         .shortcut-icon { font-size: 1.2rem; padding: 6px 12px; color: #777777; }
         .shortcut-icon.focus-hint, .shortcut-icon.enter-hint { font-size: 1.2rem; }
         .sticky-content { font-size: 2rem; }
-        .sticky-content.bold { font-size: 2.5rem; }
+        .sticky-content.bold { font-size: 2.8rem; }
         .bold-toggle {
             font-size: 1.2rem !important;
             font-family: 'Comic Neue', cursive !important;
