@@ -683,7 +683,7 @@ body {
 }
 
 .close-modal-btn {
-    border: 2px solid rgb(255, 255, 255);
+    border: 1px solid rgb(255, 255, 255);
     color: rgb(255, 254, 254);
     width: 42px;
     height: 42px;
@@ -1726,7 +1726,7 @@ body {
         height: 60px !important;
         border-radius: 12px !important;
     }
-    .board-title-input, .board-title-circle.show-temporary .board-title-input { font-size: 1.5rem; padding: 0 25px; }
+    .board-title-input, .board-title-circle.show-temporary .board-title-input { font-size: 1.3rem; padding: 0 25px; }
     .board-title-input::after { font-size: 16px; right: 20px; bottom: 12px; }
 
     .radio-control i { font-size: 25px; } /* These seem unrelated to board title, but were in this block */
