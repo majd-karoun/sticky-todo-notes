@@ -199,17 +199,13 @@ body {
 }
 
 .sticky-note:hover {
-    z-index: 1000 !important;
     box-shadow: 0 6px 20px rgba(0,0,0,0.25), 
                 0 12px 30px rgba(0,0,0,0.22),
                 0 18px 40px rgba(0,0,0,0.15);
     transition:  box-shadow 0.3s ease-out;
 }
 
-/* change last moved note z-index to top */
-.sticky-note.active-note {
-    z-index: 100; 
-}
+/* Note z-index is now managed dynamically in JavaScript */
 
 .sticky-content {
     width: 100%;

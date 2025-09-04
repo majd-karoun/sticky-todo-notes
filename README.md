@@ -8,14 +8,11 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 
 ### Note Management.
 - ➕ Enter text to create notes
-- 🖱️ Click notes to edit content
-- 🎨 Color picker for notes and boards
-- 🖐️ select multiple Notes with the mouse and Drag notes around.
-- 🖊️ Bold text with (B) button
-- ↘️ Resize notes from corner
-- 🗑️ Delete a Note by clicking done sign.
-- 🔢 Switch boards with arrow keys or 1-9
-- 🔄 Transfer notes between boards by dragging them over the board numbers.
+- 🖱️ Click on a note to edit content.
+- ↘️ Resize notes from corner.
+- 🖐️ Hold a note and drag it around to reposition it.
+- 🖐️ drag mutliple notes together by highliting an  area with the mouse where the notes are, then drag them together.
+
 
 
 ## 🚀 Quick Start

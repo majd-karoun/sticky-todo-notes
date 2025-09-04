@@ -10,6 +10,9 @@ let hoveredBoardButton = null;
 // Track drag transfer message visibility
 let dragTransferMessageVisible = false;
 
+// Global z-index counter for proper note layering
+let globalZIndex = 1000;
+
 // Function to generate unique note ID
 function generateNoteId(note) {
     return `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -247,10 +250,9 @@ function addNote() {
 function createNote(text, color, x, y, isRestored = false, width = '200px', height = '150px', isBold = false, boardId = currentBoardId, repositioned = false) {
     const note = document.createElement('div');
     note.className = 'sticky-note';
-    // Add active-note class to new notes to ensure they're on top
-    document.querySelectorAll('.sticky-note').forEach(n => n.classList.remove('active-note'));
-    note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height};`;
-    note.classList.add('active-note');
+    // Set z-index for new notes to bring them to the front
+    globalZIndex++;
+    note.style.cssText = `background-color:${color}; left:${typeof x === 'number' ? x+'px' : x}; top:${typeof y === 'number' ? y+'px' : y}; width:${width}; height:${height}; z-index:${globalZIndex};`;
     
     // Generate and assign note ID
     const noteId = generateNoteId(note);
@@ -312,6 +314,23 @@ function setupNote(note) {
             setTimeout(() => document.addEventListener('click', cancelEditing), 0);
             e.stopPropagation(); // Prevent triggering parent click handlers
         }
+    });
+
+    // Add click handler to bring note to front when clicked anywhere on the note
+    note.addEventListener('click', (e) => {
+        // Don't interfere with editing or control interactions
+        if (e.target.closest('.sticky-content[contenteditable="true"]') || 
+            e.target.closest('.color-palette') || 
+            e.target.closest('.done-button') ||
+            e.target.closest('.bold-toggle') ||
+            e.target.closest('.resize-handle')) {
+            return;
+        }
+        
+        // Bring note to front
+        globalZIndex++;
+        note.style.zIndex = globalZIndex;
+        e.stopPropagation();
     });
     content.addEventListener('blur', () => content.contentEditable = "false"); // Already have saveContent on blur
     content.addEventListener('keydown', (e) => {
@@ -459,9 +478,9 @@ colorPalette.addEventListener('mouseleave', hidePalette);
         document.body.style.userSelect = 'none';
         document.body.style.webkitUserSelect = 'none';
 
-        // Add active-note class to bring to front when starting interaction
-        document.querySelectorAll('.sticky-note').forEach(n => n.classList.remove('active-note'));
-        note.classList.add('active-note');
+        // Bring note to front by incrementing z-index when starting interaction
+        globalZIndex++;
+        note.style.zIndex = globalZIndex;
 
         startX = clientX; startY = clientY;
         if (e.target.closest('.resize-handle')) {

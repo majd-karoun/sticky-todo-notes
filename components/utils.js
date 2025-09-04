@@ -63,7 +63,8 @@ function saveActiveNotes() {
         x: note.style.left, y: note.style.top,
         width: note.style.width || '200px', height: note.style.height || '150px',
         isBold: note.querySelector('.sticky-content').classList.contains('bold'),
-        noteId: note.dataset.noteId
+        noteId: note.dataset.noteId,
+        zIndex: note.style.zIndex || 1
         // Don't save repositioned status - it should reset after refresh
     }));
     saveToLocalStorage(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData);
@@ -143,9 +144,16 @@ function loadSavedData() {
                 lastNoteColors[i] = note.color;
                 if (typeof createNote === 'function') {
                     const createdNote = createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold, i);
-                    // Restore note ID but not repositioned status (resets after refresh)
+                    // Restore note ID and z-index but not repositioned status (resets after refresh)
                     if (createdNote && note.noteId) {
                         createdNote.dataset.noteId = note.noteId;
+                        if (note.zIndex) {
+                            createdNote.style.zIndex = note.zIndex;
+                            // Update global z-index counter to ensure new notes appear on top
+                            if (typeof globalZIndex !== 'undefined' && parseInt(note.zIndex) >= globalZIndex) {
+                                globalZIndex = parseInt(note.zIndex);
+                            }
+                        }
                     }
                 }
             });
