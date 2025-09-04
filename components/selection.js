@@ -138,6 +138,10 @@ function moveSelectionHandler(e) {
     // Check for board button hover during selection drag
     if (selectedNotes.length > 0) {
         checkBoardButtonHover(e.clientX, e.clientY);
+        // Show transfer message when dragging multiple notes
+        if (selectedNotes.length > 1) {
+            showDragTransferMessage();
+        }
     }
 }
 
@@ -147,6 +151,9 @@ function endSelectionMoveHandler() {
     document.body.classList.remove('selecting');
     document.removeEventListener('mousemove', moveSelectionHandler);
     document.removeEventListener('mouseup', endSelectionMoveHandler);
+    
+    // Hide the drag transfer message when drag ends
+    hideDragTransferMessage();
     
     // Check for board drop before other operations
     const dropResult = checkBoardButtonDrop();
