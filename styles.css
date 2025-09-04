@@ -891,15 +891,17 @@ body {
 
 .shortcut-hint {
     color: rgba(255, 255, 255, 0.5);
-    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    font-size: 1rem;
     position: absolute;
     bottom: 50px;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 5px 8px;
-    border-radius: 20px;
+    font-weight: 200;
+    padding: 5px 15px;
+   
     backdrop-filter: blur(2px);
     opacity: 0;
     transition: opacity 0.3s;
@@ -909,6 +911,9 @@ body {
 }
 .boards-navigation:hover .shortcut-hint {
     opacity: 1;
+}
+.shortcut-hint.hidden-during-drag {
+    opacity: 0 !important;
 }
 
 .board-button, .add-board-button {
@@ -932,6 +937,8 @@ body {
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10+ */
     user-select: none;
+    z-index: 2000;
+    position: relative;
     
 }
 .board-button {
@@ -948,8 +955,8 @@ body {
     background-color: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.5);
   
- 
 }
+
 .board-button.active {
     background-color: rgba(255, 255, 255, 0.2);
     border-color: white; 
@@ -1159,6 +1166,85 @@ body {
 
 .emoji-item:active {
     transform: scale(0.95);
+}
+
+/* Drag Transfer Message Styles */
+.drag-transfer-message {
+    position: fixed;
+    bottom: 95px;
+    left: 60%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.drag-transfer-message.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.transfer-content {
+    
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    font-size: 1rem;
+    padding: 5px 15px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;    justify-content: space-between;
+    margin-bottom: 0px;
+    z-index: 999;
+    
+}
+
+.transfer-text {
+    color: rgba(255, 255, 255, 0.5);
+   font-size: 1rem;
+    font-weight: 200;
+    font-family: 'Poppins', sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.transfer-arrow {
+    color: rgba(255, 255, 255, 0.5);
+    animation: arrowBounce 1.2s ease-in-out infinite;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+
+    font-size: 2rem;
+  
+}
+
+@keyframes arrowBounce {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 0.9;
+    }
+    50% {
+        transform: translateY(4px);
+        opacity: 1;
+    }
+}
+
+
+
+
+
+@keyframes boardButtonPulse {
+    0% {
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+    }
+    100% {
+        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6);
+    }
 }
 
 /* Emoji Sticker Styles */
@@ -1650,22 +1736,19 @@ body {
 /* Drag-and-drop hover effect for board buttons */
 .board-button.drag-hover {
     border-color: rgba(76, 175, 80, 1) !important;
-   
-    z-index: 1002 !important;
-    
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .board-button.drag-hover.has-notes::after {
     background-color: rgba(76, 175, 80, 1) !important;
-    transform: translateX(-50%)  !important;
+    
 }
 
 /* Proximity scaling effect for board buttons */
 .board-button.drag-proximity {
-    transform: scale(1.3) !important;
-    z-index: 1001;
-    margin: 0 2px;
+    transform: scale(1.4) !important;
+    z-index: 1000 !important;
+    
     transition: transform 0.2s ease-out !important;
 }
 

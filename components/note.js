@@ -7,6 +7,9 @@ let repositionedNotes = new Set();
 // Track board button hover state for drag-and-drop
 let hoveredBoardButton = null;
 
+// Track drag transfer message visibility
+let dragTransferMessageVisible = false;
+
 // Function to generate unique note ID
 function generateNoteId(note) {
     return `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -484,6 +487,9 @@ colorPalette.addEventListener('mouseleave', hidePalette);
             newY = Math.min(Math.max(newY, minY), maxY);
             note.style.left = `${newX}px`; note.style.top = `${newY}px`;
             
+            // Show transfer message if multiple boards exist and not already shown
+            showDragTransferMessage();
+            
             // Check for board button hover during drag
             checkBoardButtonHover(clientX, clientY);
         }
@@ -504,6 +510,9 @@ colorPalette.addEventListener('mouseleave', hidePalette);
         
         if (isDragging || isResizing) {
             if (isDragging) { 
+                // Hide transfer message when drag ends
+                hideDragTransferMessage();
+                
                 // Check for board drop before other operations
                 const dropResult = checkBoardButtonDrop();
                 if (!dropResult.moved) {
@@ -530,6 +539,10 @@ colorPalette.addEventListener('mouseleave', hidePalette);
             }
         }
         isDragging = false; isResizing = false;
+        
+        // Hide transfer message if drag ended without successful transfer
+        hideDragTransferMessage();
+        
         // Don't clear activeNote here - it's needed for board drop detection
     };
 
@@ -788,6 +801,39 @@ function clearHoverAnimations() {
     });
 }
 
+function showDragTransferMessage() {
+    // Only show if there are multiple boards and message isn't already visible
+    if (boardCount > 1 && !dragTransferMessageVisible) {
+        const transferMessage = document.getElementById('dragTransferMessage');
+        if (transferMessage) {
+            transferMessage.classList.add('visible');
+            dragTransferMessageVisible = true;
+        }
+        
+        // Hide shortcut hint while dragging
+        const shortcutHint = document.querySelector('.shortcut-hint');
+        if (shortcutHint) {
+            shortcutHint.classList.add('hidden-during-drag');
+        }
+    }
+}
+
+function hideDragTransferMessage() {
+    if (dragTransferMessageVisible) {
+        const transferMessage = document.getElementById('dragTransferMessage');
+        if (transferMessage) {
+            transferMessage.classList.remove('visible');
+            dragTransferMessageVisible = false;
+        }
+        
+        // Show shortcut hint again when drag ends
+        const shortcutHint = document.querySelector('.shortcut-hint');
+        if (shortcutHint) {
+            shortcutHint.classList.remove('hidden-during-drag');
+        }
+    }
+}
+
 function clearBoardButtonHover() {
     // Clear all board button effects, not just the hovered one
     const allBoardButtons = document.querySelectorAll('.board-button');
@@ -797,6 +843,9 @@ function clearBoardButtonHover() {
     
     hoveredBoardButton = null;
     clearHoverAnimations();
+    
+    // Also hide transfer message when clearing hover
+    hideDragTransferMessage();
 }
 
 function checkBoardButtonDrop() {
