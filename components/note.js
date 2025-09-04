@@ -901,10 +901,35 @@ function checkBoardButtonDrop() {
         return { moved: false };
     }
     
+    // Calculate relative positions for multiple notes to preserve spacing
+    // Use original positions from before drag started, not current edge-constrained positions
+    let relativePositions = new Map();
+    if (notesToMove.length > 1 && typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
+        // Find the reference point from original positions (leftmost, topmost note)
+        let minLeft = Infinity, minTop = Infinity;
+        notesInitialPositions.forEach(notePos => {
+            if (notePos && notesToMove.includes(notePos.element)) {
+                minLeft = Math.min(minLeft, notePos.x);
+                minTop = Math.min(minTop, notePos.y);
+            }
+        });
+        
+        // Calculate relative positions from the reference point using original positions
+        notesInitialPositions.forEach(notePos => {
+            if (notePos && notesToMove.includes(notePos.element)) {
+                relativePositions.set(notePos.element, {
+                    offsetX: notePos.x - minLeft,
+                    offsetY: notePos.y - minTop
+                });
+            }
+        });
+    }
+    
     // Move the note(s) to the target board
     notesToMove.forEach(note => {
         if (note) {
-            moveNoteToBoard(note, targetBoardId);
+            const relativePos = relativePositions.size > 0 ? relativePositions.get(note) : null;
+            moveNoteToBoard(note, targetBoardId, relativePos);
         }
     });
     
@@ -916,7 +941,7 @@ function checkBoardButtonDrop() {
     return { moved: true };
 }
 
-function moveNoteToBoard(note, targetBoardId) {
+function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
     // Store current position before moving
     const currentLeft = note.style.left;
     const currentTop = parsePosition(note.style.top);
@@ -988,10 +1013,40 @@ function moveNoteToBoard(note, targetBoardId) {
             note.style.removeProperty('--suckX');
             note.style.removeProperty('--suckY');
             
-            // Keep horizontal position, move up by 250px
-            note.style.left = currentLeft;
-            const newTop = Math.max(60, currentTop - 250); // Start at 60px to avoid header
-            note.style.top = `${newTop}px`;
+            // Position notes at their original positions (before drag) in the new board
+            if (relativePosition) {
+                // Find the original position of this note from notesInitialPositions
+                let originalPosition = null;
+                if (typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
+                    originalPosition = notesInitialPositions.find(pos => pos.element === note);
+                }
+                
+                if (originalPosition) {
+                    // Use the exact original position from before drag started
+                    note.style.left = `${originalPosition.x}px`;
+                    note.style.top = `${Math.max(60, originalPosition.y)}px`;
+                } else {
+                    // Fallback: use relative positioning
+                    const baseLeft = 100;
+                    const baseTop = 80;
+                    note.style.left = `${baseLeft + relativePosition.offsetX}px`;
+                    note.style.top = `${Math.max(60, baseTop + relativePosition.offsetY)}px`;
+                }
+            } else {
+                // Single note: use original position if available, otherwise keep current horizontal
+                let originalPosition = null;
+                if (typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
+                    originalPosition = notesInitialPositions.find(pos => pos.element === note);
+                }
+                
+                if (originalPosition) {
+                    note.style.left = `${originalPosition.x}px`;
+                    note.style.top = `${Math.max(60, originalPosition.y)}px`;
+                } else {
+                    note.style.left = currentLeft;
+                    note.style.top = '80px';
+                }
+            }
             
             // Mark as repositioned since it was manually moved
             let noteId = note.dataset.noteId;
