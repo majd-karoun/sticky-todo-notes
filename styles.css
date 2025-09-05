@@ -731,7 +731,6 @@ body {
     padding: 5px;
     flex-grow: 1;
     height: 100%;
-    transition: all 0.3s ease;
 }
 .deleted-notes-container::-webkit-scrollbar { width: 8px; }
 .deleted-notes-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 4px; }
@@ -751,7 +750,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(3px);
     animation: fadeInScale 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .trash-modal.visible .deleted-note { /* Already handled by animation, but kept for clarity if needed */
     opacity: 1;
@@ -989,7 +987,7 @@ body {
 .board-button.active {
     background-color: rgba(255, 255, 255, 0.2);
     border-color: white; 
-    transform: scale(1.1);
+
 }
 .add-board-button {
     background-color: rgba(0, 0, 0, 0.1);
