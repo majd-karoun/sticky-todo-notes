@@ -1802,7 +1802,7 @@ body.drag-in-progress .board-button:hover .delete-board {
         height: 60px !important;
         border-radius: 12px !important;
     }
-    .board-title-input, .board-title-circle.show-temporary .board-title-input { font-size: 1.3rem; padding: 0 25px; }
+    .board-title-input, .board-title-circle.show-temporary .board-title-input { font-size: 1.7rem; padding: 0 25px; }
     .board-title-input::after { font-size: 16px; right: 20px; bottom: 12px; }
 
     .radio-control i { font-size: 25px; } /* These seem unrelated to board title, but were in this block */
