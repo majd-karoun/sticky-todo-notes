@@ -11,6 +11,134 @@ const generateNoteId = () => `note_${Date.now()}_${Math.random().toString(36).su
 const getRandomOffset = () => (Math.random() * 40) - 20; // Random between -20 and 20
 const getDayColumnIndex = (date = getCurrentDate()) => date.getDay() === 0 ? 0 : date.getDay() - 1; // 0=Mon, 5=Sat
 
+// Note limit notification system
+function showNoteLimitMessage(message) {
+    const limitMessage = document.getElementById('noteLimitMessage');
+    if (limitMessage) {
+        const textElement = limitMessage.querySelector('.transfer-text');
+        if (textElement) {
+            textElement.textContent = message;
+        }
+        limitMessage.classList.add('visible');
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            limitMessage.classList.remove('visible');
+        }, 3000);
+    }
+}
+
+// Intelligent stacking for regular boards
+function findStackingPosition(targetX, targetY, existingNotes) {
+    const bottomThreshold = window.innerHeight - 300;
+    const stackRadius = 150; // Area to search for notes to stack under
+    
+    // Find notes in the target area
+    const nearbyNotes = existingNotes.filter(note => {
+        const noteX = parsePosition(note.style.left);
+        const noteY = parsePosition(note.style.top);
+        const distance = Math.sqrt(Math.pow(noteX - targetX, 2) + Math.pow(noteY - targetY, 2));
+        return distance <= stackRadius;
+    });
+    
+    if (nearbyNotes.length === 0) {
+        // No nearby notes, check if original position is within bounds
+        if (targetY > bottomThreshold) {
+            return { x: targetX, y: targetY, showLimit: true };
+        }
+        return { x: targetX, y: targetY, showLimit: false };
+    }
+    
+    // Find the lowest note in the area to stack under
+    let lowestNote = null;
+    let lowestY = -1;
+    
+    nearbyNotes.forEach(note => {
+        const noteY = parsePosition(note.style.top);
+        if (noteY > lowestY) {
+            lowestY = noteY;
+            lowestNote = note;
+        }
+    });
+    
+    if (lowestNote) {
+        const stackX = parsePosition(lowestNote.style.left);
+        const stackY = lowestY + 70; // Stack 70px below the lowest note
+        
+        // Check if stacking would exceed bottom threshold
+        if (stackY > bottomThreshold) {
+            // Try to find empty space elsewhere on the board
+            const emptySpace = findEmptySpace(existingNotes, bottomThreshold);
+            if (emptySpace) {
+                return { 
+                    x: emptySpace.x, 
+                    y: emptySpace.y, 
+                    showLimit: false 
+                };
+            }
+            return { x: targetX, y: targetY, showLimit: true };
+        }
+        
+        return { 
+            x: stackX, 
+            y: stackY, 
+            showLimit: false,
+            inheritColor: lowestNote.style.backgroundColor
+        };
+    }
+    
+    return { x: targetX, y: targetY, showLimit: false };
+}
+
+// Open trash modal and shake clear button when limit reached
+function openTrashDueToLimit() {
+    const modal = document.getElementById('trashModal');
+    const clearButton = document.querySelector('.clear-trash-btn');
+    
+    // Open trash modal
+    if (modal && !modal.classList.contains('visible')) {
+        modal.style.display = 'block';
+        modal.classList.add('visible');
+        if (typeof renderDeletedNotes === 'function') {
+            renderDeletedNotes();
+        }
+    }
+    
+    // Shake the clear button
+    if (clearButton) {
+        clearButton.classList.add('shake-animation');
+        setTimeout(() => {
+            clearButton.classList.remove('shake-animation');
+        }, 1000);
+    }
+}
+
+// Find empty space on the board when stacking fails
+function findEmptySpace(existingNotes, bottomThreshold) {
+    const boardWidth = window.innerWidth - 220; // Account for note width
+    const searchStep = 220; // Note width + spacing
+    const searchYStep = 70; // Note height + spacing
+    
+    // Search in a grid pattern for empty space
+    for (let x = 50; x < boardWidth; x += searchStep) {
+        for (let y = 50; y < bottomThreshold; y += searchYStep) {
+            // Check if this position conflicts with existing notes
+            const hasConflict = existingNotes.some(note => {
+                const noteX = parsePosition(note.style.left);
+                const noteY = parsePosition(note.style.top);
+                const distance = Math.sqrt(Math.pow(noteX - x, 2) + Math.pow(noteY - y, 2));
+                return distance < 100; // Minimum distance between notes
+            });
+            
+            if (!hasConflict) {
+                return { x, y };
+            }
+        }
+    }
+    
+    return null; // No empty space found
+}
+
 // Note Creation and Management
 function addNote() {
     const textarea = document.querySelector('.note-input textarea');
@@ -19,21 +147,32 @@ function addNote() {
 
     const boardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
     const notes = Array.from(boardElement.querySelectorAll('.sticky-note'));
-    const lastAddedNote = notes[notes.length - 1];
-    let { x: lastX, y: lastY } = lastNotePositions[currentBoardId] || { x: 0, y: 0 };
-    let lastColor = lastNoteColors[currentBoardId] || getRandomColor();
-    let positionX, positionY;
-
+    
     const [hasWeekdaysPattern, hasDaysPattern, hasNoNotes] = [
         boardElement.classList.contains('board-pattern-weekdays'),
         boardElement.classList.contains('board-pattern-days'),
         notes.length === 0
     ];
 
+    // Check note count limits (skip for pattern boards as they use position-based limits)
+    if (!hasWeekdaysPattern && !hasDaysPattern) {
+        const maxNotes = 30;
+        if (notes.length >= maxNotes) {
+            showNoteLimitMessage(`Maximum note count reached.`);
+            return;
+        }
+    }
+
+    const lastAddedNote = notes[notes.length - 1];
+    let { x: lastX, y: lastY } = lastNotePositions[currentBoardId] || { x: 0, y: 0 };
+    let lastColor = lastNoteColors[currentBoardId] || getRandomColor();
+    let positionX, positionY;
+
     const calculateColumnPosition = (columnIndex, columnCount) => {
         const headerWidth = boardElement.offsetWidth / columnCount;
-        const baseX = (columnIndex * headerWidth) + (headerWidth / 2) - 100;
-        return Math.max(10, Math.min(boardElement.offsetWidth - 210, baseX + getRandomOffset()));
+        const baseX = (columnIndex * headerWidth) + 10; // Start 10px from column left edge
+        const maxX = (columnIndex + 1) * headerWidth - 210; // End 210px before column right edge (note width)
+        return Math.max(baseX, Math.min(maxX, baseX + getRandomOffset()));
     };
 
     const getColumnNotes = (columnIndex, columnCount, excludeNote = null) => {
@@ -98,36 +237,34 @@ function addNote() {
             }
         });
         
-        // Use note count instead of pixel threshold for line breaking
-        const maxNotesPerColumn = 6;
+        // Use 300px bottom threshold for line breaking
+        const bottomThreshold = window.innerHeight - 300;
         
-        // Don't place new note if column is already at max capacity
-        if (columnNotes.length >= maxNotesPerColumn) {
-            // Skip positioning, let overflow logic handle it
-            positionX = calculateColumnPosition(columnIndex, columnCount);
-            positionY = 60; // Temporary, will be overridden by overflow logic
+        // Calculate new Y position
+        let newY = lastNoteInColumn ? lastYInColumn + 70 : 60;
+        
+        // Always set positionX for this column first
+        positionX = calculateColumnPosition(columnIndex, columnCount);
+        
+        // Check if new position would exceed bottom threshold
+        if (newY > bottomThreshold) {
+            // Column is full based on position, move to next column
+            positionY = 60; // Will be overridden by overflow logic
         } else {
             // Place note after the last note in column
-            let newY = lastNoteInColumn ? lastYInColumn + 70 : 60;
             positionY = newY;
+            // Set color based on the last note in column (inherit color)
+            if (lastNoteInColumn) {
+                lastColor = lastNoteInColumn.style.backgroundColor;
+                console.log(`Inheriting color from last note: ${lastColor}`);
+            }
+            return true; // Success - note can be placed in this column
         }
         
-        console.log(`Final positioning: lastNote=${lastNoteInColumn ? 'found' : 'none'}, positionY=${positionY}, columnNotes=${columnNotes.length}, max=${maxNotesPerColumn}`);
         
-        // Set color based on the last note in column (inherit color)
-        if (lastNoteInColumn && columnNotes.length < maxNotesPerColumn) {
-            lastColor = lastNoteInColumn.style.backgroundColor;
-            console.log(`Inheriting color from last note: ${lastColor}`);
-        }
-        
-        // Initialize positionX for this column
-        if (columnNotes.length < maxNotesPerColumn) {
-            positionX = calculateColumnPosition(columnIndex, columnCount);
-        }
-        
-        // If the column already has 6 notes, move to next column
-        if (columnNotes.length >= maxNotesPerColumn) {
-            console.log(`Column ${columnIndex} is full (${columnNotes.length}/${maxNotesPerColumn}), looking for next column...`);
+        // If the column is full (based on position threshold), move to next column
+        if (newY > bottomThreshold) {
+            console.log(`Column ${columnIndex} is full (position ${newY} > threshold ${bottomThreshold}), looking for next column...`);
             
             // Find the next available column (cycling through all columns)
             let nextColumnIndex = (columnIndex + 1) % columnCount;
@@ -139,10 +276,18 @@ function addNote() {
                 console.log(`Checking column ${nextColumnIndex} (attempt ${attempts + 1})`);
                 const nextColumnNotes = getColumnNotes(nextColumnIndex, columnCount, null);
                 
-                // Check if this column has space (less than 6 notes)
-                console.log(`Column ${nextColumnIndex} has ${nextColumnNotes.length}/${maxNotesPerColumn} notes`);
+                // Check if this column has space (based on position threshold)
+                let nextColumnLastY = 60;
+                nextColumnNotes.forEach(note => {
+                    const noteY = parsePosition(note.style.top);
+                    if (noteY >= nextColumnLastY) { 
+                        nextColumnLastY = noteY;
+                    }
+                });
+                const nextColumnNewY = nextColumnNotes.length > 0 ? nextColumnLastY + 70 : 60;
+                console.log(`Column ${nextColumnIndex} next position would be ${nextColumnNewY}, threshold is ${bottomThreshold}`);
                 
-                if (nextColumnNotes.length < maxNotesPerColumn) {
+                if (nextColumnNewY <= bottomThreshold) {
                     // This column has space
                     console.log(`Using column ${nextColumnIndex} with space`);
                     columnIndex = nextColumnIndex;
@@ -177,37 +322,71 @@ function addNote() {
                     break;
                 } else {
                     // This column is full, try next one
-                    console.log(`Column ${nextColumnIndex} is full (${nextColumnNotes.length}/${maxNotesPerColumn}), trying next...`);
+                    console.log(`Column ${nextColumnIndex} is full (position threshold exceeded), trying next...`);
                     nextColumnIndex = (nextColumnIndex + 1) % columnCount;
                     attempts++;
                 }
             }
             
-            // If no available columns found, place at center of board
+            // If no available columns found, show limit message
             if (!foundAvailableColumn) {
-                console.log(`No available columns found, placing at center`);
-                positionX = boardElement.offsetWidth / 2 - 100; // Center horizontally
-                positionY = 60; // Start from top
+                console.log(`No available columns found, showing limit message`);
+                showNoteLimitMessage(`Maximum note count reached.`);
+                return false; // Return false to indicate failure
             }
         }
     };
 
     if (hasNoNotes) {
-        if (hasWeekdaysPattern) { setColumnNotePosition(getDayColumnIndex(), 6); }
-        else if (hasDaysPattern) { setColumnNotePosition(getCurrentDayNumber(currentBoardId), 5); }
+        if (hasWeekdaysPattern) { 
+            const result = setColumnNotePosition(getDayColumnIndex(), 6);
+            if (result === false) return;
+        }
+        else if (hasDaysPattern) { 
+            const dayNumber = getCurrentDayNumber(currentBoardId);
+            const columnIndex = dayNumber === -1 ? 0 : dayNumber;
+            const result = setColumnNotePosition(columnIndex, 5);
+            if (result === false) return;
+        }
         else {
-            // Place first note at top-left corner (50px from edges)
-            positionX = 50;
+            // Place first note more centered, not so far to the left
+            positionX = Math.max(150, window.innerWidth / 4);
             positionY = 50;
         }
     } else if (hasWeekdaysPattern || hasDaysPattern) {
         // Always use column positioning for pattern modes, ignore repositioned notes
-        if (hasWeekdaysPattern) setColumnNotePosition(getDayColumnIndex(), 6);
-        else if (hasDaysPattern) setColumnNotePosition(getCurrentDayNumber(currentBoardId), 5);
-    } else if (lastAddedNote) {
-        [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
-        ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
-    } else ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
+        if (hasWeekdaysPattern) {
+            const result = setColumnNotePosition(getDayColumnIndex(), 6);
+            if (result === false) return;
+        }
+        else if (hasDaysPattern) {
+            const dayNumber = getCurrentDayNumber(currentBoardId);
+            const columnIndex = dayNumber === -1 ? 0 : dayNumber;
+            const result = setColumnNotePosition(columnIndex, 5);
+            if (result === false) return;
+        }
+    } else {
+        // For regular boards, use intelligent stacking
+        if (lastAddedNote) {
+            [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
+            ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
+        } else {
+            ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
+        }
+        
+        
+        // Check for collision and stack intelligently
+        const stackResult = findStackingPosition(positionX, positionY, notes);
+        if (stackResult.showLimit) {
+            showNoteLimitMessage(`Maximum note space reached.`);
+            return;
+        }
+        positionX = stackResult.x;
+        positionY = stackResult.y;
+        if (stackResult.inheritColor) {
+            lastColor = stackResult.inheritColor;
+        }
+    }
 
     createNote(text.replace(/\n/g, '<br>'), lastColor, positionX, positionY, false, '200px', '150px', false, currentBoardId);
     [lastNotePositions[currentBoardId], lastNoteColors[currentBoardId], textarea.value] = [{ x: positionX, y: positionY }, lastColor, ''];

@@ -13,6 +13,12 @@ function markAsDone(note) {
 }
 
 function markNoteAsDone(note) {
+    // Check trash count before deleting note
+    if (deletedNotes.length > 100) {
+        openTrashDueToLimit();
+        return;
+    }
+    
     const content = note.querySelector('.sticky-content');
     const noteData = {
         text: content.innerHTML,

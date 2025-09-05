@@ -952,6 +952,36 @@ body {
     opacity: 0 !important;
 }
 
+/* Note Limit Message Styles */
+.note-limit-message {
+    position: fixed;
+    bottom: 95px;
+    left: 60%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.note-limit-message.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Shake animation for clear trash button */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+.shake-animation {
+    animation: shake 0.3s ease-in-out 3;
+}
+
 .board-button, .add-board-button {
     width: 40px;
     height: 40px;
