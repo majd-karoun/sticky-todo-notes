@@ -30,21 +30,28 @@ const parsePosition = value => parseInt(String(value).replace('px', '')) || 0;
 const getNextNotePosition = (lastX, lastY) => {
     const horizontalOffset = Math.random() * 10 - 5;
     let newX = lastX + horizontalOffset, newY = lastY + 70;
-    const padding = 5, maxX = window.innerWidth - 150;
+    const padding = 5, maxX = window.innerWidth - 200; // Account for full note width
     const bottomThreshold = window.innerHeight - 300; // Break line when reaching 300px from bottom
     
     // If the new position would be too close to the bottom, start a new line
     if (newY > bottomThreshold) { 
-        newY = 50; // Start new line at top (50px from top)
+        newY = 50; // Start new line at top
         newX = lastX + 250; // Move to next column (note width + more spacing)
         
-        // If we've reached the right edge, wrap to the beginning
+        // If we've reached the right edge, we're out of space
         if (newX > maxX) {
-            newX = 50; // Reset to left edge (50px from left)
+            return { x: newX, y: newY, noSpace: true };
         }
     }
     
-    return { x: Math.min(Math.max(newX, padding), maxX), y: Math.min(Math.max(newY, padding), window.innerHeight - 100) };
+    // Also check if the position would be below the bottom threshold after adjustment
+    const finalY = Math.min(Math.max(newY, padding), window.innerHeight - 100);
+    if (finalY > bottomThreshold && newY <= bottomThreshold) {
+        // Position was clamped to bottom, indicating no space
+        return { x: newX, y: newY, noSpace: true };
+    }
+    
+    return { x: Math.min(Math.max(newX, padding), maxX), y: finalY };
 };
 
 const hexToRgb = hex => {

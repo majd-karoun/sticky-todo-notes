@@ -1851,17 +1851,21 @@ body.drag-in-progress .board-button:hover .delete-board {
 
 /* Proximity scaling effect for board buttons */
 .board-button.drag-proximity {
-    transform: scale(1.4) !important;
+    width: 56px !important;
+    height: 56px !important;
+    margin: -8px !important;
     z-index: 1000 !important;
-    transition: transform 0.2s ease-out !important;
-    will-change: transform !important;
+    transition: width 0.2s ease-out, height 0.2s ease-out, margin 0.2s ease-out !important;
+    will-change: width, height, margin !important;
 }
 
 /* Pause animation when dragging over new buttons instead of removing it */
 .board-button.new-button.drag-proximity {
     animation-play-state: paused !important;
-    transform: scale(1.4) !important;
-    transition: transform 0.2s ease-out !important;
+    width: 56px !important;
+    height: 56px !important;
+    margin: -8px !important;
+    transition: width 0.2s ease-out, height 0.2s ease-out, margin 0.2s ease-out !important;
 }
 
 .button-pattern-dots { background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 6px 6px; }
@@ -1880,7 +1884,7 @@ body.drag-in-progress .board-button:hover .delete-board {
     top: 2px; left: 0; right: 0;
     height: 8px;
     border-radius: 25px 25px 0 0; /* Specific to button */
-    background-color: rgba(0,0,0,0.3);
+    background-color: transparent;
     border-bottom: 1px solid rgba(255,255,255,0.3);
     z-index: 1;
     font-size: 10px;
@@ -1948,6 +1952,6 @@ body.selecting * {
     }
 }
 
-.debug-modal{
+/* .debug-modal{
     display: none;
-}
+} /*

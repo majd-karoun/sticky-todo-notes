@@ -1,4 +1,6 @@
 // Bin Management
+let pendingNotesToDelete = []; // Store notes waiting to be deleted when bin is full
+
 function markAsDone(note) {
     const isPartOfSelection = selectedNotes.includes(note) && selectedNotes.length > 1;
     if (isPartOfSelection) {
@@ -15,6 +17,10 @@ function markAsDone(note) {
 function markNoteAsDone(note) {
     // Check trash count before deleting note
     if (deletedNotes.length > 100) {
+        // Store the note for later deletion
+        if (!pendingNotesToDelete.includes(note)) {
+            pendingNotesToDelete.push(note);
+        }
         openTrashDueToLimit();
         return;
     }
@@ -140,7 +146,26 @@ function clearTrash() {
         saveDeletedNotes();
         updateTrashCount();
         renderDeletedNotes(); // Will show empty state
-        // toggleTrashModal(); // Optionally close modal, or let user close it
+        
+        // Wait briefly for the empty state to appear before closing modal
+        setTimeout(() => {
+            toggleTrashModal(); // Close modal after empty state animation completes
+            
+            // Process any pending notes that were waiting to be deleted
+            if (pendingNotesToDelete.length > 0) {
+                const notesToProcess = [...pendingNotesToDelete];
+                pendingNotesToDelete = []; // Clear the pending list
+                
+                // Delete the pending notes with a small delay to ensure modal is closed
+                setTimeout(() => {
+                    notesToProcess.forEach(note => {
+                        if (note && note.parentNode) { // Check if note still exists
+                            markNoteAsDone(note);
+                        }
+                    });
+                }, 100);
+            }
+        }, 200);
     }, 350 + (topNotes.length > 0 ? (topNotes.length - 1) * 50 : 0) + 100); // Adjust timeout based on staggered animation
 }
 

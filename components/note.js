@@ -29,68 +29,6 @@ function showNoteLimitMessage(message) {
     }
 }
 
-// Intelligent stacking for regular boards
-function findStackingPosition(targetX, targetY, existingNotes) {
-    const bottomThreshold = window.innerHeight - 300;
-    const stackRadius = 150; // Area to search for notes to stack under
-    
-    // Find notes in the target area
-    const nearbyNotes = existingNotes.filter(note => {
-        const noteX = parsePosition(note.style.left);
-        const noteY = parsePosition(note.style.top);
-        const distance = Math.sqrt(Math.pow(noteX - targetX, 2) + Math.pow(noteY - targetY, 2));
-        return distance <= stackRadius;
-    });
-    
-    if (nearbyNotes.length === 0) {
-        // No nearby notes, check if original position is within bounds
-        if (targetY > bottomThreshold) {
-            return { x: targetX, y: targetY, showLimit: true };
-        }
-        return { x: targetX, y: targetY, showLimit: false };
-    }
-    
-    // Find the lowest note in the area to stack under
-    let lowestNote = null;
-    let lowestY = -1;
-    
-    nearbyNotes.forEach(note => {
-        const noteY = parsePosition(note.style.top);
-        if (noteY > lowestY) {
-            lowestY = noteY;
-            lowestNote = note;
-        }
-    });
-    
-    if (lowestNote) {
-        const stackX = parsePosition(lowestNote.style.left);
-        const stackY = lowestY + 70; // Stack 70px below the lowest note
-        
-        // Check if stacking would exceed bottom threshold
-        if (stackY > bottomThreshold) {
-            // Try to find empty space elsewhere on the board
-            const emptySpace = findEmptySpace(existingNotes, bottomThreshold);
-            if (emptySpace) {
-                return { 
-                    x: emptySpace.x, 
-                    y: emptySpace.y, 
-                    showLimit: false 
-                };
-            }
-            return { x: targetX, y: targetY, showLimit: true };
-        }
-        
-        return { 
-            x: stackX, 
-            y: stackY, 
-            showLimit: false,
-            inheritColor: lowestNote.style.backgroundColor
-        };
-    }
-    
-    return { x: targetX, y: targetY, showLimit: false };
-}
-
 // Open trash modal and shake clear button when limit reached
 function openTrashDueToLimit() {
     const modal = document.getElementById('trashModal');
@@ -112,32 +50,6 @@ function openTrashDueToLimit() {
             clearButton.classList.remove('shake-animation');
         }, 1000);
     }
-}
-
-// Find empty space on the board when stacking fails
-function findEmptySpace(existingNotes, bottomThreshold) {
-    const boardWidth = window.innerWidth - 220; // Account for note width
-    const searchStep = 220; // Note width + spacing
-    const searchYStep = 70; // Note height + spacing
-    
-    // Search in a grid pattern for empty space
-    for (let x = 50; x < boardWidth; x += searchStep) {
-        for (let y = 50; y < bottomThreshold; y += searchYStep) {
-            // Check if this position conflicts with existing notes
-            const hasConflict = existingNotes.some(note => {
-                const noteX = parsePosition(note.style.left);
-                const noteY = parsePosition(note.style.top);
-                const distance = Math.sqrt(Math.pow(noteX - x, 2) + Math.pow(noteY - y, 2));
-                return distance < 100; // Minimum distance between notes
-            });
-            
-            if (!hasConflict) {
-                return { x, y };
-            }
-        }
-    }
-    
-    return null; // No empty space found
 }
 
 // Note Creation and Management
@@ -367,25 +279,58 @@ function addNote() {
             if (result === false) return;
         }
     } else {
-        // For regular boards, use intelligent stacking
+        // For regular boards, use line-breaking logic with vertical breaks
         if (lastAddedNote) {
             [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
-            ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
+            const positionResult = getNextNotePosition(lastX, lastY);
+            if (positionResult.noSpace) {
+                showNoteLimitMessage(`Maximum notes space reached.`);
+                return;
+            }
+            ({ x: positionX, y: positionY } = positionResult);
         } else {
-            ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
+            const positionResult = getNextNotePosition(lastX, lastY);
+            if (positionResult.noSpace) {
+                showNoteLimitMessage(`Maximum notes space reached.`);
+                return;
+            }
+            ({ x: positionX, y: positionY } = positionResult);
         }
         
-        
-        // Check for collision and stack intelligently
-        const stackResult = findStackingPosition(positionX, positionY, notes);
-        if (stackResult.showLimit) {
-            showNoteLimitMessage(`Maximum notes space reached.`);
-            return;
-        }
-        positionX = stackResult.x;
-        positionY = stackResult.y;
-        if (stackResult.inheritColor) {
-            lastColor = stackResult.inheritColor;
+        // If this is a new column (Y <= 50), create vertical break from existing notes
+        if (positionY <= 50) {
+            // Find notes in the same column area (within 100px horizontally)
+            const notesInColumn = notes.filter(note => {
+                const noteX = parsePosition(note.style.left);
+                return Math.abs(noteX - positionX) < 100;
+            });
+            
+            if (notesInColumn.length > 0) {
+                // Check if there are notes from a different "section" (different colors or significant gap)
+                let lowestY = 0;
+                let hasOldNotes = false;
+                
+                notesInColumn.forEach(note => {
+                    const noteY = parsePosition(note.style.top);
+                    const noteColor = note.style.backgroundColor;
+                    
+                    // Check if this is an "old" note (different color from last added note)
+                    if (noteColor !== lastColor && noteY < 250) {
+                        hasOldNotes = true;
+                    }
+                    
+                    if (noteY > lowestY) {
+                        lowestY = noteY;
+                    }
+                });
+                
+                // Only create vertical break if there are old notes from different section
+                if (hasOldNotes) {
+                    positionY = lowestY + 200; // Create 200px vertical break below existing notes
+                } else {
+                    positionY = lowestY + 70; // Normal stacking for same section
+                }
+            }
         }
     }
 
