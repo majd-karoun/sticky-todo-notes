@@ -441,44 +441,37 @@ function setupNote(note) {
         }
     };
 
-    content.addEventListener('mousedown', (e) => {
-        // Prevent dragging when clicking on text content
-        e.stopPropagation();
-    });
-
-    content.addEventListener('click', (e) => {
-        if (!isEditing) {
-            [isEditing, content.contentEditable] = [true, "true"];
+    content.addEventListener('dblclick', (e) => {
+        [isEditing, content.contentEditable] = [true, "true"];
+        
+        // Use setTimeout to ensure the contenteditable is set before positioning cursor
+        setTimeout(() => {
+            // Set cursor position based on click location
+            const range = document.createRange();
+            const selection = window.getSelection();
             
-            // Use setTimeout to ensure the contenteditable is set before positioning cursor
-            setTimeout(() => {
-                // Set cursor position based on click location
-                const range = document.createRange();
-                const selection = window.getSelection();
-                
-                // Get the click position and set cursor there
-                if (document.caretRangeFromPoint) {
-                    const clickRange = document.caretRangeFromPoint(e.clientX, e.clientY);
-                    if (clickRange) {
-                        selection.removeAllRanges();
-                        selection.addRange(clickRange);
-                    }
-                } else if (document.caretPositionFromPoint) {
-                    const caretPos = document.caretPositionFromPoint(e.clientX, e.clientY);
-                    if (caretPos) {
-                        range.setStart(caretPos.offsetNode, caretPos.offset);
-                        range.collapse(true);
-                        selection.removeAllRanges();
-                        selection.addRange(range);
-                    }
+            // Get the click position and set cursor there
+            if (document.caretRangeFromPoint) {
+                const clickRange = document.caretRangeFromPoint(e.clientX, e.clientY);
+                if (clickRange) {
+                    selection.removeAllRanges();
+                    selection.addRange(clickRange);
                 }
-                
-                content.focus();
-            }, 0);
+            } else if (document.caretPositionFromPoint) {
+                const caretPos = document.caretPositionFromPoint(e.clientX, e.clientY);
+                if (caretPos) {
+                    range.setStart(caretPos.offsetNode, caretPos.offset);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
             
-            setTimeout(() => document.addEventListener('click', cancelEditing), 0);
-            e.stopPropagation();
-        }
+            content.focus();
+        }, 0);
+        
+        setTimeout(() => document.addEventListener('click', cancelEditing), 0);
+        e.stopPropagation();
     });
 
     // Add hover functionality to bring note to top temporarily
