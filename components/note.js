@@ -262,15 +262,41 @@ function setupNote(note) {
         }
     };
 
+    content.addEventListener('mousedown', (e) => {
+        // Prevent dragging when clicking on text content
+        e.stopPropagation();
+    });
+
     content.addEventListener('click', (e) => {
         if (!isEditing) {
             [isEditing, content.contentEditable] = [true, "true"];
-            content.focus();
-            const range = document.createRange();
-            const selection = window.getSelection();
-            range.selectNodeContents(content);
-            selection.removeAllRanges();
-            selection.addRange(range);
+            
+            // Use setTimeout to ensure the contenteditable is set before positioning cursor
+            setTimeout(() => {
+                // Set cursor position based on click location
+                const range = document.createRange();
+                const selection = window.getSelection();
+                
+                // Get the click position and set cursor there
+                if (document.caretRangeFromPoint) {
+                    const clickRange = document.caretRangeFromPoint(e.clientX, e.clientY);
+                    if (clickRange) {
+                        selection.removeAllRanges();
+                        selection.addRange(clickRange);
+                    }
+                } else if (document.caretPositionFromPoint) {
+                    const caretPos = document.caretPositionFromPoint(e.clientX, e.clientY);
+                    if (caretPos) {
+                        range.setStart(caretPos.offsetNode, caretPos.offset);
+                        range.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                }
+                
+                content.focus();
+            }, 0);
+            
             setTimeout(() => document.addEventListener('click', cancelEditing), 0);
             e.stopPropagation();
         }

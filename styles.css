@@ -225,10 +225,10 @@ body {
     font-weight: 400;
     letter-spacing: 0.01em;
     transition: font-size 0.3s ease;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
 
 .sticky-content::-webkit-scrollbar { width: 6px; }
