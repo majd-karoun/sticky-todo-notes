@@ -158,7 +158,7 @@ function addNote() {
     if (!hasWeekdaysPattern && !hasDaysPattern) {
         const maxNotes = 30;
         if (notes.length >= maxNotes) {
-            showNoteLimitMessage(`Maximum note count reached.`);
+            showNoteLimitMessage(`Maximum notes space reached.`);
             return;
         }
     }
@@ -331,7 +331,7 @@ function addNote() {
             // If no available columns found, show limit message
             if (!foundAvailableColumn) {
                 console.log(`No available columns found, showing limit message`);
-                showNoteLimitMessage(`Maximum note count reached.`);
+                showNoteLimitMessage(`Maximum notes space reached.`);
                 return false; // Return false to indicate failure
             }
         }
@@ -378,7 +378,7 @@ function addNote() {
         // Check for collision and stack intelligently
         const stackResult = findStackingPosition(positionX, positionY, notes);
         if (stackResult.showLimit) {
-            showNoteLimitMessage(`Maximum note space reached.`);
+            showNoteLimitMessage(`Maximum notes space reached.`);
             return;
         }
         positionX = stackResult.x;
