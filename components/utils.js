@@ -38,20 +38,18 @@ const getNextNotePosition = (lastX, lastY) => {
         newY = 50; // Start new line at top
         newX = lastX + 250; // Move to next column (note width + more spacing)
         
-        // If we've reached the right edge, we're out of space
+        // If we've reached the right edge, start from the far left again
         if (newX > maxX) {
-            return { x: newX, y: newY, noSpace: true };
+            newX = padding + 50; // Start from far left with some padding
+            newY = 50; // Keep at top for new row
         }
     }
     
-    // Also check if the position would be below the bottom threshold after adjustment
+    // Ensure position is within bounds
+    const finalX = Math.min(Math.max(newX, padding), maxX);
     const finalY = Math.min(Math.max(newY, padding), window.innerHeight - 100);
-    if (finalY > bottomThreshold && newY <= bottomThreshold) {
-        // Position was clamped to bottom, indicating no space
-        return { x: newX, y: newY, noSpace: true };
-    }
     
-    return { x: Math.min(Math.max(newX, padding), maxX), y: finalY };
+    return { x: finalX, y: finalY };
 };
 
 const hexToRgb = hex => {

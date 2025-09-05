@@ -283,52 +283,145 @@ function addNote() {
         if (lastAddedNote) {
             [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
             const positionResult = getNextNotePosition(lastX, lastY);
-            if (positionResult.noSpace) {
-                showNoteLimitMessage(`Maximum notes space reached.`);
-                return;
-            }
             ({ x: positionX, y: positionY } = positionResult);
         } else {
             const positionResult = getNextNotePosition(lastX, lastY);
-            if (positionResult.noSpace) {
-                showNoteLimitMessage(`Maximum notes space reached.`);
-                return;
-            }
             ({ x: positionX, y: positionY } = positionResult);
         }
         
-        // If this is a new column (Y <= 50), create vertical break from existing notes
+        // If this is a new row (Y <= 50), create vertical break from existing notes
         if (positionY <= 50) {
-            // Find notes in the same column area (within 100px horizontally)
+            // Find notes in the same column area (within 150px horizontally)
             const notesInColumn = notes.filter(note => {
                 const noteX = parsePosition(note.style.left);
-                return Math.abs(noteX - positionX) < 100;
+                return Math.abs(noteX - positionX) < 150;
             });
             
             if (notesInColumn.length > 0) {
-                // Check if there are notes from a different "section" (different colors or significant gap)
+                // Find the lowest and highest Y positions among existing notes in this column
                 let lowestY = 0;
-                let hasOldNotes = false;
-                
+                let highestY = window.innerHeight;
                 notesInColumn.forEach(note => {
                     const noteY = parsePosition(note.style.top);
-                    const noteColor = note.style.backgroundColor;
-                    
-                    // Check if this is an "old" note (different color from last added note)
-                    if (noteColor !== lastColor && noteY < 250) {
-                        hasOldNotes = true;
-                    }
-                    
                     if (noteY > lowestY) {
                         lowestY = noteY;
                     }
+                    if (noteY < highestY) {
+                        highestY = noteY;
+                    }
                 });
                 
-                // Only create vertical break if there are old notes from different section
-                if (hasOldNotes) {
-                    positionY = lowestY + 200; // Create 200px vertical break below existing notes
+                // Check if placing the note below would exceed the bottom threshold
+                const bottomThreshold = window.innerHeight - 300;
+                const proposedY = lowestY + 200;
+                const proposedUpwardY = highestY - 200;
+                
+                if (proposedY > bottomThreshold) {
+                    // Check if there's space above
+                    if (proposedUpwardY >= 50) {
+                        // Break upward - place above the highest note with spacing
+                        positionY = proposedUpwardY;
+                    } else {
+                        // No space above or below - systematically check all columns for space
+                        const maxX = window.innerWidth - 200;
+                        const columnWidth = 250;
+                        let foundSpace = false;
+                        let testX = positionX + columnWidth;
+                        
+                        // Check columns to the right first
+                        while (testX <= maxX && !foundSpace) {
+                            const testColumnNotes = notes.filter(note => {
+                                const noteX = parsePosition(note.style.left);
+                                return Math.abs(noteX - testX) < 150;
+                            });
+                            
+                            if (testColumnNotes.length === 0) {
+                                // Empty column found
+                                positionX = testX;
+                                positionY = 50;
+                                foundSpace = true;
+                            } else {
+                                // Check if this column has space above or below
+                                let testLowestY = 0;
+                                let testHighestY = window.innerHeight;
+                                testColumnNotes.forEach(note => {
+                                    const noteY = parsePosition(note.style.top);
+                                    if (noteY > testLowestY) testLowestY = noteY;
+                                    if (noteY < testHighestY) testHighestY = noteY;
+                                });
+                                
+                                const testProposedY = testLowestY + 200;
+                                const testProposedUpwardY = testHighestY - 200;
+                                
+                                if (testProposedY <= bottomThreshold) {
+                                    // Space below found
+                                    positionX = testX;
+                                    positionY = testProposedY;
+                                    foundSpace = true;
+                                } else if (testProposedUpwardY >= 50) {
+                                    // Space above found
+                                    positionX = testX;
+                                    positionY = testProposedUpwardY;
+                                    foundSpace = true;
+                                }
+                            }
+                            
+                            if (!foundSpace) testX += columnWidth;
+                        }
+                        
+                        // If no space found to the right, check from the left
+                        if (!foundSpace) {
+                            testX = 55; // Start from far left
+                            while (testX < positionX && !foundSpace) {
+                                const testColumnNotes = notes.filter(note => {
+                                    const noteX = parsePosition(note.style.left);
+                                    return Math.abs(noteX - testX) < 150;
+                                });
+                                
+                                if (testColumnNotes.length === 0) {
+                                    // Empty column found
+                                    positionX = testX;
+                                    positionY = 50;
+                                    foundSpace = true;
+                                } else {
+                                    // Check if this column has space above or below
+                                    let testLowestY = 0;
+                                    let testHighestY = window.innerHeight;
+                                    testColumnNotes.forEach(note => {
+                                        const noteY = parsePosition(note.style.top);
+                                        if (noteY > testLowestY) testLowestY = noteY;
+                                        if (noteY < testHighestY) testHighestY = noteY;
+                                    });
+                                    
+                                    const testProposedY = testLowestY + 200;
+                                    const testProposedUpwardY = testHighestY - 200;
+                                    
+                                    if (testProposedY <= bottomThreshold) {
+                                        // Space below found
+                                        positionX = testX;
+                                        positionY = testProposedY;
+                                        foundSpace = true;
+                                    } else if (testProposedUpwardY >= 50) {
+                                        // Space above found
+                                        positionX = testX;
+                                        positionY = testProposedUpwardY;
+                                        foundSpace = true;
+                                    }
+                                }
+                                
+                                if (!foundSpace) testX += columnWidth;
+                            }
+                        }
+                        
+                        // If still no space found anywhere, show limit message
+                        if (!foundSpace) {
+                            showNoteLimitMessage(`Maximum notes space reached.`);
+                            return;
+                        }
+                    }
                 } else {
-                    positionY = lowestY + 70; // Normal stacking for same section
+                    // Normal downward break
+                    positionY = proposedY;
                 }
             }
         }
