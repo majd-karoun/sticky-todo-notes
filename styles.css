@@ -655,8 +655,6 @@ body {
     color: rgb(151, 151, 151);
     font-family: 'Poppins', sans-serif;
 }
-
-
 .modal-controls {
     display: flex;
     gap: 15px;
@@ -799,7 +797,16 @@ body {
     justify-content: flex-end;
     flex-shrink: 0;
     padding-top: 10px;
-    border-top: 1px solid rgb(0, 0, 0, 0.2);
+    position: relative;
+}
+.deleted-note-actions::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(80, 80, 80, 0.4) 15%, rgba(80, 80, 80, 0.4) 85%, transparent);
 }
 .restore-btn {
     padding: 0 12px;
@@ -1759,7 +1766,7 @@ body {
         height: 60px !important;
         border-radius: 12px !important;
     }
-    .board-title-input, .board-title-circle.show-temporary .board-title-input { font-size: 2rem; padding: 0 25px; }
+    .board-title-input, .board-title-circle.show-temporary .board-title-input { font-size: 1.3rem; padding: 0 25px; }
     .board-title-input::after { font-size: 16px; right: 20px; bottom: 12px; }
 
     .radio-control i { font-size: 25px; } /* These seem unrelated to board title, but were in this block */
@@ -1859,9 +1866,6 @@ body {
 body.selecting * {
     user-select: none !important;
 }
-
-
-/* Safari */
 
 @media not all and (max-width: 400px) and (min-resolution: 0.001dpcm) {
     @supports (-webkit-appearance:none) and (stroke-color:transparent) {
