@@ -5,6 +5,7 @@ let hoveredBoardButton = null; // Tracks board button hover state for drag-and-d
 let dragTransferMessageVisible = false; // Tracks drag transfer message visibility
 let globalZIndex = 1000; // Global z-index counter for note layering
 let hoverDetectionDisabled = false; // Disables hover detection temporarily
+let isDragInProgress = false; // Global drag state to prevent button hover interactions
 
 // Utility functions
 const generateNoteId = () => `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -600,6 +601,10 @@ function setupNote(note) {
         if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) clearTimeout(holdTimer);
 
         if (isDragging) {
+            if (!isDragInProgress) {
+                isDragInProgress = true;
+                document.body.classList.add('drag-in-progress');
+            }
             const padding = 5;
             let [newX, newY] = [
                 Math.min(Math.max(initialX + clientX - startX, -padding), window.innerWidth - (note.offsetWidth / 4)),
@@ -637,6 +642,9 @@ function setupNote(note) {
                     activeNote = null;
                 }
                 saveActiveNotes();
+                // Clear global drag state
+                isDragInProgress = false;
+                document.body.classList.remove('drag-in-progress');
             }
         }
         [isDragging, isResizing] = [false, false];

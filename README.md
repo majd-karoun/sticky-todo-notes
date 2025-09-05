@@ -8,7 +8,7 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 
 ### Note Management.
 - ➕ Enter text to create notes
-- 🖱️ Click on a note to edit content.
+- 🖱️ Dubble Click on a note to edit its content.
 - ↘️ Resize notes from corner.
 - 🖐️ Hold a note and drag it around to reposition it.
 - 🖐️ drag mutliple notes together by highliting an  area with the mouse where the notes are, then drag them together.

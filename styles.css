@@ -1065,9 +1065,15 @@ body {
 .board-button:hover .delete-board {
     opacity: 1;
 }
-.board-button.drag-hover .delete-board {
-    opacity: 0;
-    pointer-events: none;
+.board-button.drag-hover .delete-board,
+.board-button.drag-proximity .delete-board,
+body.drag-in-progress .board-button .delete-board {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+body.drag-in-progress .board-button:hover .delete-board {
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 .board-button:first-child .delete-board {
     display: none;
