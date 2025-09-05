@@ -1247,6 +1247,10 @@ body.drag-in-progress .board-button:hover .delete-board {
     transition: all 0.2s ease;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .emoji-item:hover {
