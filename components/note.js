@@ -696,11 +696,17 @@ function checkBoardButtonHover(clientX, clientY) {
         if (isNearMenu) {
             const boardButtons = document.querySelectorAll('.board-button:not(.disabled)');
             hoveredBoardButton = findClosestButton();
-            boardButtons.forEach(button => button.classList.add('drag-proximity'));
+            boardButtons.forEach(button => {
+                button.classList.add('drag-active', 'drag-proximity');
+            });
             if (hoveredBoardButton) hoveredBoardButton.classList.add('drag-hover');
             startHoverAnimation();
         } else {
-            document.querySelectorAll('.board-button').forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
+            document.querySelectorAll('.board-button').forEach(button => {
+                button.classList.remove('drag-hover', 'drag-proximity');
+                // Keep drag-active for smooth transition back, remove after transition
+                setTimeout(() => button.classList.remove('drag-active'), 200);
+            });
             [hoveredBoardButton] = [null];
             clearHoverAnimations();
         }

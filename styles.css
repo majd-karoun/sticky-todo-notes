@@ -1849,14 +1849,18 @@ body.drag-in-progress .board-button:hover .delete-board {
     
 }
 
+/* Base transition for all board buttons during drag */
+.board-button.drag-active {
+    transition: width 0.2s ease-out, height 0.2s ease-out, margin 0.2s ease-out !important;
+    will-change: width, height, margin !important;
+}
+
 /* Proximity scaling effect for board buttons */
 .board-button.drag-proximity {
     width: 56px !important;
     height: 56px !important;
     margin: -8px !important;
     z-index: 1000 !important;
-    transition: width 0.2s ease-out, height 0.2s ease-out, margin 0.2s ease-out !important;
-    will-change: width, height, margin !important;
 }
 
 /* Pause animation when dragging over new buttons instead of removing it */
@@ -1865,7 +1869,6 @@ body.drag-in-progress .board-button:hover .delete-board {
     width: 56px !important;
     height: 56px !important;
     margin: -8px !important;
-    transition: width 0.2s ease-out, height 0.2s ease-out, margin 0.2s ease-out !important;
 }
 
 .button-pattern-dots { background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 6px 6px; }
