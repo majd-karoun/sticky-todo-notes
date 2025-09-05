@@ -267,26 +267,62 @@ function addNote() {
             positionY = 50;
         }
     } else if (hasWeekdaysPattern || hasDaysPattern) {
-        // Always use column positioning for pattern modes, ignore repositioned notes
-        if (hasWeekdaysPattern) {
-            const result = setColumnNotePosition(getDayColumnIndex(), 6);
-            if (result === false) return;
-        }
-        else if (hasDaysPattern) {
-            const dayNumber = getCurrentDayNumber(currentBoardId);
-            const columnIndex = dayNumber === -1 ? 0 : dayNumber;
-            const result = setColumnNotePosition(columnIndex, 5);
-            if (result === false) return;
+        // Check if last note was repositioned, if so stack from it
+        if (lastAddedNote && lastAddedNote.dataset.repositioned === 'true') {
+            // If last note was repositioned, stack directly under it
+            [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
+            positionX = lastX + (Math.random() * 10 - 5); // Small horizontal offset
+            positionY = lastY + 70; // Stack directly below with standard spacing
+            
+            // Ensure position is within bounds
+            const maxX = window.innerWidth - 200;
+            const bottomThreshold = window.innerHeight - 300;
+            positionX = Math.min(Math.max(positionX, 5), maxX);
+            
+            // If stacking would go below threshold, place above instead
+            if (positionY > bottomThreshold) {
+                positionY = Math.max(50, lastY - 200);
+            }
+        } else {
+            // Use column positioning for pattern modes when no repositioned notes
+            if (hasWeekdaysPattern) {
+                const result = setColumnNotePosition(getDayColumnIndex(), 6);
+                if (result === false) return;
+            }
+            else if (hasDaysPattern) {
+                const dayNumber = getCurrentDayNumber(currentBoardId);
+                const columnIndex = dayNumber === -1 ? 0 : dayNumber;
+                const result = setColumnNotePosition(columnIndex, 5);
+                if (result === false) return;
+            }
         }
     } else {
-        // For regular boards, use line-breaking logic with vertical breaks
-        if (lastAddedNote) {
+        // For regular boards, check if last note was repositioned
+        if (lastAddedNote && lastAddedNote.dataset.repositioned === 'true') {
+            // If last note was repositioned, stack directly under it
             [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
-            const positionResult = getNextNotePosition(lastX, lastY);
-            ({ x: positionX, y: positionY } = positionResult);
+            positionX = lastX + (Math.random() * 10 - 5); // Small horizontal offset
+            positionY = lastY + 70; // Stack directly below with standard spacing
+            
+            // Ensure position is within bounds
+            const maxX = window.innerWidth - 200;
+            const bottomThreshold = window.innerHeight - 300;
+            positionX = Math.min(Math.max(positionX, 5), maxX);
+            
+            // If stacking would go below threshold, place above instead
+            if (positionY > bottomThreshold) {
+                positionY = Math.max(50, lastY - 200);
+            }
         } else {
-            const positionResult = getNextNotePosition(lastX, lastY);
-            ({ x: positionX, y: positionY } = positionResult);
+            // Use normal line-breaking logic for non-repositioned notes
+            if (lastAddedNote) {
+                [lastX, lastY, lastColor] = [parsePosition(lastAddedNote.style.left), parsePosition(lastAddedNote.style.top), lastAddedNote.style.backgroundColor];
+                const positionResult = getNextNotePosition(lastX, lastY);
+                ({ x: positionX, y: positionY } = positionResult);
+            } else {
+                const positionResult = getNextNotePosition(lastX, lastY);
+                ({ x: positionX, y: positionY } = positionResult);
+            }
         }
         
         // If this is a new row (Y <= 50), create vertical break from existing notes
