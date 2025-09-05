@@ -132,11 +132,14 @@ function deleteBoard(boardId) {
     }
 
     const notes = boardElement.querySelectorAll('.sticky-note');
-    if (notes.length > 0) {
+    const stickers = boardElement.querySelectorAll('.emoji-sticker');
+    
+    if (notes.length > 0 || stickers.length > 0) {
         const trashBin = document.querySelector('.trash-bin');
         const trashRect = trashBin.getBoundingClientRect();
         trashBin.style.animation = 'binShake 0.5s ease-in-out';
 
+        // Animate notes to trash bin
         notes.forEach(note => {
             const content = note.querySelector('.sticky-content');
             const noteData = {
@@ -158,6 +161,12 @@ function deleteBoard(boardId) {
             note.style.setProperty('--throwY', `${throwY}px`);
             note.style.animation = 'paperCrumble 0.5s ease-in forwards';
         });
+
+        // Animate emoji stickers using their delete animation
+        stickers.forEach(sticker => {
+            sticker.classList.add('deleting');
+        });
+
         saveDeletedNotes();
         updateTrashCount();
         setTimeout(() => continueWithBoardDeletion(boardId), 600);
