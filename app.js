@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load all saved data (notes, boards, styles, deleted notes)
     // This function is defined in components/utils.js
     // It internally calls functions like createNote, createBoardUI, loadBoardStyles, etc.
+    loadNoteZIndexes();
     loadSavedData();
 
     // Setup event listeners for the main note input textarea

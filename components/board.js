@@ -1,57 +1,35 @@
 // Global variable to store test date override
-// Helper function to get current date
-function getCurrentDate() {
-    return new Date();
-}
+const getCurrentDate = () => new Date();
 
-// Helper function to check if a weekday index matches the current day
-function isCurrentDay(weekdayIndex) {
-    const today = getCurrentDate().getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    // Convert Sunday (0) to be index 6, and shift Monday-Saturday to be 0-5
-    const currentDayIndex = today === 0 ? 5 : today - 1; // Monday=0, Tuesday=1, ..., Saturday=5
+const isCurrentDay = (weekdayIndex) => {
+    const today = getCurrentDate().getDay();
+    const currentDayIndex = today === 0 ? 5 : today - 1;
     return weekdayIndex === currentDayIndex;
-}
+};
 
-// Helper function to save the start date when days pattern is first applied
-function saveDaysPatternStartDate(boardId) {
+const saveDaysPatternStartDate = (boardId) => {
     const key = `daysPatternStartDate_${boardId}`;
-    if (!localStorage.getItem(key)) {
-        const today = getCurrentDate().toISOString().split('T')[0]; // YYYY-MM-DD format
-        localStorage.setItem(key, today);
-    }
-}
+    if (!localStorage.getItem(key)) localStorage.setItem(key, getCurrentDate().toISOString().split('T')[0]);
+};
 
-// Helper function to calculate current day number based on start date
-function getCurrentDayNumber(boardId) {
-    const key = `daysPatternStartDate_${boardId}`;
-    const startDate = localStorage.getItem(key);
+const getCurrentDayNumber = (boardId) => {
+    const startDate = localStorage.getItem(`daysPatternStartDate_${boardId}`);
     if (!startDate) return -1;
-    
-    const start = new Date(startDate);
-    const today = getCurrentDate();
-    const diffTime = today - start;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Return day number (0-4 for Day 1-5), cycling every 5 days
+    const diffDays = Math.floor((getCurrentDate() - new Date(startDate)) / (1000 * 60 * 60 * 24));
     return diffDays % 5;
-}
+};
 
-// Helper function to clean up days pattern data
-function cleanupDaysPatternData(boardId) {
-    localStorage.removeItem(`daysPatternStartDate_${boardId}`);
-}
+const cleanupDaysPatternData = (boardId) => localStorage.removeItem(`daysPatternStartDate_${boardId}`);
 
-// Board Management Functions
-function createNewBoard() {
+const createNewBoard = () => {
     if (isMobileView || boardCount >= MAX_BOARDS) {
         if (boardCount >= MAX_BOARDS) alert(`Maximum number of boards (${MAX_BOARDS}) reached.`);
         return;
     }
-    boardCount++;
-    createBoardUI(boardCount);
+    createBoardUI(++boardCount);
     saveBoardCount();
     updateAddButtonState();
-}
+};
 
 function createBoardUI(boardId) {
     const boardsContainer = document.querySelector('.boards-container');
@@ -286,6 +264,13 @@ function switchToBoard(boardId) {
     const targetBoardId = parseInt(boardId);
     if (targetBoardId === currentBoardId || targetBoardId === null) return;
 
+    // Show shortcut hint on first board switch
+    showShortcutHintOnFirstSwitch();
+
+    // Add motion blur effect
+    document.body.classList.add('board-switching');
+    setTimeout(() => document.body.classList.remove('board-switching'), 300);
+
     const previousBoardId = currentBoardId;
     currentBoardId = targetBoardId;
 
@@ -391,12 +376,7 @@ function setupBoardNavigation() {
             return;
         }
         if (e.key === 'Delete' || e.key === 'Backspace') {
-            // Delete selected stickers
-            if (selectedStickers.length > 0) {
-                e.preventDefault();
-                deleteSelectedStickers();
-                return;
-            }
+            // Only handle note deletion
         }
         if (e.key === 'ArrowLeft' && currentBoardId > 1) switchToBoard(currentBoardId - 1);
         else if (e.key === 'ArrowRight' && currentBoardId < boardCount) switchToBoard(currentBoardId + 1);
@@ -419,6 +399,25 @@ function updateAddButtonState() {
 function updateShortcutHintVisibility() {
     const shortcutHint = document.querySelector('.shortcut-hint');
     if (shortcutHint) shortcutHint.style.display = boardCount >= 2 ? 'block' : 'none';
+}
+
+let hasShownHint = false;
+
+function showShortcutHintOnFirstSwitch() {
+    // Skip if we've already shown the hint or there's only one board
+    if (hasShownHint || boardCount < 2) return;
+
+    const shortcutHint = document.querySelector('.shortcut-hint');
+    if (!shortcutHint) return;
+
+    // Mark that we've shown the hint
+    hasShownHint = true;
+
+    // Show hint for 4 seconds
+    shortcutHint.classList.add('auto-show');
+    setTimeout(() => {
+        shortcutHint.classList.remove('auto-show');
+    }, 4000);
 }
 
 function toggleBoardStyleMenu() {
@@ -705,10 +704,9 @@ function setupBoardTitleListeners() {
     });
 }
 
-function updateBoardIndicators() {
+const updateBoardIndicators = () => {
     for (let i = 1; i <= boardCount; i++) {
-        const boardElement = document.querySelector(`.board[data-board-id="${i}"]`);
-        const buttonElement = document.querySelector(`.board-button[data-board-id="${i}"]`);
+        const [boardElement, buttonElement] = [document.querySelector(`.board[data-board-id="${i}"]`), document.querySelector(`.board-button[data-board-id="${i}"]`)];
         if (!boardElement || !buttonElement) continue;
 
         buttonElement.classList.toggle('has-notes', boardElement.querySelectorAll('.sticky-note').length > 0);
@@ -716,11 +714,8 @@ function updateBoardIndicators() {
         buttonElement.style.backgroundColor = boardColor;
 
         const patternClasses = ['board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days'];
-        let currentPatternClass = '';
-        patternClasses.forEach(pc => {
-            if (boardElement.classList.contains(pc)) currentPatternClass = pc;
-            buttonElement.classList.remove(pc.replace('board-pattern', 'button-pattern'));
-        });
+        const currentPatternClass = patternClasses.find(pc => boardElement.classList.contains(pc));
+        patternClasses.forEach(pc => buttonElement.classList.remove(pc.replace('board-pattern', 'button-pattern')));
         if (currentPatternClass) buttonElement.classList.add(currentPatternClass.replace('board-pattern', 'button-pattern'));
 
         const rgb = hexToRgb(boardColor) || { r: 26, g: 26, b: 26 };

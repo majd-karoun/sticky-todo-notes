@@ -1,409 +1,214 @@
 // Emoji Sticker Management
-let emojiStickers = {};
-let draggedEmoji = null;
-let dragOffset = { x: 0, y: 0 };
-let emojiUsageOrder = [];
+let emojiStickers = {}, draggedEmoji = null, dragOffset = { x: 0, y: 0 }, emojiUsageOrder = [];
 
 // Initialize emoji functionality
 function initializeEmojiPicker() {
-    loadEmojiUsageOrder();
-    reorderEmojiPicker();
-    
-    const emojiItems = document.querySelectorAll('.emoji-item');
-    emojiItems.forEach(item => {
-        item.addEventListener('click', handleEmojiClick);
-    });
-    
-    // Load existing emoji stickers for all boards
-    loadAllEmojiStickers();
+    [loadEmojiUsageOrder(), reorderEmojiPicker(), loadAllEmojiStickers()];
+    document.querySelectorAll('.emoji-item').forEach(item => item.addEventListener('click', handleEmojiClick));
 }
 
-function handleEmojiClick(event) {
+const handleEmojiClick = event => {
     const emoji = event.target.dataset.emoji;
-    if (emoji) {
-        updateEmojiUsageOrder(emoji);
-        createEmojiSticker(emoji);
-    }
-}
+    emoji && [updateEmojiUsageOrder(emoji), createEmojiSticker(emoji)];
+};
 
 function createEmojiSticker(emoji) {
     const activeBoard = document.querySelector('.board.active');
     if (!activeBoard) return;
     
     const boardId = activeBoard.dataset.boardId;
+    if (getEmojiCount(boardId) >= 10) return showEmojiLimitMessage();
     
-    // Check if emoji limit is reached
-    if (getEmojiCount(boardId) >= 10) {
-        showEmojiLimitMessage();
-        return;
-    }
-    const stickerId = generateStickerId();
+    const stickerId = generateStickerId(), boardRect = activeBoard.getBoundingClientRect();
+    const [maxX, maxY, minY] = [boardRect.width - 120, boardRect.height * 0.8 - 120, 20];
+    const [x, y] = [Math.random() * maxX, Math.max(minY, Math.random() * maxY)];
     
-    // Create sticker element
-    const stickerElement = document.createElement('div');
-    stickerElement.className = 'emoji-sticker new';
-    stickerElement.dataset.stickerId = stickerId;
-    stickerElement.textContent = emoji;
-    
-    // Position sticker at random location on board, ignoring bottom 20%
-    const boardRect = activeBoard.getBoundingClientRect();
-    const maxX = boardRect.width - 120; // Account for emoji size
-    const maxY = boardRect.height * 0.8 - 120; // Only use top 80% of the height
-    const minY = 20; // Minimum Y position to avoid sticking to the very top
-    const x = Math.random() * maxX;
-    const y = Math.max(minY, Math.random() * maxY);
-    
-    stickerElement.style.left = x + 'px';
-    stickerElement.style.top = y + 'px';
-    
-    // Create delete button
-    const deleteButton = document.createElement('button');
-    deleteButton.className = 'delete-button';
-    deleteButton.textContent = '×';
-    deleteButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteEmojiSticker(stickerId, boardId);
+    const stickerElement = Object.assign(document.createElement('div'), {
+        className: 'emoji-sticker new',
+        textContent: emoji
     });
+    stickerElement.dataset.stickerId = stickerId;
+    Object.assign(stickerElement.style, { left: x + 'px', top: y + 'px' });
     
+    const deleteButton = Object.assign(document.createElement('button'), {
+        className: 'delete-button',
+        textContent: '×'
+    });
+    deleteButton.addEventListener('click', e => [e.stopPropagation(), deleteEmojiSticker(stickerId, boardId)]);
     
-    stickerElement.appendChild(deleteButton);
+    [stickerElement.appendChild(deleteButton), setupEmojiDrag(stickerElement), activeBoard.appendChild(stickerElement)];
     
-    // Add drag functionality
-    setupEmojiDrag(stickerElement);
-    
-    // Add to board
-    activeBoard.appendChild(stickerElement);
-    
-    // Store sticker data
-    if (!emojiStickers[boardId]) {
-        emojiStickers[boardId] = {};
-    }
-    
-    emojiStickers[boardId][stickerId] = {
-        emoji: emoji,
-        x: x,
-        y: y,
-        id: stickerId
-    };
-    
-    // Save to localStorage
-    saveEmojiStickers(boardId);
-    
-    // Remove 'new' class after animation
-    setTimeout(() => {
-        stickerElement.classList.remove('new');
-    }, 400);
+    (emojiStickers[boardId] = emojiStickers[boardId] || {})[stickerId] = { emoji, x, y, id: stickerId };
+    [saveEmojiStickers(boardId), setTimeout(() => stickerElement.classList.remove('new'), 400)];
 }
 
 function setupEmojiDrag(stickerElement) {
     let isDragging = false;
-    
-    stickerElement.addEventListener('mousedown', startDrag);
-    stickerElement.addEventListener('touchstart', startDrag, { passive: false });
+    ['mousedown', 'touchstart'].forEach(event => stickerElement.addEventListener(event, startDrag, event === 'touchstart' ? { passive: false } : false));
     
     function startDrag(e) {
         if (e.target.classList.contains('delete-button')) return;
+        [e.preventDefault(), e.stopPropagation()];
         
-        e.preventDefault();
-        e.stopPropagation();
-        
-        
-        isDragging = true;
-        draggedEmoji = stickerElement;
+        [isDragging, draggedEmoji] = [true, stickerElement];
         
         // Disable text selection during drag
-        document.body.style.userSelect = 'none';
-        document.body.style.webkitUserSelect = 'none';
-        document.body.style.mozUserSelect = 'none';
-        document.body.style.msUserSelect = 'none';
-        document.onselectstart = () => false;
-        document.ondragstart = () => false;
+        Object.assign(document.body.style, { userSelect: 'none', webkitUserSelect: 'none', mozUserSelect: 'none', msUserSelect: 'none' });
+        [document.onselectstart, document.ondragstart] = [() => false, () => false];
         
-        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        const [clientX, clientY] = [e.type === 'touchstart' ? e.touches[0].clientX : e.clientX, e.type === 'touchstart' ? e.touches[0].clientY : e.clientY];
         const rect = stickerElement.getBoundingClientRect();
-        
-        dragOffset.x = clientX - rect.left;
-        dragOffset.y = clientY - rect.top;
+        [dragOffset.x, dragOffset.y] = [clientX - rect.left, clientY - rect.top];
         
         stickerElement.classList.add('dragging');
-        
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('touchmove', drag, { passive: false });
-        document.addEventListener('mouseup', stopDrag);
-        document.addEventListener('touchend', stopDrag);
+        ['mousemove', 'touchmove', 'mouseup', 'touchend'].forEach(event => 
+            document.addEventListener(event, event.includes('move') ? drag : stopDrag, event === 'touchmove' ? { passive: false } : false)
+        );
     }
     
     function drag(e) {
         if (!isDragging || !draggedEmoji) return;
+        [e.preventDefault(), e.stopPropagation()];
         
-        e.preventDefault();
-        e.stopPropagation();
+        const [clientX, clientY] = [e.type === 'touchmove' ? e.touches[0].clientX : e.clientX, e.type === 'touchmove' ? e.touches[0].clientY : e.clientY];
+        const boardRect = document.querySelector('.board.active').getBoundingClientRect();
         
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        
-        const activeBoard = document.querySelector('.board.active');
-        const boardRect = activeBoard.getBoundingClientRect();
-        
-        let x = clientX - boardRect.left - dragOffset.x;
-        let y = clientY - boardRect.top - dragOffset.y;
-        
-        // Keep within board bounds
-        x = Math.max(0, Math.min(x, boardRect.width - 120));
-        y = Math.max(0, Math.min(y, boardRect.height - 120));
-        
-        draggedEmoji.style.left = x + 'px';
-        draggedEmoji.style.top = y + 'px';
+        const [x, y] = [
+            Math.max(0, Math.min(clientX - boardRect.left - dragOffset.x, boardRect.width - 120)),
+            Math.max(0, Math.min(clientY - boardRect.top - dragOffset.y, boardRect.height - 120))
+        ];
+        Object.assign(draggedEmoji.style, { left: x + 'px', top: y + 'px' });
     }
     
     function stopDrag() {
         if (!isDragging || !draggedEmoji) return;
         
-        isDragging = false;
-        draggedEmoji.classList.remove('dragging');
+        [isDragging, draggedEmoji.classList.remove('dragging')];
+        Object.assign(document.body.style, { userSelect: '', webkitUserSelect: '', mozUserSelect: '', msUserSelect: '' });
+        [document.onselectstart, document.ondragstart] = [null, null];
         
-        // Re-enable text selection
-        document.body.style.userSelect = '';
-        document.body.style.webkitUserSelect = '';
-        document.body.style.mozUserSelect = '';
-        document.body.style.msUserSelect = '';
-        document.onselectstart = null;
-        document.ondragstart = null;
-        
-        // Check bottom corner collision before saving position
         checkEmojiBottomCornerCollision(draggedEmoji);
         
-        // Update stored position
-        const boardId = document.querySelector('.board.active').dataset.boardId;
-        const stickerId = draggedEmoji.dataset.stickerId;
-        
-        if (emojiStickers[boardId] && emojiStickers[boardId][stickerId]) {
-            emojiStickers[boardId][stickerId].x = parseInt(draggedEmoji.style.left);
-            emojiStickers[boardId][stickerId].y = parseInt(draggedEmoji.style.top);
+        const [boardId, stickerId] = [document.querySelector('.board.active').dataset.boardId, draggedEmoji.dataset.stickerId];
+        if (emojiStickers[boardId]?.[stickerId]) {
+            Object.assign(emojiStickers[boardId][stickerId], {
+                x: parseInt(draggedEmoji.style.left),
+                y: parseInt(draggedEmoji.style.top)
+            });
             saveEmojiStickers(boardId);
         }
         
         draggedEmoji = null;
-        
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('touchmove', drag);
-        document.removeEventListener('mouseup', stopDrag);
-        document.removeEventListener('touchend', stopDrag);
+        ['mousemove', 'touchmove', 'mouseup', 'touchend'].forEach(event => document.removeEventListener(event, event.includes('move') ? drag : stopDrag));
     }
 }
 
-function deleteEmojiSticker(stickerId, boardId) {
+const deleteEmojiSticker = (stickerId, boardId) => {
     const stickerElement = document.querySelector(`[data-sticker-id="${stickerId}"]`);
-    if (stickerElement) {
-        // Add deleting class to trigger animation
-        stickerElement.classList.add('deleting');
-        
-        // Remove the element after animation completes
-        setTimeout(() => {
-            stickerElement.remove();
-        }, 500); // Match animation duration
-    }
-    
-    if (emojiStickers[boardId]) {
-        delete emojiStickers[boardId][stickerId];
-        saveEmojiStickers(boardId);
-    }
-}
+    stickerElement && [stickerElement.classList.add('deleting'), setTimeout(() => stickerElement.remove(), 500)];
+    emojiStickers[boardId] && [delete emojiStickers[boardId][stickerId], saveEmojiStickers(boardId)];
+};
 
-
-function saveEmojiStickers(boardId) {
-    const key = `emojiStickers_board_${boardId}`;
-    localStorage.setItem(key, JSON.stringify(emojiStickers[boardId] || {}));
-}
+const saveEmojiStickers = boardId => localStorage.setItem(`emojiStickers_board_${boardId}`, JSON.stringify(emojiStickers[boardId] || {}));
 
 function loadEmojiStickers(boardId) {
-    const key = `emojiStickers_board_${boardId}`;
-    const saved = localStorage.getItem(key);
-    
-    if (saved) {
-        try {
-            emojiStickers[boardId] = JSON.parse(saved);
-            renderEmojiStickers(boardId);
-        } catch (e) {
-            console.error('Error loading emoji stickers:', e);
-            emojiStickers[boardId] = {};
-        }
-    } else {
-        emojiStickers[boardId] = {};
+    const saved = localStorage.getItem(`emojiStickers_board_${boardId}`);
+    try {
+        emojiStickers[boardId] = saved ? JSON.parse(saved) : {};
+        saved && renderEmojiStickers(boardId);
+    } catch (e) {
+        [console.error('Error loading emoji stickers:', e), emojiStickers[boardId] = {}];
     }
 }
 
-function loadAllEmojiStickers() {
-    for (let i = 1; i <= boardCount; i++) {
-        loadEmojiStickers(i);
-    }
-}
+const loadAllEmojiStickers = () => Array.from({length: boardCount}, (_, i) => loadEmojiStickers(i + 1));
 
 function renderEmojiStickers(boardId) {
     const board = document.querySelector(`.board[data-board-id="${boardId}"]`);
     if (!board || !emojiStickers[boardId]) return;
     
-    // Clear existing stickers
     board.querySelectorAll('.emoji-sticker').forEach(sticker => sticker.remove());
     
-    // Render saved stickers
-    Object.values(emojiStickers[boardId]).forEach(stickerData => {
-        const stickerElement = document.createElement('div');
-        stickerElement.className = 'emoji-sticker';
-        stickerElement.dataset.stickerId = stickerData.id;
-        stickerElement.textContent = stickerData.emoji;
-        stickerElement.style.left = stickerData.x + 'px';
-        stickerElement.style.top = stickerData.y + 'px';
-        
-        // Create delete button
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'delete-button';
-        deleteButton.textContent = '×';
-        deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteEmojiSticker(stickerData.id, boardId);
+    Object.values(emojiStickers[boardId]).forEach(({id, emoji, x, y}) => {
+        const stickerElement = Object.assign(document.createElement('div'), {
+            className: 'emoji-sticker',
+            textContent: emoji
         });
+        stickerElement.dataset.stickerId = id;
+        Object.assign(stickerElement.style, { left: x + 'px', top: y + 'px' });
         
+        const deleteButton = Object.assign(document.createElement('button'), {
+            className: 'delete-button',
+            textContent: '×'
+        });
+        deleteButton.addEventListener('click', e => [e.stopPropagation(), deleteEmojiSticker(id, boardId)]);
         
-        stickerElement.appendChild(deleteButton);
-        
-        // Add drag functionality
-        setupEmojiDrag(stickerElement);
-        
-        board.appendChild(stickerElement);
+        [stickerElement.appendChild(deleteButton), setupEmojiDrag(stickerElement), board.appendChild(stickerElement)];
     });
 }
 
 function updateEmojiUsageOrder(emoji) {
-    // Add emoji to the beginning only if it's not already in the top 12
     const existingIndex = emojiUsageOrder.indexOf(emoji);
     if (existingIndex < 0 || existingIndex >= 12) {
-        // Remove from current position if it exists
-        if (existingIndex > -1) {
-            emojiUsageOrder.splice(existingIndex, 1);
-        }
-        
-        // Add emoji to the beginning of the array
+        existingIndex > -1 && emojiUsageOrder.splice(existingIndex, 1);
         emojiUsageOrder.unshift(emoji);
-        
-        // Keep only the last 16 used emojis to prevent the array from growing too large
-        if (emojiUsageOrder.length > 16) {
-            emojiUsageOrder = emojiUsageOrder.slice(0, 16);
-        }
-        
-        // Save to localStorage
-        saveEmojiUsageOrder();
-        
-        // Reorder the picker
-        reorderEmojiPicker();
+        emojiUsageOrder.length > 16 && (emojiUsageOrder = emojiUsageOrder.slice(0, 16));
+        [saveEmojiUsageOrder(), reorderEmojiPicker()];
     }
 }
 
 function loadEmojiUsageOrder() {
     const saved = localStorage.getItem('emojiUsageOrder');
-    if (saved) {
-        try {
-            emojiUsageOrder = JSON.parse(saved);
-        } catch (e) {
-            console.error('Error loading emoji usage order:', e);
-            emojiUsageOrder = [];
-        }
-    } else {
-        emojiUsageOrder = [];
+    try {
+        emojiUsageOrder = saved ? JSON.parse(saved) : [];
+    } catch (e) {
+        [console.error('Error loading emoji usage order:', e), emojiUsageOrder = []];
     }
 }
 
-function saveEmojiUsageOrder() {
-    localStorage.setItem('emojiUsageOrder', JSON.stringify(emojiUsageOrder));
-}
+const saveEmojiUsageOrder = () => localStorage.setItem('emojiUsageOrder', JSON.stringify(emojiUsageOrder));
 
 function reorderEmojiPicker() {
     const emojiPicker = document.querySelector('.emoji-picker');
     if (!emojiPicker) return;
     
-    // Get all original emoji items
-    const allEmojiItems = Array.from(emojiPicker.querySelectorAll('.emoji-item:not(.recent-emoji)'));
-    
-    // Remove any existing recent emojis
     emojiPicker.querySelectorAll('.recent-emoji').forEach(item => item.remove());
     
-    // Add recent emojis at the beginning if we have any
-    if (emojiUsageOrder.length > 0) {
-        const recentEmojis = emojiUsageOrder.slice(0, 12); // Limit to 12 recent emojis (3 full rows)
-        
-        // Insert recent emojis at the beginning
-        recentEmojis.reverse().forEach(emoji => {
-            const emojiElement = document.createElement('div');
-            emojiElement.className = 'emoji-item recent-emoji';
-            emojiElement.dataset.emoji = emoji;
-            emojiElement.textContent = emoji;
-            emojiElement.addEventListener('click', handleEmojiClick);
-            emojiPicker.insertBefore(emojiElement, emojiPicker.firstChild);
+    emojiUsageOrder.length > 0 && emojiUsageOrder.slice(0, 12).reverse().forEach(emoji => {
+        const emojiElement = Object.assign(document.createElement('div'), {
+            className: 'emoji-item recent-emoji',
+            textContent: emoji
         });
-    }
+        emojiElement.dataset.emoji = emoji;
+        emojiElement.addEventListener('click', handleEmojiClick);
+        emojiPicker.insertBefore(emojiElement, emojiPicker.firstChild);
+    });
 }
 
+const getEmojiCount = boardId => emojiStickers[boardId] ? Object.keys(emojiStickers[boardId]).length : 0;
 
-function getEmojiCount(boardId) {
-    if (!emojiStickers[boardId]) return 0;
-    return Object.keys(emojiStickers[boardId]).length;
-}
-
-function showEmojiLimitMessage() {
+const showEmojiLimitMessage = () => {
     const emojiLimitMessage = document.getElementById('emojiLimitMessage');
-    if (emojiLimitMessage) {
-        emojiLimitMessage.classList.add('visible');
-        setTimeout(() => {
-            emojiLimitMessage.classList.remove('visible');
-        }, 1500); // Show for 3 seconds
-    }
-}
+    emojiLimitMessage && [emojiLimitMessage.classList.add('visible'), setTimeout(() => emojiLimitMessage.classList.remove('visible'), 1000)];
+};
 
 function checkEmojiBottomCornerCollision(emoji) {
     if (!emoji) return;
-    const emojiRect = emoji.getBoundingClientRect();
-    const screenHeight = window.innerHeight;
-    const restrictedWidth = 250, restrictedHeight = 150;
-    const restrictedTop = screenHeight - restrictedHeight;
-
-    const overlapsVertically = emojiRect.bottom > restrictedTop;
-    const overlapsBottomLeft = emojiRect.left < restrictedWidth && overlapsVertically;
-
+    const [emojiRect, screenHeight] = [emoji.getBoundingClientRect(), window.innerHeight];
+    const [restrictedWidth, restrictedHeight, restrictedTop] = [250, 150, screenHeight - 150];
+    
+    const overlapsBottomLeft = emojiRect.left < restrictedWidth && emojiRect.bottom > restrictedTop;
     if (overlapsBottomLeft) {
-        const moveUpDistance = emojiRect.bottom - restrictedTop + 20;
-        const activeBoard = document.querySelector('.board.active');
-        const boardRect = activeBoard.getBoundingClientRect();
-        const currentTop = parseInt(emoji.style.top);
-        const newTop = Math.max(60, currentTop - moveUpDistance);
-        emoji.style.transition = 'top 0.3s ease-out';
+        const newTop = Math.max(60, parseInt(emoji.style.top) - (emojiRect.bottom - restrictedTop + 20));
         emoji.style.top = `${newTop}px`;
-        setTimeout(() => emoji.style.transition = '', 300);
     }
 }
 
-function generateStickerId() {
-    return 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
+const generateStickerId = () => 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-// Clean up emoji stickers when board is deleted
-function cleanupEmojiStickers(boardId) {
-    const key = `emojiStickers_board_${boardId}`;
-    localStorage.removeItem(key);
-    delete emojiStickers[boardId];
-}
+const cleanupEmojiStickers = boardId => [localStorage.removeItem(`emojiStickers_board_${boardId}`), delete emojiStickers[boardId]];
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Wait a bit for other components to initialize
-    setTimeout(initializeEmojiPicker, 100);
-});
+document.addEventListener('DOMContentLoaded', () => setTimeout(initializeEmojiPicker, 100));
 
-// Export functions for use in other components
-window.emojiStickers = {
-    loadEmojiStickers,
-    renderEmojiStickers,
-    cleanupEmojiStickers,
-    initializeEmojiPicker
-};
+window.emojiStickers = { loadEmojiStickers, renderEmojiStickers, cleanupEmojiStickers, initializeEmojiPicker };
 

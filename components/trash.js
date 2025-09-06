@@ -1,65 +1,54 @@
 // Bin Management
 let pendingNotesToDelete = []; // Store notes waiting to be deleted when bin is full
+const TRASH_LIMIT = 100, ANIMATION_DELAY = 50, DEFAULT_COLOR = '#ffd700';
 
-function markAsDone(note) {
-    const isPartOfSelection = selectedNotes.includes(note) && selectedNotes.length > 1;
-    if (isPartOfSelection) {
-        const notesToDelete = [...selectedNotes];
-        notesToDelete.forEach((selectedNote, index) => {
-            setTimeout(() => markNoteAsDone(selectedNote), index * 100);
-        });
-        clearSelection(); // Clear selection after processing
+const markAsDone = note => {
+    if (selectedNotes.includes(note) && selectedNotes.length > 1) {
+        selectedNotes.forEach((selectedNote, i) => setTimeout(() => markNoteAsDone(selectedNote), i * 100));
+        clearSelection();
     } else {
         markNoteAsDone(note);
     }
-}
+};
 
-function markNoteAsDone(note) {
-    // Check trash count before deleting note
-    if (deletedNotes.length > 100) {
-        // Store the note for later deletion
-        if (!pendingNotesToDelete.includes(note)) {
-            pendingNotesToDelete.push(note);
-        }
-        openTrashDueToLimit();
-        return;
+const markNoteAsDone = note => {
+    if (deletedNotes.length > TRASH_LIMIT) {
+        !pendingNotesToDelete.includes(note) && pendingNotesToDelete.push(note);
+        return openTrashDueToLimit();
     }
     
     const content = note.querySelector('.sticky-content');
     const noteData = {
         text: content.innerHTML,
         color: note.style.backgroundColor,
-        x: note.style.left,
-        y: note.style.top,
-        width: note.style.width,
-        height: note.style.height,
+        x: note.style.left, y: note.style.top,
+        width: note.style.width, height: note.style.height,
         timestamp: new Date().toLocaleString(),
         isBold: content.classList.contains('bold')
     };
     
-    // Update noteColumns to remove this note's position
-    if (window.noteColumns) {
-        const boardElement = note.closest('.board');
-        if (boardElement && (boardElement.classList.contains('board-pattern-weekdays') || boardElement.classList.contains('board-pattern-days'))) {
-            const boardRect = boardElement.getBoundingClientRect();
-            const noteRect = note.getBoundingClientRect();
-            const noteCenterX = noteRect.left + (noteRect.width / 2) - boardRect.left;
-            const columnWidth = boardRect.width / 6; // 6 columns for weekdays
-            const columnIndex = Math.min(5, Math.max(0, Math.floor(noteCenterX / columnWidth)));
-            
-            if (window.noteColumns[columnIndex]) {
-                // Remove this note's position from the column
-                window.noteColumns[columnIndex] = window.noteColumns[columnIndex].filter(pos => 
-                    Math.abs(pos.x - parsePosition(note.style.left)) > 1 || 
-                    Math.abs(pos.y - parsePosition(note.style.top)) > 1
-                );
-            }
-        }
-    }
-    deletedNotes.unshift(noteData);
-    saveDeletedNotes();
-    updateTrashCount();
+    updateNoteColumns(note);
+    [deletedNotes.unshift(noteData), saveDeletedNotes(), updateTrashCount()];
+    animateNoteToTrash(note);
+};
 
+const updateNoteColumns = note => {
+    if (!window.noteColumns) return;
+    const board = note.closest('.board');
+    if (!board || !board.matches('.board-pattern-weekdays, .board-pattern-days')) return;
+    
+    const [boardRect, noteRect] = [board.getBoundingClientRect(), note.getBoundingClientRect()];
+    const columnIndex = Math.min(5, Math.max(0, Math.floor(((noteRect.left + (noteRect.width / 2) - boardRect.left) / (boardRect.width / 6)))));
+    
+    if (window.noteColumns[columnIndex]) {
+        window.noteColumns[columnIndex] = window.noteColumns[columnIndex].filter(pos => 
+            Math.abs(pos.x - parsePosition(note.style.left)) > 1 || 
+            Math.abs(pos.y - parsePosition(note.style.top)) > 1
+        );
+    }
+};
+
+const animateNoteToTrash = note => {
     const trashBin = document.querySelector('.trash-bin');
     const trashRect = trashBin.getBoundingClientRect();
     const noteRect = note.getBoundingClientRect();
@@ -75,107 +64,88 @@ function markNoteAsDone(note) {
         note.remove();
         trashBin.style.animation = '';
         saveActiveNotes();
-        updateBoardIndicators(); // Update indicators after note removal
+        updateBoardIndicators();
     }, 500);
-}
+};
 
-function checkTrashCollision(note) {
-    const trashBin = document.querySelector('.trash-bin');
-    const trashRect = trashBin.getBoundingClientRect();
-    const noteRect = note.getBoundingClientRect();
+const checkTrashCollision = note => {
+    const [trashRect, noteRect] = [
+        document.querySelector('.trash-bin').getBoundingClientRect(),
+        note.getBoundingClientRect()
+    ];
+    
     if (noteRect.right > trashRect.left && noteRect.left < trashRect.right &&
         noteRect.bottom > trashRect.top && noteRect.top < trashRect.bottom) {
         markAsDone(note);
         return true;
     }
     return false;
-}
+};
 
 // Trash Modal Management
-function toggleTrashModal() {
+const toggleTrashModal = () => {
     const modal = document.getElementById('trashModal');
-    const isVisible = modal.classList.contains('visible');
-    if (!isVisible) {
+    const isVisible = modal.classList.toggle('visible');
+    
+    if (isVisible) {
         modal.style.display = 'block';
-        requestAnimationFrame(() => modal.classList.add('visible')); // Use rAF for smoother transition
-        renderDeletedNotes();
+        requestAnimationFrame(() => renderDeletedNotes());
     } else {
-        modal.classList.remove('visible');
-        setTimeout(() => modal.style.display = 'none', 300); // Match CSS transition
+        setTimeout(() => modal.style.display = 'none', 300);
     }
-}
+};
 
-function renderDeletedNotes() {
+const renderDeletedNotes = () => {
     const container = document.querySelector('.deleted-notes-container');
-    if (deletedNotes.length === 0) {
-        container.innerHTML = `<div class="empty-state">(Empty)</div>`;
-        return;
-    }
-    container.innerHTML = deletedNotes.map((note, index) => `
-        <div class="deleted-note" style="background-color: ${note.color || '#ffd700'}">
-            <div class="deleted-note-content ${note.isBold ? 'bold' : ''}">${note.text}</div>
-            <div class="deleted-note-actions">
-                <button class="restore-btn" onclick="restoreNote(${index})">Restore</button>
-            </div>
-        </div>`).join('');
-}
+    container.innerHTML = deletedNotes.length ? 
+        deletedNotes.map((note, i) => `
+            <div class="deleted-note" style="background-color: ${note.color || DEFAULT_COLOR}">
+                <div class="deleted-note-content ${note.isBold ? 'bold' : ''}">${note.text}</div>
+                <div class="deleted-note-actions">
+                    <button class="restore-btn" onclick="restoreNote(${i})">Restore</button>
+                </div>
+            </div>`).join('') : 
+        '<div class="empty-state">(Empty)</div>';
+};
 
-function restoreNote(index) {
+const restoreNote = index => {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
-    noteElement.classList.add('shrinking');
+    noteElement?.classList.add('shrinking');
+    
     setTimeout(() => {
-        const note = deletedNotes.splice(index, 1)[0];
+        const [note] = deletedNotes.splice(index, 1);
         createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold);
-        saveDeletedNotes();
-        updateTrashCount();
-        renderDeletedNotes();
-        saveActiveNotes();
-        updateBoardIndicators();
-    }, 300); // Match animation
-}
+        [saveDeletedNotes(), updateTrashCount(), renderDeletedNotes(), saveActiveNotes(), updateBoardIndicators()];
+    }, 300);
+};
 
-function clearTrash() {
-    const notes = document.querySelectorAll('.deleted-note');
-    const topNotes = Array.from(notes).slice(0, 6);
-    topNotes.forEach((note, index) => {
+const clearTrash = () => {
+    const notes = [...document.querySelectorAll('.deleted-note')].slice(0, 6);
+    notes.forEach((note, i) => {
         note.classList.add('note-deleting');
-        note.style.animationDelay = `${index * 50}ms`;
+        note.style.animationDelay = `${i * ANIMATION_DELAY}ms`;
     });
+    
     setTimeout(() => {
-        deletedNotes = [];
-        saveDeletedNotes();
-        updateTrashCount();
-        renderDeletedNotes(); // Will show empty state
-        
-        // Wait briefly for the empty state to appear before closing modal
-        setTimeout(() => {
-            toggleTrashModal(); // Close modal after empty state animation completes
-            
-            // Process any pending notes that were waiting to be deleted
-            if (pendingNotesToDelete.length > 0) {
+        const processPending = () => {
+            if (pendingNotesToDelete.length) {
                 const notesToProcess = [...pendingNotesToDelete];
-                pendingNotesToDelete = []; // Clear the pending list
-                
-                // Delete the pending notes with a small delay to ensure modal is closed
-                setTimeout(() => {
-                    notesToProcess.forEach(note => {
-                        if (note && note.parentNode) { // Check if note still exists
-                            markNoteAsDone(note);
-                        }
-                    });
-                }, 100);
+                pendingNotesToDelete = [];
+                setTimeout(() => notesToProcess.forEach(note => note?.parentNode && markNoteAsDone(note)), 100);
             }
-        }, 200);
-    }, 350 + (topNotes.length > 0 ? (topNotes.length - 1) * 50 : 0) + 100); // Adjust timeout based on staggered animation
-}
+        };
+        
+        deletedNotes = [];
+        [saveDeletedNotes(), updateTrashCount(), renderDeletedNotes()];
+        setTimeout(() => [toggleTrashModal(), processPending()], 200);
+    }, 350 + (notes.length ? (notes.length - 1) * ANIMATION_DELAY : 0) + 100);
+};
 
-function updateTrashCount() {
+const updateTrashCount = () => {
     document.querySelector('.trash-count').textContent = deletedNotes.length;
-}
+};
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', e => {
     const modal = document.getElementById('trashModal');
-    if (modal.classList.contains('visible') && e.target === modal) {
-        toggleTrashModal();
-    }
+    modal?.classList.contains('visible') && e.target === modal && toggleTrashModal();
 });

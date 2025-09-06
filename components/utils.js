@@ -11,14 +11,15 @@ const boardStyles = {
 let deletedNotes = [];
 let holdTimer, activeNote = null, activePalette = null;
 let isSelecting = false, selectionBox = null, selectionStartX = 0, selectionStartY = 0;
-let selectedNotes = [], selectedStickers = [], isMovingSelection = false, selectionMoveStartX = 0, selectionMoveStartY = 0;
-let notesInitialPositions = [], stickersInitialPositions = [];
-const lastNotePositions = {}, lastNoteColors = {};
+let selectedNotes = [], isMovingSelection = false, selectionMoveStartX = 0, selectionMoveStartY = 0;
+let notesInitialPositions = [];
+const lastNotePositions = {}, lastNoteColors = {}, noteZIndexes = {};
+let globalZIndex = 1000;
 lastNotePositions[1] = { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 75 };
 lastNoteColors[1] = colors[0];
 let currentBoardId = 1, boardCount = 1, isMobileView = false;
 const MAX_BOARDS = 9;
-const ACTIVE_NOTES_KEY = 'stickyNotes_active', DELETED_NOTES_KEY = 'stickyNotes_deleted', BOARDS_COUNT_KEY = 'stickyNotes_boardCount';
+const ACTIVE_NOTES_KEY = 'stickyNotes_active', DELETED_NOTES_KEY = 'stickyNotes_deleted', BOARDS_COUNT_KEY = 'stickyNotes_boardCount', NOTE_ZINDEX_KEY = 'stickyNotes_zIndexes';
 
 const checkMobileView = () => {
     isMobileView = window.innerWidth <= 768;
@@ -222,9 +223,16 @@ const loadSavedData = () => {
                                 const createdNote = createNote(note.text, note.color || colors[0], parsePosition(note.x), parsePosition(note.y), true, note.width || '200px', note.height || '150px', note.isBold || false, i);
                                 if (createdNote && note.noteId) {
                                     createdNote.dataset.noteId = note.noteId;
-                                    if (note.zIndex && !isNaN(parseInt(note.zIndex))) {
+                                    // Apply saved z-index from the z-index management system
+                                    if (noteZIndexes[note.noteId]) {
+                                        createdNote.style.zIndex = noteZIndexes[note.noteId];
+                                        if (noteZIndexes[note.noteId] > globalZIndex) {
+                                            globalZIndex = noteZIndexes[note.noteId];
+                                        }
+                                    } else if (note.zIndex && !isNaN(parseInt(note.zIndex))) {
                                         createdNote.style.zIndex = note.zIndex;
-                                        if (typeof globalZIndex !== 'undefined' && parseInt(note.zIndex) >= globalZIndex) {
+                                        noteZIndexes[note.noteId] = parseInt(note.zIndex);
+                                        if (parseInt(note.zIndex) > globalZIndex) {
                                             globalZIndex = parseInt(note.zIndex);
                                         }
                                     }
@@ -254,5 +262,29 @@ const loadSavedData = () => {
     } catch (error) {
         console.error('Critical error loading saved data:', error);
     }
+};
+
+// Z-Index Management Functions
+const bringNoteToFront = (noteElement) => {
+    noteElement.style.zIndex = ++globalZIndex;
+    const noteId = noteElement.dataset.noteId;
+    if (noteId) noteZIndexes[noteId] = globalZIndex, saveNoteZIndexes();
+};
+
+const saveNoteZIndexes = () => {
+    try { localStorage.setItem(NOTE_ZINDEX_KEY, JSON.stringify(noteZIndexes)); }
+    catch (error) { console.error('Error saving note z-indexes:', error); }
+};
+
+const loadNoteZIndexes = () => {
+    try {
+        const saved = localStorage.getItem(NOTE_ZINDEX_KEY);
+        if (saved) Object.assign(noteZIndexes, JSON.parse(saved)), globalZIndex = Math.max(1000, ...Object.values(noteZIndexes));
+    } catch (error) { console.error('Error loading note z-indexes:', error); }
+};
+
+const applyNoteZIndex = (noteElement) => {
+    const noteId = noteElement.dataset.noteId;
+    if (noteId && noteZIndexes[noteId]) noteElement.style.zIndex = noteZIndexes[noteId];
 };
 
