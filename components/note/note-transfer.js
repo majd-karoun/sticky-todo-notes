@@ -131,7 +131,18 @@ function checkBoardButtonDrop() {
 
     if (targetBoardId === currentBoardId) {
         notesToMove.forEach(note => {
-            if (note) note.style.top = `${parseInt(note.style.top || 0) - 250}px`;
+            if (note) {
+                // Use the original position if available in notesInitialPositions
+                const originalPos = notesInitialPositions?.find(pos => pos.element === note);
+                if (originalPos) {
+                    // Simple animation back to original position
+                    note.style.left = `${originalPos.x}px`;
+                    note.style.top = `${Math.max(60, originalPos.y)}px`;
+                } else {
+                    // Fallback to the current behavior if no original position is found
+                    note.style.top = `${parseInt(note.style.top || 0) - 250}px`;
+                }
+            }
         });
         return { moved: false };
     }
@@ -203,9 +214,9 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
             note.style.removeProperty('--suckY');
 
             if (relativePosition) {
-                let originalPosition = notesInitialPositions?.find(pos => pos.element === note);
-                if (originalPosition) {
-                    [note.style.left, note.style.top] = [`${originalPosition.x}px`, `${Math.max(60, originalPosition.y)}px`];
+                // For active board transfers, use the original position if available
+                if (relativePosition.originalX !== undefined && relativePosition.originalY !== undefined) {
+                    [note.style.left, note.style.top] = [`${relativePosition.originalX}px`, `${Math.max(60, relativePosition.originalY)}px`];
                 } else {
                     const [baseLeft, baseTop] = [100, 80];
                     [note.style.left, note.style.top] = [`${baseLeft + relativePosition.offsetX}px`, `${Math.max(60, baseTop + relativePosition.offsetY)}px`];
