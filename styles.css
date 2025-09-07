@@ -662,9 +662,15 @@ body.selecting * {
 .emoji-sticker {
     position: absolute; font-size: 120px; cursor: move; z-index: 10000; transition: transform 0.2s ease;
     user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
-    text-shadow: -3px -3px 0 rgba(255, 255, 255, 0.8), 3px -3px 0 rgba(255, 255, 255, 0.8),
-                 -3px 3px 0 rgba(255, 255, 255, 0.8), 3px 3px 0 rgba(255, 255, 255, 0.8),
-                 0 0 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 
+    -3px -3px 0 rgba(255, 255, 255, 0.8),
+    3px -3px 0 rgba(255, 255, 255, 0.8),
+    -3px 3px 0 rgba(255, 255, 255, 0.8),
+    3px 3px 0 rgba(255, 255, 255, 0.8),
+    -3px 0 0 rgba(255, 255, 255, 0.8),
+    3px 0 0 rgba(255, 255, 255, 0.8),
+    0 -3px 0 rgba(255, 255, 255, 0.8),
+    0 3px 0 rgba(255, 255, 255, 0.8);
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
     will-change: transform;
     transform: translateZ(0); backface-visibility: hidden;
