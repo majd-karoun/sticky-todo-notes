@@ -28,6 +28,17 @@ cd sticky-todo-notes
 open index.html
 ```
 
+3. Weather API Setup
+
+To use the weather feature with your own API key:
+
+- Get an API key from [WeatherAPI.com](https://www.weatherapi.com/) (no credit card required)
+- Replace the API key in `index.html` line 1263:
+```javascript
+const WEATHER_API_KEY = 'your_api_key_here';
+```
+
+
 
 ## 🛠️ Technical Stack
 
@@ -35,6 +46,7 @@ open index.html
 - CSS3
 - JavaScript
 - LocalStorage for persistent data
+- WeatherAPI.com for weather data
 
 
 ## ⚙️ Customization

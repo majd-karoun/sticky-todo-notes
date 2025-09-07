@@ -1,9 +1,6 @@
 # Environment variables
 .env
 
-# Configuration files with sensitive data
-config.js
-
 # Node modules
 node_modules/
 
@@ -15,4 +12,4 @@ build/
 .DS_Store
 
 # Development tools
-watch.js sdf
+watch.js
