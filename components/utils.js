@@ -1,5 +1,21 @@
-// Global Variables
+/**
+ * UTILITIES MODULE
+ * Core utility functions and global state management for the sticky notes app
+ * Features:
+ * - Global state variables and constants
+ * - Position calculation and note layout algorithms
+ * - Data persistence (localStorage management)
+ * - Mobile view detection and responsive behavior
+ * - Z-index layering system
+ * - Color and styling utilities
+ */
+
+// GLOBAL CONSTANTS AND STATE
+
+// Available note colors for the color palette
 const colors = ['#f0e68c', '#98ff98', '#ff7eb9', '#7afcff', '#FE8801', '#ec0c39', '#AF65EF', '#ffd700', '#C1C1C1', '#FFFFFF'];
+
+// Board styling configuration
 const boardStyles = {
     colors: { 
         default: '#1a1a1a', 
@@ -8,6 +24,8 @@ const boardStyles = {
     },
     patterns: { default: 'none', current: 'none' }
 };
+
+// Global state variables
 let deletedNotes = [];
 let holdTimer, activeNote = null, activePalette = null;
 let isSelecting = false, selectionBox = null, selectionStartX = 0, selectionStartY = 0;
@@ -19,17 +37,39 @@ lastNotePositions[1] = { x: window.innerWidth / 2 - 100, y: window.innerHeight /
 lastNoteColors[1] = colors[0];
 let currentBoardId = 1, boardCount = 1, isMobileView = false;
 const MAX_BOARDS = 9;
+
+// localStorage keys for data persistence
 const ACTIVE_NOTES_KEY = 'stickyNotes_active', DELETED_NOTES_KEY = 'stickyNotes_deleted', BOARDS_COUNT_KEY = 'stickyNotes_boardCount', NOTE_ZINDEX_KEY = 'stickyNotes_zIndexes';
 
+// RESPONSIVE DESIGN UTILITIES
+
+/**
+ * Checks if the current viewport is mobile and updates global state
+ * Forces switch to board 1 on mobile for better UX
+ */
 const checkMobileView = () => {
     isMobileView = window.innerWidth <= 768;
     if (isMobileView && currentBoardId !== 1 && typeof switchToBoard === 'function') switchToBoard(1);
 };
 
+// POSITION AND LAYOUT UTILITIES
+
+/**
+ * Parses CSS position values (removes 'px' and converts to integer)
+ * @param {string|number} value - The position value to parse
+ * @returns {number} Parsed integer value or 0 if invalid
+ */
 const parsePosition = value => parseInt(String(value).replace('px', '')) || 0;
 
+/**
+ * Calculates the next position for a new note using intelligent layout algorithm
+ * Implements column-based wrapping with natural positioning variations
+ * @param {number} lastX - X coordinate of the last placed note
+ * @param {number} lastY - Y coordinate of the last placed note
+ * @returns {Object} Object with x and y coordinates for the new note
+ */
 const getNextNotePosition = (lastX, lastY) => {
-    const horizontalOffset = Math.random() * 10 - 5;
+    const horizontalOffset = Math.random() * 10 - 5; // Add natural variation
     let newX = lastX + horizontalOffset, newY = lastY + 70;
     const padding = 5, maxX = window.innerWidth - 200; // Account for full note width
     const bottomThreshold = window.innerHeight - 300; // Break line when reaching 300px from bottom
@@ -53,6 +93,13 @@ const getNextNotePosition = (lastX, lastY) => {
     return { x: finalX, y: finalY };
 };
 
+// COLOR UTILITIES
+
+/**
+ * Converts hex or rgba color values to RGB object
+ * @param {string} hex - Hex color string (#fff, #ffffff) or rgba string
+ * @returns {Object|null} RGB object with r, g, b properties or null if invalid
+ */
 const hexToRgb = hex => {
     if (hex.startsWith('rgba')) {
         const parts = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
@@ -264,18 +311,29 @@ const loadSavedData = () => {
     }
 };
 
-// Z-Index Management Functions
+// Z-INDEX LAYERING SYSTEM
+
+/**
+ * Brings a note to the front by assigning it the highest z-index
+ * @param {Element} noteElement - The note element to bring to front
+ */
 const bringNoteToFront = (noteElement) => {
     noteElement.style.zIndex = ++globalZIndex;
     const noteId = noteElement.dataset.noteId;
     if (noteId) noteZIndexes[noteId] = globalZIndex, saveNoteZIndexes();
 };
 
+/**
+ * Saves note z-index data to localStorage
+ */
 const saveNoteZIndexes = () => {
     try { localStorage.setItem(NOTE_ZINDEX_KEY, JSON.stringify(noteZIndexes)); }
     catch (error) { console.error('Error saving note z-indexes:', error); }
 };
 
+/**
+ * Loads note z-index data from localStorage
+ */
 const loadNoteZIndexes = () => {
     try {
         const saved = localStorage.getItem(NOTE_ZINDEX_KEY);
@@ -283,6 +341,10 @@ const loadNoteZIndexes = () => {
     } catch (error) { console.error('Error loading note z-indexes:', error); }
 };
 
+/**
+ * Applies saved z-index to a note element
+ * @param {Element} noteElement - The note element to apply z-index to
+ */
 const applyNoteZIndex = (noteElement) => {
     const noteId = noteElement.dataset.noteId;
     if (noteId && noteZIndexes[noteId]) noteElement.style.zIndex = noteZIndexes[noteId];

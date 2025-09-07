@@ -1,6 +1,27 @@
-// Global variable to store test date override
+/**
+ * BOARD MANAGEMENT MODULE
+ * Handles multi-board functionality including:
+ * - Board creation, deletion, and navigation
+ * - Board styling (colors, patterns, themes)
+ * - Pattern-based layouts (weekdays, days, dots, grid, lines)
+ * - Board switching with keyboard shortcuts and touch gestures
+ * - Title management and board indicators
+ * - Days pattern tracking for scheduling workflows
+ */
+
+// UTILITY FUNCTIONS FOR DATE AND TIME MANAGEMENT
+
+/**
+ * Gets current date - can be overridden for testing
+ * @returns {Date} Current date object
+ */
 const getCurrentDate = () => new Date();
 
+/**
+ * Checks if a given weekday index represents the current day
+ * @param {number} weekdayIndex - Index where 0=Monday, 1=Tuesday, ..., 5=Saturday
+ * @returns {boolean} True if the index matches today's weekday
+ */
 const isCurrentDay = (weekdayIndex) => {
     // getDay() returns 0 for Sunday, 1 for Monday, etc.
     const today = getCurrentDate().getDay();
@@ -9,11 +30,21 @@ const isCurrentDay = (weekdayIndex) => {
     return weekdayIndex === currentDayIndex;
 };
 
+/**
+ * Saves the start date for days pattern tracking
+ * Only saves if no start date exists to preserve the original reference point
+ * @param {number} boardId - The board ID to save the start date for
+ */
 const saveDaysPatternStartDate = (boardId) => {
     const key = `daysPatternStartDate_${boardId}`;
     if (!localStorage.getItem(key)) localStorage.setItem(key, getCurrentDate().toISOString().split('T')[0]);
 };
 
+/**
+ * Calculates which day number (0-4) it is in the 5-day cycle
+ * @param {number} boardId - The board ID to check
+ * @returns {number} Day number (0-4) or -1 if no start date set
+ */
 const getCurrentDayNumber = (boardId) => {
     const startDate = localStorage.getItem(`daysPatternStartDate_${boardId}`);
     if (!startDate) return -1;
@@ -21,8 +52,18 @@ const getCurrentDayNumber = (boardId) => {
     return diffDays % 5;
 };
 
+/**
+ * Removes days pattern data for a board
+ * @param {number} boardId - The board ID to clean up
+ */
 const cleanupDaysPatternData = (boardId) => localStorage.removeItem(`daysPatternStartDate_${boardId}`);
 
+// BOARD CREATION AND MANAGEMENT
+
+/**
+ * Creates a new board with validation for limits and mobile view
+ * Handles UI creation, state saving, and button updates
+ */
 const createNewBoard = () => {
     if (isMobileView || boardCount >= MAX_BOARDS) {
         if (boardCount >= MAX_BOARDS) alert(`Maximum number of boards (${MAX_BOARDS}) reached.`);
@@ -33,30 +74,28 @@ const createNewBoard = () => {
     updateAddButtonState();
 };
 
+/**
+ * Creates the complete UI structure for a new board
+ * Includes board element, title input, navigation button, and event handlers
+ * @param {number} boardId - The ID for the new board
+ */
 function createBoardUI(boardId) {
     const boardsContainer = document.querySelector('.boards-container');
-    const boardElement = document.createElement('div');
-    boardElement.className = 'board';
+    const boardElement = Object.assign(document.createElement('div'), {className: 'board'});
     boardElement.dataset.boardId = boardId;
     boardsContainer.appendChild(boardElement);
 
-    const titleCircle = document.createElement('div');
-    titleCircle.className = 'board-title-circle';
+    const titleCircle = Object.assign(document.createElement('div'), {className: 'board-title-circle'});
     titleCircle.setAttribute('onclick', "this.querySelector('.board-title-input').focus()");
 
-    const titleInput = document.createElement('input');
-    titleInput.type = 'text';
-    titleInput.className = 'board-title-input';
-    titleInput.placeholder = 'Title...';
-    titleInput.maxLength = 30;
+    const titleInput = Object.assign(document.createElement('input'), {
+        type: 'text', className: 'board-title-input', placeholder: 'Title...', maxLength: 30
+    });
 
     let titleSaveTimeout;
     const saveTitleDebounced = () => {
         const title = titleInput.value.trim();
-        if (title.length === 0) {
-            titleInput.value = titleInput.dataset.originalTitle || '';
-            return;
-        }
+        if (!title) { titleInput.value = titleInput.dataset.originalTitle || ''; return; }
         saveBoardTitle(boardId, title);
         updateCharCounter(titleInput);
     };
@@ -64,216 +103,150 @@ function createBoardUI(boardId) {
         clearTimeout(titleSaveTimeout);
         titleSaveTimeout = setTimeout(saveTitleDebounced, 500);
     });
-    updateCharCounter(titleInput);
-    titleCircle.appendChild(titleInput);
-    boardElement.appendChild(titleCircle);
+    [updateCharCounter(titleInput), titleCircle.appendChild(titleInput), boardElement.appendChild(titleCircle)];
 
-    const buttonElement = document.createElement('div');
-    buttonElement.className = 'board-button new-button';
+    const buttonElement = Object.assign(document.createElement('div'), {
+        className: 'board-button new-button', textContent: boardId
+    });
     buttonElement.dataset.boardId = boardId;
-    buttonElement.textContent = boardId;
     buttonElement.addEventListener('click', () => switchToBoard(boardId));
 
     if (boardId > 1) {
-        const deleteButton = document.createElement('div');
-        deleteButton.className = 'delete-board';
-        deleteButton.textContent = '×';
-        deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteBoard(boardId);
-        });
+        const deleteButton = Object.assign(document.createElement('div'), {className: 'delete-board', textContent: '×'});
+        deleteButton.addEventListener('click', (e) => { e.stopPropagation(); deleteBoard(boardId); });
         buttonElement.appendChild(deleteButton);
     }
 
-    const addButton = document.querySelector('.add-board-button');
-    document.querySelector('.boards-navigation').insertBefore(buttonElement, addButton);
-
-    setTimeout(() => {
-        buttonElement.classList.remove('new-button');
-        // Add transitions-ready class to ensure proper CSS transitions
-        buttonElement.classList.add('transitions-ready');
-    }, 500);
-    loadBoardStyles(boardId);
-    loadBoardTitle(boardId);
-    
-    // Load emoji stickers for the new board
-    if (window.emojiStickers) {
-        window.emojiStickers.loadEmojiStickers(boardId);
-    }
+    document.querySelector('.boards-navigation').insertBefore(buttonElement, document.querySelector('.add-board-button'));
+    setTimeout(() => [buttonElement.classList.remove('new-button'), buttonElement.classList.add('transitions-ready')], 500);
+    [loadBoardStyles(boardId), loadBoardTitle(boardId)];
+    if (window.emojiStickers) window.emojiStickers.loadEmojiStickers(boardId);
 }
 
+/**
+ * Deletes a board with confirmation and cleanup
+ * Handles note/sticker animations, data cleanup, and board renumbering
+ * @param {number} boardId - The ID of the board to delete
+ */
 function deleteBoard(boardId) {
     if (!confirm(`Are you sure you want to delete board ${boardId}?`)) return;
 
     const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
-    if (!boardElement) {
-        continueWithBoardDeletion(boardId);
-        return;
-    }
+    if (!boardElement) { continueWithBoardDeletion(boardId); return; }
 
-    const notes = boardElement.querySelectorAll('.sticky-note');
-    const stickers = boardElement.querySelectorAll('.emoji-sticker');
+    const [notes, stickers] = [boardElement.querySelectorAll('.sticky-note'), boardElement.querySelectorAll('.emoji-sticker')];
     
-    if (notes.length > 0 || stickers.length > 0) {
-        const trashBin = document.querySelector('.trash-bin');
-        const trashRect = trashBin.getBoundingClientRect();
+    if (notes.length || stickers.length) {
+        const [trashBin, trashRect] = [document.querySelector('.trash-bin'), document.querySelector('.trash-bin').getBoundingClientRect()];
         trashBin.style.animation = 'binShake 0.5s ease-in-out';
 
-        // Animate notes to trash bin
         notes.forEach(note => {
             const content = note.querySelector('.sticky-content');
-            const noteData = {
-                text: content.innerHTML,
-                color: note.style.backgroundColor,
-                x: note.style.left,
-                y: note.style.top,
-                width: note.style.width,
-                height: note.style.height,
-                timestamp: new Date().toLocaleString(),
-                isBold: content.classList.contains('bold')
-            };
-            deletedNotes.unshift(noteData);
+            deletedNotes.unshift({
+                text: content.innerHTML, color: note.style.backgroundColor,
+                x: note.style.left, y: note.style.top, width: note.style.width, height: note.style.height,
+                timestamp: new Date().toLocaleString(), isBold: content.classList.contains('bold')
+            });
 
             const noteRect = note.getBoundingClientRect();
-            const throwX = trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2);
-            const throwY = trashRect.top - noteRect.top;
+            const [throwX, throwY] = [
+                trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2),
+                trashRect.top - noteRect.top
+            ];
             note.style.setProperty('--throwX', `${throwX}px`);
             note.style.setProperty('--throwY', `${throwY}px`);
             note.style.animation = 'paperCrumble 0.5s ease-in forwards';
         });
 
-        // Animate emoji stickers using their delete animation
-        stickers.forEach(sticker => {
-            sticker.classList.add('deleting');
-        });
-
-        saveDeletedNotes();
-        updateTrashCount();
+        stickers.forEach(sticker => sticker.classList.add('deleting'));
+        [saveDeletedNotes(), updateTrashCount()];
         setTimeout(() => continueWithBoardDeletion(boardId), 600);
     } else {
         continueWithBoardDeletion(boardId);
     }
 }
 
+/**
+ * Continues board deletion after animations complete
+ * Handles DOM cleanup, data migration, and board renumbering
+ * @param {number} boardId - The ID of the board being deleted
+ */
 function continueWithBoardDeletion(boardId) {
-    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    const [boardElement, buttonElement] = [document.querySelector(`.board[data-board-id="${boardId}"]`), document.querySelector(`.board-button[data-board-id="${boardId}"]`)];
     if (boardElement) boardElement.remove();
-
-    const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
     if (buttonElement) buttonElement.classList.add('removing');
 
     const buttonsToRenumber = [];
     for (let i = boardId + 1; i <= boardCount; i++) {
         const button = document.querySelector(`.board-button[data-board-id="${i}"]`);
-        if (button) {
-            button.classList.add('removing');
-            buttonsToRenumber.push(i);
-        }
+        if (button) { button.classList.add('removing'); buttonsToRenumber.push(i); }
     }
 
-    // Remove all board-related data from localStorage
-    localStorage.removeItem(`${ACTIVE_NOTES_KEY}_board_${boardId}`);
-    localStorage.removeItem(`stickyNotes_boardTitle_${boardId}`);
-    localStorage.removeItem(`boardColor_${boardId}`);
-    localStorage.removeItem(`boardPattern_${boardId}`);
-    localStorage.removeItem(`boardStyles_board_${boardId}`);
+    // Remove board-related data
+    [`${ACTIVE_NOTES_KEY}_board_${boardId}`, `stickyNotes_boardTitle_${boardId}`, `boardColor_${boardId}`, `boardPattern_${boardId}`, `boardStyles_board_${boardId}`].forEach(key => localStorage.removeItem(key));
     cleanupDaysPatternData(boardId);
-    
-    // Clean up emoji stickers
-    if (window.emojiStickers) {
-        window.emojiStickers.cleanupEmojiStickers(boardId);
-    }
+    if (window.emojiStickers) window.emojiStickers.cleanupEmojiStickers(boardId);
 
     // Shift style settings from next boards
     for (let i = boardId + 1; i <= boardCount; i++) {
         ['boardColor', 'boardPattern', 'boardStyles_board'].forEach(keyPrefix => {
-            const oldKey = `${keyPrefix}_${i}`;
-            const newKey = `${keyPrefix}_${i-1}`;
-            const data = localStorage.getItem(oldKey);
-            if (data) {
-                localStorage.setItem(newKey, data);
-            }
+            const [oldKey, newKey, data] = [`${keyPrefix}_${i}`, `${keyPrefix}_${i-1}`, localStorage.getItem(`${keyPrefix}_${i}`)];
+            if (data) localStorage.setItem(newKey, data);
             localStorage.removeItem(oldKey);
         });
     }
 
     setTimeout(() => {
         if (buttonElement) buttonElement.remove();
+        const [navigationContainer, addButton] = [document.querySelector('.boards-navigation'), document.querySelector('.add-board-button')];
 
         buttonsToRenumber.forEach((oldId) => {
-            const oldButton = document.querySelector(`.board-button[data-board-id="${oldId}"]`);
+            const [oldButton, board, newId] = [document.querySelector(`.board-button[data-board-id="${oldId}"]`), document.querySelector(`.board[data-board-id="${oldId}"]`), oldId - 1];
             if (oldButton) oldButton.remove();
-
-            const board = document.querySelector(`.board[data-board-id="${oldId}"]`);
-            const newId = oldId - 1;
             if (board) board.dataset.boardId = newId;
 
-            const navigationContainer = document.querySelector('.boards-navigation');
-            const addButton = document.querySelector('.add-board-button');
-            const newButton = document.createElement('div');
-            newButton.className = 'board-button new-button';
-            newButton.dataset.boardId = newId;
-            newButton.textContent = newId;
-            newButton.dataset.originalNumber = newId;
+            const newButton = Object.assign(document.createElement('div'), {
+                className: 'board-button new-button', textContent: newId
+            });
+            [newButton.dataset.boardId, newButton.dataset.originalNumber] = [newId, newId];
             newButton.addEventListener('click', () => switchToBoard(newId));
 
             if (newId > 1) {
-                const deleteBtn = document.createElement('div');
-                deleteBtn.className = 'delete-board';
-                deleteBtn.textContent = '×';
+                const deleteBtn = Object.assign(document.createElement('div'), {className: 'delete-board', textContent: '×'});
                 deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteBoard(newId); });
                 newButton.appendChild(deleteBtn);
             }
             navigationContainer.insertBefore(newButton, addButton);
 
             ['', 'Title', 'Color', 'Pattern'].forEach(suffix => {
-                const baseKey = suffix ? `stickyNotes_board${suffix}` : ACTIVE_NOTES_KEY;
-                const oldStorageKey = `${baseKey}_board_${oldId}`;
-                const newStorageKey = `${baseKey}_board_${newId}`;
+                const [baseKey, oldStorageKey, newStorageKey] = [suffix ? `stickyNotes_board${suffix}` : ACTIVE_NOTES_KEY, `${suffix ? `stickyNotes_board${suffix}` : ACTIVE_NOTES_KEY}_board_${oldId}`, `${suffix ? `stickyNotes_board${suffix}` : ACTIVE_NOTES_KEY}_board_${newId}`];
                 const data = localStorage.getItem(oldStorageKey);
-                if (data) {
-                    localStorage.setItem(newStorageKey, data);
-                    localStorage.removeItem(oldStorageKey);
-                }
+                if (data) { localStorage.setItem(newStorageKey, data); localStorage.removeItem(oldStorageKey); }
             });
             loadBoardStyles(newId);
         });
 
-        setTimeout(() => {
-            document.querySelectorAll('.board-button.new-button').forEach(button => {
-                button.classList.remove('new-button');
-                // Add transitions-ready class to ensure proper CSS transitions
-                button.classList.add('transitions-ready');
-            });
-        }, 500);
+        setTimeout(() => document.querySelectorAll('.board-button.new-button').forEach(button => [button.classList.remove('new-button'), button.classList.add('transitions-ready')]), 500);
+        [boardCount--, saveBoardCount(), updateAddButtonState()];
 
-        boardCount--;
-        saveBoardCount();
-        updateAddButtonState();
-
-        if (currentBoardId === boardId) {
-            switchToBoard(boardId > 1 ? boardId - 1 : (boardCount >= 1 ? 1 : null));
-        } else if (currentBoardId > boardId) {
-            currentBoardId--;
-            switchToBoard(currentBoardId);
-        }
+        if (currentBoardId === boardId) switchToBoard(boardId > 1 ? boardId - 1 : (boardCount >= 1 ? 1 : null));
+        else if (currentBoardId > boardId) { currentBoardId--; switchToBoard(currentBoardId); }
         document.querySelector('.trash-bin').style.animation = '';
     }, 350);
 }
 
+/**
+ * Switches to a different board with smooth transitions
+ * Handles board visibility, animations, and state management
+ * @param {number} boardId - The target board ID to switch to
+ */
 function switchToBoard(boardId) {
     if (isMobileView && boardId !== 1) return;
     const targetBoardId = parseInt(boardId);
     if (targetBoardId === currentBoardId || targetBoardId === null) return;
 
-    // Show shortcut hint on first board switch
-    showShortcutHintOnFirstSwitch();
-
-    // Add motion blur effect
-    document.body.classList.add('board-switching');
+    [showShortcutHintOnFirstSwitch(), document.body.classList.add('board-switching')];
     setTimeout(() => document.body.classList.remove('board-switching'), 300);
-
-    const previousBoardId = currentBoardId;
     currentBoardId = targetBoardId;
 
     if (!lastNotePositions[boardId]) lastNotePositions[boardId] = { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 75 };
@@ -281,66 +254,45 @@ function switchToBoard(boardId) {
 
     document.querySelectorAll('.board').forEach(board => {
         const id = parseInt(board.dataset.boardId);
-        board.classList.remove('active', 'prev', 'next');
-        board.style.visibility = 'hidden'; // Default to hidden
+        [board.classList.remove('active', 'prev', 'next'), board.style.visibility = 'hidden'];
 
         if (id === currentBoardId) {
-            board.classList.add('active');
-            board.style.visibility = 'visible';
+            [board.classList.add('active'), board.style.visibility = 'visible'];
             board.querySelectorAll('.sticky-note').forEach((note, index) => note.style.setProperty('--note-index', index));
             board.querySelectorAll('.emoji-sticker').forEach((sticker, index) => sticker.style.setProperty('--sticker-index', index));
 
             if (!board.querySelector('.board-title-circle')) {
-                const titleCircle = document.createElement('div');
-                titleCircle.className = 'board-title-circle';
+                const titleCircle = Object.assign(document.createElement('div'), {className: 'board-title-circle'});
                 titleCircle.setAttribute('onclick', "this.querySelector('.board-title-input').focus()");
-                const titleInput = document.createElement('input');
-                titleInput.type = 'text';
-                titleInput.className = 'board-title-input';
-                titleInput.placeholder = 'Title...';
-                titleInput.maxLength = 30;
+                const titleInput = Object.assign(document.createElement('input'), {
+                    type: 'text', className: 'board-title-input', placeholder: 'Title...', maxLength: 30
+                });
                 const saveHandler = () => saveBoardTitle(id, titleInput.value);
-                titleInput.addEventListener('change', saveHandler);
-                titleInput.addEventListener('blur', saveHandler);
-                titleCircle.appendChild(titleInput);
-                board.appendChild(titleCircle);
-                loadBoardTitle(id);
+                ['change', 'blur'].forEach(event => titleInput.addEventListener(event, saveHandler));
+                [titleCircle.appendChild(titleInput), board.appendChild(titleCircle), loadBoardTitle(id)];
             }
-        } else if (id < currentBoardId) {
-            board.classList.add('prev');
-        } else {
-            board.classList.add('next');
-        }
-        // Visibility for prev/next is handled by CSS transitions ending
+        } else board.classList.add(id < currentBoardId ? 'prev' : 'next');
     });
 
-    document.querySelectorAll('.board-button').forEach(button => {
-        button.classList.toggle('active', parseInt(button.dataset.boardId) === currentBoardId);
-    });
-
-    loadBoardStyles(currentBoardId);
-    setActiveStyle();
+    document.querySelectorAll('.board-button').forEach(button => button.classList.toggle('active', parseInt(button.dataset.boardId) === currentBoardId));
+    [loadBoardStyles(currentBoardId), setActiveStyle()];
     document.querySelectorAll('.board-pattern-option, .pattern-preview').forEach(el => el.style.backgroundColor = boardStyles.colors.current);
     updateBoardIndicators();
-    
-    // Load emoji stickers for the current board
-    if (window.emojiStickers) {
-        window.emojiStickers.renderEmojiStickers(currentBoardId);
-    }
-    
+    if (window.emojiStickers) window.emojiStickers.renderEmojiStickers(currentBoardId);
     setTimeout(() => showBoardTitleTemporarily(currentBoardId), 300);
 }
 
+/**
+ * Sets up all board navigation functionality
+ * Includes keyboard shortcuts, touch gestures, and button handlers
+ */
 function setupBoardNavigation() {
     document.querySelector('.add-board-button').addEventListener('click', createNewBoard);
     document.querySelectorAll('.board-button').forEach(button => {
-        const boardId = parseInt(button.dataset.boardId);
-        const newButton = button.cloneNode(true);
+        const [boardId, newButton] = [parseInt(button.dataset.boardId), button.cloneNode(true)];
         newButton.addEventListener('click', () => switchToBoard(boardId));
         const deleteButton = newButton.querySelector('.delete-board');
-        if (deleteButton) {
-            deleteButton.addEventListener('click', (e) => { e.stopPropagation(); deleteBoard(boardId); });
-        }
+        if (deleteButton) deleteButton.addEventListener('click', (e) => { e.stopPropagation(); deleteBoard(boardId); });
         button.parentNode.replaceChild(newButton, button);
     });
 
@@ -348,14 +300,11 @@ function setupBoardNavigation() {
     const boardsContainer = document.querySelector('.boards-container');
     boardsContainer.addEventListener('touchstart', (e) => {
         if (isMobileView) return;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
+        [startX, startY] = [e.touches[0].clientX, e.touches[0].clientY];
     });
     boardsContainer.addEventListener('touchend', (e) => {
         if (isMobileView || !startX) return;
-        const endX = e.changedTouches[0].clientX;
-        const endY = e.changedTouches[0].clientY;
-        const diffX = startX - endX;
+        const [endX, endY, diffX] = [e.changedTouches[0].clientX, e.changedTouches[0].clientY, startX - e.changedTouches[0].clientX];
         if (Math.abs(diffX) > Math.abs(startY - endY) && Math.abs(diffX) > 50) {
             if (diffX > 0 && currentBoardId < boardCount) switchToBoard(currentBoardId + 1);
             else if (diffX < 0 && currentBoardId > 1) switchToBoard(currentBoardId - 1);
@@ -365,20 +314,14 @@ function setupBoardNavigation() {
 
     document.addEventListener('keydown', (e) => {
         if (isMobileView) return;
-        const targetTagName = e.target.tagName;
-        const isEditable = e.target.getAttribute('contenteditable') === 'true';
+        const [targetTagName, isEditable] = [e.target.tagName, e.target.getAttribute('contenteditable') === 'true'];
 
         if ((e.key === 'Control' || e.key === 'Meta') && !e.altKey && !e.shiftKey && targetTagName !== 'TEXTAREA' && !isEditable) {
-            e.preventDefault();
-            document.querySelector('.note-input textarea').focus();
-            return;
+            e.preventDefault(); document.querySelector('.note-input textarea').focus(); return;
         }
         if (targetTagName === 'TEXTAREA' || isEditable) {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); addNote(); }
             return;
-        }
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-            // Only handle note deletion
         }
         if (e.key === 'ArrowLeft' && currentBoardId > 1) switchToBoard(currentBoardId - 1);
         else if (e.key === 'ArrowRight' && currentBoardId < boardCount) switchToBoard(currentBoardId + 1);
@@ -390,6 +333,10 @@ function setupBoardNavigation() {
     window.addEventListener('resize', checkMobileView);
 }
 
+/**
+ * Updates the add board button state based on current limits
+ * Handles disabled state and tooltip updates
+ */
 function updateAddButtonState() {
     const addButton = document.querySelector('.add-board-button');
     const disabled = boardCount >= MAX_BOARDS;
@@ -398,13 +345,21 @@ function updateAddButtonState() {
     updateShortcutHintVisibility();
 }
 
+/**
+ * Shows or hides the keyboard shortcut hint based on board count
+ */
 function updateShortcutHintVisibility() {
     const shortcutHint = document.querySelector('.shortcut-hint');
     if (shortcutHint) shortcutHint.style.display = boardCount >= 2 ? 'block' : 'none';
 }
 
+// SHORTCUT HINT MANAGEMENT
 let hasShownHint = false;
 
+/**
+ * Shows the shortcut hint automatically on first board switch
+ * Only shows once per session when multiple boards exist
+ */
 function showShortcutHintOnFirstSwitch() {
     // Skip if we've already shown the hint or there's only one board
     if (hasShownHint || boardCount < 2) return;
@@ -422,6 +377,11 @@ function showShortcutHintOnFirstSwitch() {
     }, 4000);
 }
 
+// BOARD STYLING AND PATTERNS
+
+/**
+ * Toggles the board style menu visibility with smooth animations
+ */
 function toggleBoardStyleMenu() {
     const styleMenu = document.querySelector('.board-style-menu');
     const isVisible = styleMenu.classList.contains('visible');
@@ -436,6 +396,10 @@ function toggleBoardStyleMenu() {
     if (isVisible) setTimeout(() => styleMenu.classList.remove('closing'), 300);
 }
 
+/**
+ * Sets up event handlers for board style options (colors and patterns)
+ * Prevents duplicate initialization with 'initialized' class tracking
+ */
 function setupStyleOptions() {
     if (document.querySelector('.board-color-option.initialized')) return;
     document.querySelectorAll('.board-color-option, .board-pattern-option').forEach(option => {
@@ -451,6 +415,9 @@ function setupStyleOptions() {
     });
 }
 
+/**
+ * Updates the UI to show which color and pattern are currently active
+ */
 function setActiveStyle() {
     ['color', 'pattern'].forEach(type => {
         document.querySelectorAll(`.board-${type}-option`).forEach(option => {
@@ -459,6 +426,10 @@ function setActiveStyle() {
     });
 }
 
+/**
+ * Changes the background color of the current board
+ * @param {string} color - The new color value to apply
+ */
 function changeBoardColor(color) {
     boardStyles.colors.current = color;
     const activeBoard = document.querySelector('.board.active');
@@ -473,94 +444,75 @@ function changeBoardColor(color) {
     setTimeout(() => activeBoard.style.transition = '', 500);
 }
 
+/**
+ * Creates pattern overlay elements for board backgrounds
+ * Handles dots, grid, lines, weekdays, and days patterns
+ * @param {string} pattern - The pattern type to create
+ * @returns {Element} The created overlay element
+ */
 function createPatternOverlay(pattern) {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; transition:opacity 0.5s ease; opacity:0;';
+    const overlay = Object.assign(document.createElement('div'), {
+        style: 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; transition:opacity 0.5s ease; opacity:0;'
+    });
+    const board = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+    
     if (pattern !== 'none') {
-        if (pattern === 'dots') overlay.style.cssText += 'background-image:radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size:20px 20px;';
-        else if (pattern === 'grid') overlay.style.cssText += 'background-image:linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px); background-size:20px 20px;';
-        else if (pattern === 'lines') overlay.style.cssText += 'background-image:linear-gradient(0deg, transparent 19px, rgba(255,255,255,0.4) 20px); background-size:20px 20px;';
+        const patterns = {
+            dots: 'background-image:radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size:20px 20px;',
+            grid: 'background-image:linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px); background-size:20px 20px;',
+            lines: 'background-image:linear-gradient(0deg, transparent 19px, rgba(255,255,255,0.4) 20px); background-size:20px 20px;'
+        };
+        if (patterns[pattern]) overlay.style.cssText += patterns[pattern];
         else if (pattern === 'weekdays' || pattern === 'days') {
-            const header = document.createElement('div');
-            header.className = pattern === 'weekdays' ? 'weekday-header' : 'day-header';
+            const header = Object.assign(document.createElement('div'), {className: pattern === 'weekdays' ? 'weekday-header' : 'day-header'});
             const items = pattern === 'weekdays' ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : ['Day 1','Day 2','Day 3','Day 4','Day 5'];
             items.forEach((item, index) => {
-                const span = document.createElement('span');
-                span.textContent = item;
-                if (pattern === 'weekdays' && isCurrentDay(index)) {
-                    span.classList.add('current-day');
-                } else if (pattern === 'days' && getCurrentDayNumber(currentBoardId) === index) {
+                const span = Object.assign(document.createElement('span'), {textContent: item});
+                if ((pattern === 'weekdays' && isCurrentDay(index)) || (pattern === 'days' && getCurrentDayNumber(currentBoardId) === index)) {
                     span.classList.add('current-day');
                 }
                 header.appendChild(span);
             });
-            overlay.appendChild(header);
-            
-            // Add a class to the board to indicate it has a header
-            const board = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
-            if (board) {
-                board.classList.add('has-header');
-            }
+            [overlay.appendChild(header), board?.classList.add('has-header')];
         }
-    } else {
-        // Remove the has-header class when pattern is set to none
-        const board = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
-        if (board) {
-            board.classList.remove('has-header');
-        }
-    }
+    } else board?.classList.remove('has-header');
     return overlay;
 }
 
+/**
+ * Changes the pattern overlay for the current board
+ * Handles pattern transitions and days pattern initialization
+ * @param {string} pattern - The new pattern to apply
+ */
 function changeBoardPattern(pattern) {
-    const activeBoard = document.querySelector('.board.active');
-    const boardId = activeBoard.dataset.boardId;
-    const currentPattern = boardStyles.patterns.current;
+    const [activeBoard, boardId, currentPattern] = [document.querySelector('.board.active'), document.querySelector('.board.active').dataset.boardId, boardStyles.patterns.current];
     
-    // Clean up days pattern data if switching away from days pattern
-    if (currentPattern === 'days' && pattern !== 'days') {
-        cleanupDaysPatternData(boardId);
-    }
-    
-    // Update the current pattern after cleanup
+    if (currentPattern === 'days' && pattern !== 'days') cleanupDaysPatternData(boardId);
     boardStyles.patterns.current = pattern;
     
     activeBoard.querySelectorAll('.pattern-overlay, .lines-overlay').forEach(el => el.remove());
     activeBoard.classList.remove('board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days');
 
-    // Save start date when days pattern is first applied
-    if (pattern === 'days') {
-        saveDaysPatternStartDate(boardId);
-    }
+    if (pattern === 'days') saveDaysPatternStartDate(boardId);
 
     const patternOverlay = createPatternOverlay(pattern);
-    activeBoard.appendChild(patternOverlay);
-    void patternOverlay.offsetWidth; // Reflow
-    patternOverlay.style.opacity = '1';
+    [activeBoard.appendChild(patternOverlay), void patternOverlay.offsetWidth, patternOverlay.style.opacity = '1'];
 
     let linesOverlay = null;
     if (pattern === 'weekdays' || pattern === 'days') {
-        linesOverlay = document.createElement('div');
-        linesOverlay.className = `lines-overlay lines-overlay-${pattern}`;
-        linesOverlay.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; opacity:0; transition:opacity 0.5s ease;';
-        activeBoard.appendChild(linesOverlay);
-        void linesOverlay.offsetWidth; // Reflow
-        linesOverlay.style.opacity = '1';
+        linesOverlay = Object.assign(document.createElement('div'), {
+            className: `lines-overlay lines-overlay-${pattern}`,
+            style: 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; opacity:0; transition:opacity 0.5s ease;'
+        });
+        [activeBoard.appendChild(linesOverlay), void linesOverlay.offsetWidth, linesOverlay.style.opacity = '1'];
     }
 
     setTimeout(() => {
         if (pattern === 'weekdays' || pattern === 'days') {
-            activeBoard.classList.add(`board-pattern-${pattern}`);
-            patternOverlay.style.height = 'auto';
-            patternOverlay.style.zIndex = '1';
-            patternOverlay.classList.add('pattern-overlay');
-            if (linesOverlay) {
-                linesOverlay.style.zIndex = '0';
-                linesOverlay.classList.add('pattern-overlay'); // Naming consistency
-            }
+            [activeBoard.classList.add(`board-pattern-${pattern}`), patternOverlay.style.height = 'auto', patternOverlay.style.zIndex = '1', patternOverlay.classList.add('pattern-overlay')];
+            if (linesOverlay) [linesOverlay.style.zIndex = '0', linesOverlay.classList.add('pattern-overlay')];
         } else {
-            patternOverlay.remove();
-            if (linesOverlay) linesOverlay.remove();
+            [patternOverlay.remove(), linesOverlay?.remove()];
             if (pattern !== 'none') activeBoard.classList.add(`board-pattern-${pattern}`);
         }
         updateBoardIndicators();
@@ -568,6 +520,11 @@ function changeBoardPattern(pattern) {
     saveBoardStyles();
 }
 
+/**
+ * Applies saved styles to a board element
+ * @param {Element} board - The board element to style
+ * @param {Object} styles - Style object with color and pattern properties
+ */
 function applyBoardSavedStyles(board, styles) {
     board.style.backgroundColor = styles.color;
     board.querySelectorAll('.pattern-overlay, .lines-overlay').forEach(el => el.remove());
@@ -576,29 +533,33 @@ function applyBoardSavedStyles(board, styles) {
     if (styles.pattern !== 'none') {
         board.classList.add(`board-pattern-${styles.pattern}`);
         if (styles.pattern === 'weekdays' || styles.pattern === 'days') {
-            const headerOverlay = document.createElement('div');
-            headerOverlay.className = `pattern-overlay ${styles.pattern === 'weekdays' ? 'weekday-header' : 'day-header'}`;
+            const headerOverlay = Object.assign(document.createElement('div'), {
+                className: `pattern-overlay ${styles.pattern === 'weekdays' ? 'weekday-header' : 'day-header'}`
+            });
             const items = styles.pattern === 'weekdays' ? ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : Array.from({length: 5}, (_, i) => `Day ${i+1}`);
             items.forEach((item, index) => {
-                const span = document.createElement('span');
-                span.textContent = item;
-                if (styles.pattern === 'weekdays' && isCurrentDay(index)) {
-                    span.classList.add('current-day');
-                } else if (styles.pattern === 'days' && getCurrentDayNumber(parseInt(board.dataset.boardId)) === index) {
+                const span = Object.assign(document.createElement('span'), {textContent: item});
+                if ((styles.pattern === 'weekdays' && isCurrentDay(index)) || (styles.pattern === 'days' && getCurrentDayNumber(parseInt(board.dataset.boardId)) === index)) {
                     span.classList.add('current-day');
                 }
                 headerOverlay.appendChild(span);
             });
             board.appendChild(headerOverlay);
 
-            const linesOverlay = document.createElement('div');
-            linesOverlay.className = `pattern-overlay lines-overlay lines-overlay-${styles.pattern}`;
-            linesOverlay.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;';
+            const linesOverlay = Object.assign(document.createElement('div'), {
+                className: `pattern-overlay lines-overlay lines-overlay-${styles.pattern}`,
+                style: 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;'
+            });
             board.appendChild(linesOverlay);
         }
     }
 }
 
+/**
+ * Loads and applies saved styles for a specific board
+ * Falls back to default styles if no saved styles exist
+ * @param {number} boardId - The board ID to load styles for
+ */
 function loadBoardStyles(boardId) {
     const savedStyles = localStorage.getItem(`boardStyles_board_${boardId}`);
     const board = document.querySelector(`.board[data-board-id="${boardId}"]`);
@@ -622,6 +583,11 @@ function loadBoardStyles(boardId) {
     updateBoardIndicators();
 }
 
+// BOARD TITLE MANAGEMENT
+
+/**
+ * Initialize board titles and setup click-outside handler for style menu
+ */
 loadAllBoardTitles();
 document.addEventListener('click', function(event) {
     const styleMenu = document.querySelector('.board-style-menu');
@@ -635,10 +601,18 @@ document.addEventListener('click', function(event) {
 });
 document.querySelector('.board-style-menu').addEventListener('click', event => event.stopPropagation());
 
+/**
+ * Loads titles for all existing boards from localStorage
+ */
 function loadAllBoardTitles() {
     document.querySelectorAll('.board').forEach(board => loadBoardTitle(board.dataset.boardId));
 }
 
+/**
+ * Saves a board title to localStorage and updates button metadata
+ * @param {number} boardId - The board ID
+ * @param {string} title - The title to save
+ */
 function saveBoardTitle(boardId, title) {
     localStorage.setItem(`stickyNotes_boardTitle_${boardId}`, title);
     const buttonElement = document.querySelector(`.board-button[data-board-id="${boardId}"]`);
@@ -647,10 +621,18 @@ function saveBoardTitle(boardId, title) {
     }
 }
 
+/**
+ * Updates the character counter display for title inputs
+ * @param {Element} input - The input element to update counter for
+ */
 function updateCharCounter(input) {
     input.setAttribute('data-counter', `${input.value.length}/${input.maxLength}`);
 }
 
+/**
+ * Loads and displays a saved board title
+ * @param {number} boardId - The board ID to load title for
+ */
 function loadBoardTitle(boardId) {
     const title = localStorage.getItem(`stickyNotes_boardTitle_${boardId}`);
     const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
@@ -664,6 +646,10 @@ function loadBoardTitle(boardId) {
     }
 }
 
+/**
+ * Shows the board title circle temporarily for user feedback
+ * @param {number} boardId - The board ID to show title for
+ */
 function showBoardTitleTemporarily(boardId) {
     const titleCircle = document.querySelector(`.board[data-board-id="${boardId}"] .board-title-circle`);
     if (titleCircle) {
@@ -672,30 +658,29 @@ function showBoardTitleTemporarily(boardId) {
     }
 }
 
+/**
+ * Sets up hover and interaction handlers for board title circles
+ * Includes delayed close functionality and auto-save on input
+ */
 function setupBoardTitleListeners() {
     document.querySelectorAll('.board-title-circle').forEach(circle => {
         let hoverTimeout;
-        const input = circle.querySelector('.board-title-input');
-        const boardId = circle.closest('.board').dataset.boardId;
+        const [input, boardId] = [circle.querySelector('.board-title-input'), circle.closest('.board').dataset.boardId];
 
-        circle.addEventListener('mouseenter', () => {
-            if (input) input.focus();
-            clearTimeout(hoverTimeout);
-            circle.classList.add('delayed-close');
+        ['mouseenter', 'mouseleave', 'click'].forEach((event, i) => {
+            circle.addEventListener(event, () => {
+                if (i === 0) { if (input) input.focus(); clearTimeout(hoverTimeout); circle.classList.add('delayed-close'); }
+                else if (i === 1) { hoverTimeout = setTimeout(() => circle.classList.remove('delayed-close'), 2000); if (input) input.blur(); }
+                else if (input) input.focus();
+            });
         });
-        circle.addEventListener('mouseleave', () => {
-            hoverTimeout = setTimeout(() => circle.classList.remove('delayed-close'), 2000);
-            if (input) input.blur();
-        });
-        circle.addEventListener('click', () => { if (input) input.focus(); });
 
         if (input) {
             let titleSaveTimeout;
             const saveTitleDebounced = () => {
                 const title = input.value.trim();
-                if (title.length === 0) { input.dataset.originalTitle = ''; return; }
-                saveBoardTitle(boardId, title);
-                updateCharCounter(input);
+                if (!title) { input.dataset.originalTitle = ''; return; }
+                [saveBoardTitle(boardId, title), updateCharCounter(input)];
             };
             input.addEventListener('input', () => {
                 clearTimeout(titleSaveTimeout);
@@ -706,14 +691,17 @@ function setupBoardTitleListeners() {
     });
 }
 
+/**
+ * Updates visual indicators on board navigation buttons
+ * Shows note count, colors, patterns, and text contrast
+ */
 const updateBoardIndicators = () => {
     for (let i = 1; i <= boardCount; i++) {
         const [boardElement, buttonElement] = [document.querySelector(`.board[data-board-id="${i}"]`), document.querySelector(`.board-button[data-board-id="${i}"]`)];
         if (!boardElement || !buttonElement) continue;
 
-        buttonElement.classList.toggle('has-notes', boardElement.querySelectorAll('.sticky-note').length > 0);
         const boardColor = boardElement.style.backgroundColor || boardStyles.colors.default;
-        buttonElement.style.backgroundColor = boardColor;
+        [buttonElement.classList.toggle('has-notes', boardElement.querySelectorAll('.sticky-note').length > 0), buttonElement.style.backgroundColor = boardColor];
 
         const patternClasses = ['board-pattern-dots', 'board-pattern-grid', 'board-pattern-lines', 'board-pattern-weekdays', 'board-pattern-days'];
         const currentPatternClass = patternClasses.find(pc => boardElement.classList.contains(pc));

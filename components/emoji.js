@@ -1,17 +1,40 @@
-// Emoji Sticker Management
+/**
+ * EMOJI STICKER MODULE
+ * Handles emoji sticker functionality including:
+ * - Emoji picker and sticker creation
+ * - Drag and drop positioning
+ * - Usage tracking and reordering
+ * - Board-specific sticker management
+ * - Collision detection and limits
+ */
+
+// Global state for emoji sticker management
 let emojiStickers = {}, draggedEmoji = null, dragOffset = { x: 0, y: 0 }, emojiUsageOrder = [];
 
-// Initialize emoji functionality
+/**
+ * Initializes the emoji picker system
+ * Loads usage history, reorders picker, and sets up event handlers
+ */
 function initializeEmojiPicker() {
     [loadEmojiUsageOrder(), reorderEmojiPicker(), loadAllEmojiStickers()];
     document.querySelectorAll('.emoji-item').forEach(item => item.addEventListener('click', handleEmojiClick));
 }
 
+/**
+ * Handles clicks on emoji picker items
+ * Updates usage order and creates new sticker
+ * @param {Event} event - The click event
+ */
 const handleEmojiClick = event => {
     const emoji = event.target.dataset.emoji;
     emoji && [updateEmojiUsageOrder(emoji), createEmojiSticker(emoji)];
 };
 
+/**
+ * Creates a new emoji sticker on the active board
+ * Handles positioning, limits, and DOM creation
+ * @param {string} emoji - The emoji character to create
+ */
 function createEmojiSticker(emoji) {
     const activeBoard = document.querySelector('.board.active');
     if (!activeBoard) return;
@@ -42,6 +65,11 @@ function createEmojiSticker(emoji) {
     [saveEmojiStickers(boardId), setTimeout(() => stickerElement.classList.remove('new'), 400)];
 }
 
+/**
+ * Sets up drag and drop functionality for an emoji sticker
+ * Handles mouse and touch events with boundary constraints
+ * @param {Element} stickerElement - The sticker element to make draggable
+ */
 function setupEmojiDrag(stickerElement) {
     let isDragging = false;
     ['mousedown', 'touchstart'].forEach(event => stickerElement.addEventListener(event, startDrag, event === 'touchstart' ? { passive: false } : false));

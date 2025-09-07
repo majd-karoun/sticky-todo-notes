@@ -1,7 +1,44 @@
-// Bin Management
+/**
+ * TRASH MANAGEMENT MODULE
+ * Handles note deletion, trash bin functionality, and note restoration
+ * Features:
+ * - Note deletion with smooth animations
+ * - Trash bin collision detection
+ * - Deleted notes storage and management
+ * - Note restoration from trash
+ * - Trash limit handling with pending deletion queue
+ * - Modal interface for trash management
+ */
+
+// TRASH SYSTEM CONSTANTS AND STATE
+
 let pendingNotesToDelete = []; // Store notes waiting to be deleted when bin is full
 const TRASH_LIMIT = 100, ANIMATION_DELAY = 50, DEFAULT_COLOR = '#ffd700';
 
+/**
+ * Opens the trash modal when trash limit is reached
+ * Provides visual feedback to encourage trash clearing
+ */
+const openTrashDueToLimit = () => {
+    const [modal, clearButton] = [document.getElementById('trashModal'), document.querySelector('.clear-trash-btn')];
+    if (modal && !modal.classList.contains('visible')) {
+        modal.style.display = 'block';
+        modal.classList.add('visible');
+        requestAnimationFrame(() => renderDeletedNotes());
+    }
+    if (clearButton) {
+        clearButton.classList.add('shake-animation');
+        setTimeout(() => clearButton.classList.remove('shake-animation'), 1000);
+    }
+};
+
+// NOTE DELETION FUNCTIONS
+
+/**
+ * Marks a note or multiple selected notes as done (deleted)
+ * Handles both single note and multi-note selection scenarios
+ * @param {Element} note - The note element to mark as done
+ */
 const markAsDone = note => {
     if (selectedNotes.includes(note) && selectedNotes.length > 1) {
         selectedNotes.forEach((selectedNote, i) => setTimeout(() => markNoteAsDone(selectedNote), i * 100));
@@ -11,10 +48,16 @@ const markAsDone = note => {
     }
 };
 
+/**
+ * Processes the deletion of a single note
+ * Handles trash limit checking, data extraction, and animation
+ * @param {Element} note - The note element to delete
+ */
 const markNoteAsDone = note => {
-    if (deletedNotes.length > TRASH_LIMIT) {
+    if (deletedNotes.length >= TRASH_LIMIT) {
         !pendingNotesToDelete.includes(note) && pendingNotesToDelete.push(note);
-        return openTrashDueToLimit();
+        openTrashDueToLimit();
+        return;
     }
     
     const content = note.querySelector('.sticky-content');
@@ -32,6 +75,11 @@ const markNoteAsDone = note => {
     animateNoteToTrash(note);
 };
 
+/**
+ * Updates note column tracking for pattern-based boards
+ * Removes deleted note from column position tracking
+ * @param {Element} note - The note being deleted
+ */
 const updateNoteColumns = note => {
     if (!window.noteColumns) return;
     const board = note.closest('.board');
@@ -48,6 +96,11 @@ const updateNoteColumns = note => {
     }
 };
 
+/**
+ * Animates a note being thrown into the trash bin
+ * Calculates trajectory and applies CSS animations
+ * @param {Element} note - The note element to animate
+ */
 const animateNoteToTrash = note => {
     const trashBin = document.querySelector('.trash-bin');
     const trashRect = trashBin.getBoundingClientRect();
@@ -68,6 +121,11 @@ const animateNoteToTrash = note => {
     }, 500);
 };
 
+/**
+ * Checks if a note collides with the trash bin during drag operations
+ * @param {Element} note - The note element to check for collision
+ * @returns {boolean} True if collision detected and note was deleted
+ */
 const checkTrashCollision = note => {
     const [trashRect, noteRect] = [
         document.querySelector('.trash-bin').getBoundingClientRect(),
@@ -82,7 +140,12 @@ const checkTrashCollision = note => {
     return false;
 };
 
-// Trash Modal Management
+// TRASH MODAL MANAGEMENT
+
+/**
+ * Toggles the visibility of the trash modal
+ * Handles modal display and note rendering
+ */
 const toggleTrashModal = () => {
     const modal = document.getElementById('trashModal');
     const isVisible = modal.classList.toggle('visible');
@@ -95,6 +158,10 @@ const toggleTrashModal = () => {
     }
 };
 
+/**
+ * Renders the list of deleted notes in the trash modal
+ * Creates HTML for each deleted note with restore functionality
+ */
 const renderDeletedNotes = () => {
     const container = document.querySelector('.deleted-notes-container');
     container.innerHTML = deletedNotes.length ? 
@@ -108,6 +175,10 @@ const renderDeletedNotes = () => {
         '<div class="empty-state">(Empty)</div>';
 };
 
+/**
+ * Restores a deleted note back to the current board
+ * @param {number} index - Index of the note in the deletedNotes array
+ */
 const restoreNote = index => {
     const noteElement = document.querySelectorAll('.deleted-note')[index];
     noteElement?.classList.add('shrinking');
@@ -119,6 +190,10 @@ const restoreNote = index => {
     }, 300);
 };
 
+/**
+ * Clears all notes from the trash with staggered animations
+ * Processes any pending notes that were waiting for trash space
+ */
 const clearTrash = () => {
     const notes = [...document.querySelectorAll('.deleted-note')].slice(0, 6);
     notes.forEach((note, i) => {
@@ -127,24 +202,41 @@ const clearTrash = () => {
     });
     
     setTimeout(() => {
-        const processPending = () => {
+        deletedNotes = [];
+        [saveDeletedNotes(), updateTrashCount(), renderDeletedNotes()];
+        
+        // Close modal first, then process pending notes
+        setTimeout(() => {
+            toggleTrashModal();
+            
+            // Process pending notes after modal is closed
             if (pendingNotesToDelete.length) {
                 const notesToProcess = [...pendingNotesToDelete];
                 pendingNotesToDelete = [];
-                setTimeout(() => notesToProcess.forEach(note => note?.parentNode && markNoteAsDone(note)), 100);
+                setTimeout(() => {
+                    notesToProcess.forEach(note => {
+                        if (note?.parentNode) {
+                            markNoteAsDone(note);
+                        }
+                    });
+                }, 300);
             }
-        };
-        
-        deletedNotes = [];
-        [saveDeletedNotes(), updateTrashCount(), renderDeletedNotes()];
-        setTimeout(() => [toggleTrashModal(), processPending()], 200);
+        }, 200);
     }, 350 + (notes.length ? (notes.length - 1) * ANIMATION_DELAY : 0) + 100);
 };
 
+/**
+ * Updates the trash count display in the UI
+ */
 const updateTrashCount = () => {
     document.querySelector('.trash-count').textContent = deletedNotes.length;
 };
 
+// EVENT HANDLERS
+
+/**
+ * Closes trash modal when clicking outside the modal content
+ */
 document.addEventListener('click', e => {
     const modal = document.getElementById('trashModal');
     modal?.classList.contains('visible') && e.target === modal && toggleTrashModal();
