@@ -167,3 +167,6 @@ function initializeBoardButtonAnimations() {
     }, 100);
 }
 
+// Expose functions globally for onclick attributes
+window.toggleBold = toggleBold;
+window.markAsDone = markAsDone;
