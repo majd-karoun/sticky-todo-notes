@@ -40,8 +40,25 @@ function setupNote(note) {
         e.stopPropagation();
     });
 
-    // Note: Z-index management is now handled by the click handler in note-creation.js
-    // Removed conflicting hover and click z-index logic to prevent interference
+    // Z-index hover management
+    let originalZIndex = null;
+    let isHovering = false;
+    
+    note.addEventListener('mouseenter', () => {
+        if (!isDragging && !isResizing) {
+            isHovering = true;
+            originalZIndex = note.style.zIndex || '1';
+            note.style.zIndex = '9999';
+        }
+    });
+    
+    note.addEventListener('mouseleave', () => {
+        if (!isDragging && !isResizing && originalZIndex !== null) {
+            isHovering = false;
+            note.style.zIndex = originalZIndex;
+            originalZIndex = null;
+        }
+    });
 
     content.addEventListener('blur', () => content.contentEditable = "false");
     content.addEventListener('keydown', e => {
@@ -122,7 +139,16 @@ function setupNote(note) {
         else if (!selectedNotes.includes(note)) { selectedNotes.push(note); note.classList.add('selected'); }
 
         e.preventDefault();
-        [document.body.style.userSelect, document.body.style.webkitUserSelect, note.style.zIndex] = ['none', 'none', ++globalZIndex];
+        [document.body.style.userSelect, document.body.style.webkitUserSelect] = ['none', 'none'];
+        
+        // Only update z-index if not currently hovering (to preserve permanent click positioning)
+        if (!isHovering) {
+            note.style.zIndex = ++globalZIndex;
+        } else {
+            // Update the stored original z-index for when hover ends
+            originalZIndex = ++globalZIndex;
+        }
+        
         [startX, startY] = [clientX, clientY];
         
         if (e.target.closest('.resize-handle')) {

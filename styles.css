@@ -98,12 +98,13 @@ body { background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; height:
     position: absolute; width: 200px; min-width: 150px; min-height: 150px; padding: 8px; padding-bottom: 2px;
     border-radius: 0px; color: #000; animation: paperPop 0.3s ease-out forwards; cursor: grab;
     border: rgb(79, 79, 79) 1px solid; z-index: 1;
-    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    transition: background-color 0.3s ease, transform 0.2s ease-out, box-shadow 0.2s ease-out, z-index 0s;
 }
 .sticky-note.selected { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8); }
 .sticky-note:hover {
     box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 12px 30px rgba(0,0,0,0.22), 0 18px 40px rgba(0,0,0,0.15);
-    transition: box-shadow 0.3s ease-out;
+    z-index: 9999;
+    transition: box-shadow 0.3s ease-out, z-index 0s;
 }
 
 /* Note z-index is now managed dynamically in JavaScript */
