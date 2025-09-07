@@ -5,7 +5,6 @@
  * - Global state variables and constants
  * - Position calculation and note layout algorithms
  * - Data persistence (localStorage management)
- * - Mobile view detection and responsive behavior
  * - Z-index layering system
  * - Color and styling utilities
  */
@@ -35,22 +34,12 @@ const lastNotePositions = {}, lastNoteColors = {}, noteZIndexes = {};
 let globalZIndex = 1000;
 lastNotePositions[1] = { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 75 };
 lastNoteColors[1] = colors[0];
-let currentBoardId = 1, boardCount = 1, isMobileView = false;
+let currentBoardId = 1, boardCount = 1;
 const MAX_BOARDS = 9;
 
 // localStorage keys for data persistence
 const ACTIVE_NOTES_KEY = 'stickyNotes_active', DELETED_NOTES_KEY = 'stickyNotes_deleted', BOARDS_COUNT_KEY = 'stickyNotes_boardCount', NOTE_ZINDEX_KEY = 'stickyNotes_zIndexes';
 
-// RESPONSIVE DESIGN UTILITIES
-
-/**
- * Checks if the current viewport is mobile and updates global state
- * Forces switch to board 1 on mobile for better UX
- */
-const checkMobileView = () => {
-    isMobileView = window.innerWidth <= 768;
-    if (isMobileView && currentBoardId !== 1 && typeof switchToBoard === 'function') switchToBoard(1);
-};
 
 // POSITION AND LAYOUT UTILITIES
 
@@ -239,7 +228,6 @@ const loadSavedData = () => {
         // Perform one-time localStorage cleanup before loading any data
         performOneTimeStorageCleanup();
         
-        checkMobileView();
         if (typeof createSelectionBox === 'function') createSelectionBox();
 
         const savedBoardCount = localStorage.getItem(BOARDS_COUNT_KEY);

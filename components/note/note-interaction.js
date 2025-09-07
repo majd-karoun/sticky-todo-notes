@@ -197,7 +197,7 @@ function setupNote(note) {
     /**
      * DRAG AND DROP INTERACTION HANDLERS
      * Handles the start of drag/resize interactions
-     * @param {Event} e - The mouse/touch event
+     * @param {Event} e - The mouse event
      * @param {number} clientX - X coordinate of the interaction
      * @param {number} clientY - Y coordinate of the interaction
      */
@@ -316,10 +316,11 @@ function setupNote(note) {
 
     /**
      * EVENT LISTENER SETUP
-     * Attach mouse and touch event handlers for drag/resize functionality
+     * Attach mouse event handlers for drag/resize functionality
      */
-    [['mousedown', e => handleInteractionStart(e, e.clientX, e.clientY)], ['touchstart', e => handleInteractionStart(e, e.touches[0].clientX, e.touches[0].clientY), { passive: false }]].forEach(([event, handler, options]) => note.addEventListener(event, handler, options));
-    [['mousemove', e => handleInteractionMove(e.clientX, e.clientY)], ['mouseup', handleInteractionEnd], ['touchmove', e => handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY), { passive: false }], ['touchend', handleInteractionEnd]].forEach(([event, handler, options]) => document.addEventListener(event, handler, options));
+    note.addEventListener('mousedown', e => handleInteractionStart(e, e.clientX, e.clientY));
+    document.addEventListener('mousemove', e => handleInteractionMove(e.clientX, e.clientY));
+    document.addEventListener('mouseup', handleInteractionEnd);
 }
 
 /**

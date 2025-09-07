@@ -315,15 +315,14 @@ const toggleBold = button => {
 const shortcutIcon = document.getElementById('shortcutIcon') || document.querySelector('.textarea-container').appendChild(Object.assign(document.createElement('div'), {className: 'shortcut-icon', id: 'shortcutIcon'}));
 
 /**
- * Updates the shortcut icon based on platform and screen size
+ * Updates the shortcut icon based on platform
  */
 const updateShortcutIcon = () => {
-    const isMobile = window.innerWidth <= 1024;
-    [shortcutIcon.style.display, shortcutIcon.textContent] = [isMobile ? 'none' : 'block', isMobile ? '' : (navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl')];
+    shortcutIcon.textContent = navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl';
 };
 
-// Setup shortcut icon updates
-[window.addEventListener('resize', updateShortcutIcon), updateShortcutIcon()];
+// Setup shortcut icon
+updateShortcutIcon();
 
 // Handle keyboard shortcuts for note creation
 document.querySelector('.note-input textarea').addEventListener('keydown', e => {

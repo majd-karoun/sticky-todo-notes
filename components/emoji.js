@@ -67,12 +67,12 @@ function createEmojiSticker(emoji) {
 
 /**
  * Sets up drag and drop functionality for an emoji sticker
- * Handles mouse and touch events with boundary constraints
+ * Handles mouse events with boundary constraints
  * @param {Element} stickerElement - The sticker element to make draggable
  */
 function setupEmojiDrag(stickerElement) {
     let isDragging = false;
-    ['mousedown', 'touchstart'].forEach(event => stickerElement.addEventListener(event, startDrag, event === 'touchstart' ? { passive: false } : false));
+    stickerElement.addEventListener('mousedown', startDrag);
     
     function startDrag(e) {
         if (e.target.classList.contains('delete-button')) return;
@@ -84,21 +84,20 @@ function setupEmojiDrag(stickerElement) {
         Object.assign(document.body.style, { userSelect: 'none', webkitUserSelect: 'none', mozUserSelect: 'none', msUserSelect: 'none' });
         [document.onselectstart, document.ondragstart] = [() => false, () => false];
         
-        const [clientX, clientY] = [e.type === 'touchstart' ? e.touches[0].clientX : e.clientX, e.type === 'touchstart' ? e.touches[0].clientY : e.clientY];
+        const [clientX, clientY] = [e.clientX, e.clientY];
         const rect = stickerElement.getBoundingClientRect();
         [dragOffset.x, dragOffset.y] = [clientX - rect.left, clientY - rect.top];
         
         stickerElement.classList.add('dragging');
-        ['mousemove', 'touchmove', 'mouseup', 'touchend'].forEach(event => 
-            document.addEventListener(event, event.includes('move') ? drag : stopDrag, event === 'touchmove' ? { passive: false } : false)
-        );
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDrag);
     }
     
     function drag(e) {
         if (!isDragging || !draggedEmoji) return;
         [e.preventDefault(), e.stopPropagation()];
         
-        const [clientX, clientY] = [e.type === 'touchmove' ? e.touches[0].clientX : e.clientX, e.type === 'touchmove' ? e.touches[0].clientY : e.clientY];
+        const [clientX, clientY] = [e.clientX, e.clientY];
         const boardRect = document.querySelector('.board.active').getBoundingClientRect();
         
         const [x, y] = [
@@ -127,7 +126,8 @@ function setupEmojiDrag(stickerElement) {
         }
         
         draggedEmoji = null;
-        ['mousemove', 'touchmove', 'mouseup', 'touchend'].forEach(event => document.removeEventListener(event, event.includes('move') ? drag : stopDrag));
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', stopDrag);
     }
 }
 

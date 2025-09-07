@@ -4,7 +4,7 @@
  * - Board creation, deletion, and navigation
  * - Board styling (colors, patterns, themes)
  * - Pattern-based layouts (weekdays, days, dots, grid, lines)
- * - Board switching with keyboard shortcuts and touch gestures
+ * - Board switching with keyboard shortcuts
  * - Title management and board indicators
  * - Days pattern tracking for scheduling workflows
  */
@@ -61,12 +61,12 @@ const cleanupDaysPatternData = (boardId) => localStorage.removeItem(`daysPattern
 // BOARD CREATION AND MANAGEMENT
 
 /**
- * Creates a new board with validation for limits and mobile view
+ * Creates a new board with validation for limits
  * Handles UI creation, state saving, and button updates
  */
 const createNewBoard = () => {
-    if (isMobileView || boardCount >= MAX_BOARDS) {
-        if (boardCount >= MAX_BOARDS) alert(`Maximum number of boards (${MAX_BOARDS}) reached.`);
+    if (boardCount >= MAX_BOARDS) {
+        alert(`Maximum number of boards (${MAX_BOARDS}) reached.`);
         return;
     }
     createBoardUI(++boardCount);
@@ -241,7 +241,6 @@ function continueWithBoardDeletion(boardId) {
  * @param {number} boardId - The target board ID to switch to
  */
 function switchToBoard(boardId) {
-    if (isMobileView && boardId !== 1) return;
     const targetBoardId = parseInt(boardId);
     if (targetBoardId === currentBoardId || targetBoardId === null) return;
 
@@ -284,7 +283,7 @@ function switchToBoard(boardId) {
 
 /**
  * Sets up all board navigation functionality
- * Includes keyboard shortcuts, touch gestures, and button handlers
+ * Includes keyboard shortcuts and button handlers
  */
 function setupBoardNavigation() {
     document.querySelector('.add-board-button').addEventListener('click', createNewBoard);
@@ -296,24 +295,8 @@ function setupBoardNavigation() {
         button.parentNode.replaceChild(newButton, button);
     });
 
-    let startX, startY;
-    const boardsContainer = document.querySelector('.boards-container');
-    boardsContainer.addEventListener('touchstart', (e) => {
-        if (isMobileView) return;
-        [startX, startY] = [e.touches[0].clientX, e.touches[0].clientY];
-    });
-    boardsContainer.addEventListener('touchend', (e) => {
-        if (isMobileView || !startX) return;
-        const [endX, endY, diffX] = [e.changedTouches[0].clientX, e.changedTouches[0].clientY, startX - e.changedTouches[0].clientX];
-        if (Math.abs(diffX) > Math.abs(startY - endY) && Math.abs(diffX) > 50) {
-            if (diffX > 0 && currentBoardId < boardCount) switchToBoard(currentBoardId + 1);
-            else if (diffX < 0 && currentBoardId > 1) switchToBoard(currentBoardId - 1);
-        }
-        startX = null;
-    });
 
     document.addEventListener('keydown', (e) => {
-        if (isMobileView) return;
         const [targetTagName, isEditable] = [e.target.tagName, e.target.getAttribute('contenteditable') === 'true'];
 
         if ((e.key === 'Control' || e.key === 'Meta') && !e.altKey && !e.shiftKey && targetTagName !== 'TEXTAREA' && !isEditable) {
@@ -330,7 +313,6 @@ function setupBoardNavigation() {
         const keyNum = parseInt(e.key);
         if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= 9 && keyNum <= boardCount) switchToBoard(keyNum);
     });
-    window.addEventListener('resize', checkMobileView);
 }
 
 /**

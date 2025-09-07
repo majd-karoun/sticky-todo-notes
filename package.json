@@ -86,6 +86,9 @@
   },
   "devDependencies": {},
   "scripts": {
+    "build": "node build.js",
+    "watch": "node watch.js",
+    "dev": "node watch.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
