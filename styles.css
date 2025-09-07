@@ -233,7 +233,8 @@ body { background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; height:
     border-radius: 5px 5px 0 0; transform-origin: top center; transition: transform 0.3s ease;
     backdrop-filter: blur(5px); border: 2px solid rgba(255, 255, 255, 0.3);
 }
-.trash-bin:hover .bin-lid, .trash-modal.visible ~ .trash-bin .bin-lid { transform: rotate(10deg); }
+.trash-bin:hover .bin-lid, .trash-modal.visible .bin-lid { transform: rotate(10deg); }
+body:has(.trash-modal.visible) .trash-bin .bin-lid { transform: rotate(10deg); }
 .bin-body {
     position: absolute; bottom: 0; width: 100%; height: 60px; background: rgba(0, 0, 0, 0.3);
     border-radius: 5px; backdrop-filter: blur(5px); border: 2px solid rgba(255, 255, 255, 0.3);
@@ -294,8 +295,8 @@ body { background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; height:
 
 
 .deleted-notes-container {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;
-    overflow-y: auto; padding: 5px; flex-grow: 1; height: 100%;
+    display: grid; grid-template-columns: repeat(auto-fill, 320px); gap: 20px;
+    overflow-y: auto; padding: 5px; flex-grow: 1; height: 100%; justify-content: center;
 }
 .deleted-notes-container::-webkit-scrollbar { width: 8px; }
 .deleted-notes-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 4px; }

@@ -164,6 +164,8 @@ const toggleTrashModal = () => {
  */
 const renderDeletedNotes = () => {
     const container = document.querySelector('.deleted-notes-container');
+    // Force container to calculate layout first
+    container.style.minHeight = '200px';
     container.innerHTML = deletedNotes.length ? 
         deletedNotes.map((note, i) => `
             <div class="deleted-note" style="background-color: ${note.color || DEFAULT_COLOR}">
