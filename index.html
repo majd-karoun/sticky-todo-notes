@@ -21,6 +21,9 @@
         <meta name="msapplication-TileColor" content="#1a1a1a">
         <meta name="msapplication-TileImage" content="/favicon_io/android-chrome-192x192.png">
         <meta name="application-name" content="Sticky Todo Notes">
+        <meta name="apple-mobile-web-app-title" content="Sticky Notes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         
         <!-- Canonical URL -->
         <link rel="canonical" href="https://sticky-todo-notes.netlify.app">
@@ -1255,16 +1258,22 @@
         </script>
     </div>
 
+    <!-- Load configuration -->
+    <script src="config.js"></script>
+    
     <script>
-        // OpenWeatherMap API key
-        const API_KEY = 'a5efc298fea72e681c6900851b516e49';
-        const API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+        // WeatherAPI.com configuration - comprehensive implementation
+        const WEATHER_API_KEY = window.CONFIG?.WEATHER_API_KEY || 'fallback_key'; // Load from config
+        const WEATHER_API_URL = 'https://api.weatherapi.com/v1/current.json';
 
         // Load weather toggle state from localStorage
         let isWeatherEnabled = localStorage.getItem('weatherEnabled') === 'true';
         const weatherToggle = document.querySelector('.weather-toggle');
         const weatherIconElement = document.querySelector('.weather-icon');
         const weatherTempElement = document.querySelector('.weather-temp');
+        
+        // Prevent multiple simultaneous API calls
+        let isUpdatingWeather = false;
 
         // Initialize weather toggle state
         if (isWeatherEnabled) {
@@ -1285,117 +1294,194 @@
             }
         }
 
+
         function updateWeather() {
+            if (isUpdatingWeather) {
+                return; // Prevent multiple simultaneous calls
+            }
+            
             if (!navigator.geolocation) {
                 weatherIconElement.textContent = '❌';
                 weatherTempElement.textContent = 'Geolocation not supported';
                 return;
             }
 
+            isUpdatingWeather = true;
             navigator.geolocation.getCurrentPosition(
                 position => {
                     const { latitude, longitude } = position.coords;
                     
-                    // Fetch weather data from OpenWeatherMap API
-                    fetch(`${API_URL}?lat=${position.coords.latitude}&lon=${position.coords.longitude}&appid=${API_KEY}&units=metric`)
-                        .then(response => response.json())
+                    // Fetch comprehensive weather data from WeatherAPI.com
+                    fetch(`${WEATHER_API_URL}?key=${WEATHER_API_KEY}&q=${latitude},${longitude}&aqi=yes`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
                         .then(data => {
-                            const temp = Math.round(data.main.temp);
-                            const weatherCode = data.weather[0].id;
-                            const sunrise = data.sys.sunrise * 1000; // Convert to milliseconds
-                            const sunset = data.sys.sunset * 1000; // Convert to milliseconds
-                            const now = Date.now();
+                            const current = data.current;
+                            const location = data.location;
                             
-                            // Store sunrise/sunset in the data object for use in getWeatherIcon
-                            data.sunrise = sunrise;
-                            data.sunset = sunset;
+                            // Basic weather display
+                            const temp = Math.round(current.temp_c);
+                            const condition = current.condition.text.toLowerCase();
+                            const conditionCode = current.condition.code;
+                            const isDay = current.is_day === 1;
                             
-                            console.log('Weather API Response:', data);
+                            console.log('WeatherAPI Response:', data);
                             weatherTempElement.textContent = `${temp}°C`;
-                            // Update weather icon based on weather code and time
-                            weatherIconElement.textContent = getWeatherIcon(weatherCode, data);
+                            weatherIconElement.textContent = getWeatherIcon(condition, conditionCode, isDay, current);
+                            isUpdatingWeather = false; // Reset flag
                         })
                         .catch(error => {
                             console.error('Weather API error:', error);
                             weatherIconElement.textContent = '❌';
                             weatherTempElement.textContent = 'API error';
+                            isUpdatingWeather = false; // Reset flag on error
                         });
                 },
                 error => {
                     console.error('Geolocation error:', error);
                     weatherIconElement.textContent = '❌';
                     weatherTempElement.textContent = 'Location error';
+                    isUpdatingWeather = false; // Reset flag on geolocation error
                 }
             );
         }
 
-        // Map weather codes to emojis
-        function getWeatherIcon(weatherCode, weatherData) {
-            // Get current time and compare with sunrise/sunset
-            const now = Date.now();
-            const isNight = now < weatherData.sunrise || now > weatherData.sunset;
-            
-            // Thunderstorm
-            if (weatherCode >= 200 && weatherCode <= 232) return '⚡';
-            
-            // Drizzle
-            if (weatherCode >= 300 && weatherCode <= 321) return '🌧️';
-            
-            // Rain
-            if (weatherCode >= 500 && weatherCode <= 531) return '🌧️';
-            
-            // Snow
-            if (weatherCode >= 600 && weatherCode <= 622) return '❄️';
-            
-            // Atmosphere
-            if (weatherCode >= 700 && weatherCode <= 781) {
-                if (weatherCode === 701 || weatherCode === 741) return '🌫️'; // Mist/Fog
-                if (weatherCode === 711) return '💨'; // Smoke
-                if (weatherCode === 721) return '💨'; // Haze
-                if (weatherCode === 731 || weatherCode === 751 || weatherCode === 761) return '💨'; // Dust/Sand
-                if (weatherCode === 762) return '🌋'; // Ash
-                if (weatherCode === 771) return '💨'; // Squall
-                if (weatherCode === 781) return '🌪️'; // Tornado
+
+
+        // Comprehensive WeatherAPI.com condition mapping - ALL possibilities
+        function getWeatherIcon(condition, conditionCode, isDay, current) {
+            // WeatherAPI.com uses specific condition codes - comprehensive mapping
+            switch(conditionCode) {
+                // Clear/Sunny conditions
+                case 1000: return isDay ? '☀️' : '🌙'; // Sunny/Clear
+                
+                // Partly cloudy conditions
+                case 1003: return isDay ? '🌤️' : '🌙'; // Partly cloudy
+                
+                // Cloudy conditions
+                case 1006: return '☁️'; // Cloudy
+                case 1009: return '☁️'; // Overcast
+                
+                // Mist/Fog conditions
+                case 1030: return '🌫️'; // Mist
+                case 1135: return '🌫️'; // Fog
+                case 1147: return '🌫️'; // Freezing fog
+                
+                // Patchy rain conditions
+                case 1063: return isDay ? '🌦️' : '🌧️'; // Patchy rain possible
+                case 1150: return '🌦️'; // Patchy light drizzle
+                case 1153: return '🌧️'; // Light drizzle
+                case 1168: return '🌧️'; // Freezing drizzle
+                case 1171: return '🌧️'; // Heavy freezing drizzle
+                
+                // Rain conditions
+                case 1180: return '🌦️'; // Patchy light rain
+                case 1183: return '🌧️'; // Light rain
+                case 1186: return '🌧️'; // Moderate rain at times
+                case 1189: return '🌧️'; // Moderate rain
+                case 1192: return '🌧️'; // Heavy rain at times
+                case 1195: return '🌧️'; // Heavy rain
+                case 1198: return '🌧️'; // Light freezing rain
+                case 1201: return '🌧️'; // Moderate or heavy freezing rain
+                
+                // Snow conditions
+                case 1066: return isDay ? '🌨️' : '❄️'; // Patchy snow possible
+                case 1069: return '🌨️'; // Patchy sleet possible
+                case 1072: return '🌨️'; // Patchy freezing drizzle possible
+                case 1114: return '❄️'; // Blowing snow
+                case 1117: return '❄️'; // Blizzard
+                case 1204: return '🌨️'; // Light sleet
+                case 1207: return '🌨️'; // Moderate or heavy sleet
+                case 1210: return '🌨️'; // Patchy light snow
+                case 1213: return '🌨️'; // Light snow
+                case 1216: return '❄️'; // Patchy moderate snow
+                case 1219: return '❄️'; // Moderate snow
+                case 1222: return '❄️'; // Patchy heavy snow
+                case 1225: return '❄️'; // Heavy snow
+                case 1237: return '🌨️'; // Ice pellets
+                case 1249: return '🌨️'; // Light sleet showers
+                case 1252: return '🌨️'; // Moderate or heavy sleet showers
+                case 1255: return '🌨️'; // Light snow showers
+                case 1258: return '❄️'; // Moderate or heavy snow showers
+                case 1261: return '🌨️'; // Light showers of ice pellets
+                case 1264: return '🌨️'; // Moderate or heavy showers of ice pellets
+                
+                // Thunderstorm conditions
+                case 1087: return '⚡'; // Thundery outbreaks possible
+                case 1273: return '⛈️'; // Patchy light rain with thunder
+                case 1276: return '⛈️'; // Moderate or heavy rain with thunder
+                case 1279: return '⛈️'; // Patchy light snow with thunder
+                case 1282: return '⛈️'; // Moderate or heavy snow with thunder
+                
+                // Rain shower conditions
+                case 1240: return '🌦️'; // Light rain shower
+                case 1243: return '🌧️'; // Moderate or heavy rain shower
+                case 1246: return '🌧️'; // Torrential rain shower
+                
+                // Additional atmospheric conditions
+                default:
+                    // Fallback based on condition text for any missed codes
+                    const conditionLower = condition.toLowerCase();
+                    
+                    // Thunderstorm patterns
+                    if (conditionLower.includes('thunder') || conditionLower.includes('storm')) {
+                        return '⚡';
+                    }
+                    
+                    // Rain patterns
+                    if (conditionLower.includes('rain') || conditionLower.includes('drizzle')) {
+                        if (conditionLower.includes('heavy') || conditionLower.includes('torrential')) {
+                            return '🌧️';
+                        }
+                        if (conditionLower.includes('light') || conditionLower.includes('patchy')) {
+                            return '🌦️';
+                        }
+                        return '🌧️';
+                    }
+                    
+                    // Snow patterns
+                    if (conditionLower.includes('snow') || conditionLower.includes('blizzard')) {
+                        if (conditionLower.includes('heavy') || conditionLower.includes('blizzard')) {
+                            return '❄️';
+                        }
+                        return '🌨️';
+                    }
+                    
+                    // Sleet/Ice patterns
+                    if (conditionLower.includes('sleet') || conditionLower.includes('ice') || conditionLower.includes('pellets')) {
+                        return '🌨️';
+                    }
+                    
+                    // Fog/Mist patterns
+                    if (conditionLower.includes('fog') || conditionLower.includes('mist')) {
+                        return '🌫️';
+                    }
+                    
+                    // Cloud patterns
+                    if (conditionLower.includes('cloudy') || conditionLower.includes('overcast')) {
+                        if (conditionLower.includes('partly')) {
+                            return isDay ? '⛅' : '🌙';
+                        }
+                        return '☁️';
+                    }
+                    
+                    // Clear/Sunny patterns
+                    if (conditionLower.includes('clear') || conditionLower.includes('sunny')) {
+                        return isDay ? '☀️' : '🌙';
+                    }
+                    
+                    // Wind patterns
+                    if (conditionLower.includes('windy') || current.wind_kph > 30) {
+                        return '💨';
+                    }
+                    
+                    // Default fallback
+                    return isDay ? '☀️' : '🌙';
             }
-            
-            // Clouds
-            if (weatherData.clouds.all > 1) {
-                if (weatherData.clouds.all <= 25) return '🌤️'; // Few clouds
-                if (weatherData.clouds.all <= 75) return '⛅'; // Partly cloudy
-                if (weatherData.clouds.all <= 95) return '🌥️'; // Mostly cloudy
-                return '☁️'; // Overcast
-            }
-            
-            // Clear
-            if (weatherData.clouds.all <= 1) return isNight ? '🌙' : '☀️';
-            
-            // Extreme
-            if (weatherCode >= 900 && weatherCode <= 906) {
-                if (weatherCode === 900) return '🌪️'; // Tornado
-                if (weatherCode === 901) return '🌪️'; // Tropical storm
-                if (weatherCode === 902) return '🌪️'; // Hurricane
-                if (weatherCode === 903) return '❄️'; // Cold
-                if (weatherCode === 904) return '🔥'; // Hot
-                if (weatherCode === 905) return '💨'; // Windy
-                if (weatherCode === 906) return '🌨️'; // Hail
-            }
-            
-            // Additional weather codes
-            if (weatherCode >= 951 && weatherCode <= 962) {
-                if (weatherCode === 952) return '💨'; // Light breeze
-                if (weatherCode === 953) return '💨'; // Gentle breeze
-                if (weatherCode === 954) return '💨'; // Moderate breeze
-                if (weatherCode === 955) return '💨'; // Fresh breeze
-                if (weatherCode === 956) return '💨'; // Strong breeze
-                if (weatherCode === 957) return '💨'; // High wind
-                if (weatherCode === 958) return '💨'; // Gale
-                if (weatherCode === 959) return '💨'; // Severe gale
-                if (weatherCode === 960) return '🌪️'; // Storm
-                if (weatherCode === 961) return '🌪️'; // Violent storm
-                if (weatherCode === 962) return '🌪️'; // Hurricane
-            }
-            
-            return '☁️'; // Default
         }
 
         function updateStatusBar() {
@@ -1432,19 +1518,12 @@
         updateStatusBar();
         setInterval(updateStatusBar, 1000);
         
-        // Update weather every 30 minutes
+        // Update weather every 30 minutes (only once)
         updateWeatherIfEnabled();
         setInterval(updateWeatherIfEnabled, 30 * 60 * 1000);
 
-        // Load random station on page load (commented out - function not defined)
-        // loadRandomStation();
-
         // Add click event listener to toggle button
         weatherToggle.addEventListener('click', toggleWeather);
-
-        // Update immediately and then every minute
-        updateStatusBar();
-        setInterval(updateStatusBar, 60000);
     </script>
         </div>
     </div>

@@ -1,18 +1,15 @@
 # Environment variables
 .env
 
+# Configuration files with sensitive data
+config.js
+
 # Node modules
 node_modules/
 
 # Build output
 dist/
 build/
-
-# IDE files
-.idea/
-.vscode/
-*.swp
-*.swo
 
 # OS files
 .DS_Store
