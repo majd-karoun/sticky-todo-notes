@@ -197,12 +197,19 @@ const restoreNote = index => {
  * Processes any pending notes that were waiting for trash space
  */
 const clearTrash = () => {
+    // If trash is already empty, just close the modal immediately
+    if (deletedNotes.length === 0) {
+        toggleTrashModal();
+        return;
+    }
+    
     const notes = [...document.querySelectorAll('.deleted-note')].slice(0, 6);
     notes.forEach((note, i) => {
         note.classList.add('note-deleting');
         note.style.animationDelay = `${i * ANIMATION_DELAY}ms`;
     });
     
+    // Wait for all animations to complete before clearing data and closing modal
     setTimeout(() => {
         deletedNotes = [];
         [saveDeletedNotes(), updateTrashCount(), renderDeletedNotes()];
@@ -224,7 +231,7 @@ const clearTrash = () => {
                 }, 300);
             }
         }, 200);
-    }, 350 + (notes.length ? (notes.length - 1) * ANIMATION_DELAY : 0) + 100);
+    }, (notes.length ? (notes.length - 1) * ANIMATION_DELAY + 300 : 0) + 100);
 };
 
 /**

@@ -122,8 +122,22 @@ function addNote() {
      * @returns {boolean} True if position found successfully
      */
     const handlePatternPositioning = (isWeekday) => {
-        const columnIndex = isWeekday ? getDayColumnIndex() : (getCurrentDayNumber(currentBoardId) || 0);
+        let columnIndex;
         const columnCount = isWeekday ? 6 : 5; // 6 weekdays (Mon-Sat) or 5 days
+        
+        // Always continue from the last added note's position (like regular patterns)
+        if (lastAddedNote) {
+            // Calculate which column the last note is in
+            const noteX = parsePosition(lastAddedNote.style.left);
+            const columnWidth = boardElement.offsetWidth / columnCount;
+            columnIndex = Math.floor(noteX / columnWidth);
+            // Ensure column index is within valid range
+            columnIndex = Math.max(0, Math.min(columnIndex, columnCount - 1));
+        } else {
+            // Default behavior: use current day's column (only when no notes exist)
+            columnIndex = isWeekday ? getDayColumnIndex() : (getCurrentDayNumber(currentBoardId) || 0);
+        }
+        
         return findColumnPosition(columnIndex, columnCount);
     };
 
