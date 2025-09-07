@@ -2,8 +2,10 @@
 const getCurrentDate = () => new Date();
 
 const isCurrentDay = (weekdayIndex) => {
+    // getDay() returns 0 for Sunday, 1 for Monday, etc.
     const today = getCurrentDate().getDay();
-    const currentDayIndex = today === 0 ? 5 : today - 1;
+    // Convert to 0-based index where 0 = Monday, 1 = Tuesday, ..., 5 = Saturday
+    const currentDayIndex = today === 0 ? 6 : today - 1;
     return weekdayIndex === currentDayIndex;
 };
 

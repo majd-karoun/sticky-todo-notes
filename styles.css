@@ -796,7 +796,10 @@ body.selecting * {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 .weekday-header span.current-day, .day-header span.current-day {
-    color: rgba(255, 255, 255, 1); font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
+    color: rgba(255, 255, 255, 1); font-weight: 700;
+}
+.weekday-header span.current-day:not(.sunday), .day-header span.current-day:not(.sunday) {
+    text-decoration: underline; text-underline-offset: 3px;
 }
 
 .board-pattern-weekdays, .board-pattern-days { background-image: none !important; padding-top: 60px; }
