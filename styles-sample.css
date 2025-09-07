@@ -15,6 +15,11 @@ body {
   overflow: hidden;
 }
 
+:root {
+  --note-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.15), 0 2px 2px rgba(0, 0, 0, 0.15),
+    0 4px 4px rgba(0, 0, 0, 0.15), 0 8px 8px rgba(0, 0, 0, 0.15);
+}
 
 
 
@@ -250,7 +255,7 @@ body {
 }
 
 
-/*-------------------- Note -------------*/
+/* Note */
 
 .sticky-note {
   position: absolute;
@@ -322,7 +327,6 @@ body {
   font-weight: 400 !important;
   letter-spacing: 0.01em !important;
 }
-
 
 .sticky-content::-webkit-scrollbar {
   width: 6px;
@@ -839,9 +843,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   backdrop-filter: blur(3px);
   animation: fadeInScale 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-
-
-
 .trash-modal.visible .deleted-note {
   opacity: 1;
   transform: translateY(0) scale(1);
@@ -884,8 +885,8 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   font-size: 1.2rem;
   overflow-y: auto;
   padding-right: 8px;
-  font-family: "Comic Neue", cursive;
-  font-weight: 400;
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
 }
 .deleted-note-content::-webkit-scrollbar {
   width: 6px;
@@ -899,27 +900,10 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   border-radius: 3px;
 }
 .deleted-note-content.bold {
-  font-weight: 700;
+  font-weight: 900;
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.2px;
   font-size: 1.5rem;
-}
-
-.deleted-note-content *,
-.deleted-note-content div,
-.deleted-note-content p,
-.deleted-note-content span {
-  font-family: "Comic Neue", cursive !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.01em !important;
-}
-
-.deleted-note-content.bold *,
-.deleted-note-content.bold div,
-.deleted-note-content.bold p,
-.deleted-note-content.bold span {
-  font-weight: 700 !important;
-  font-size: inherit !important;
 }
 .deleted-note-actions {
   display: flex;
