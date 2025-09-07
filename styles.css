@@ -44,6 +44,40 @@ body { background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; height:
     50% { filter: blur(3px); }
     100% { filter: blur(0px); }
 }
+
+@keyframes bubbleBounceIn {
+    0% { 
+        transform: scale(0); 
+        opacity: 0; 
+    }
+    60% { 
+        transform: scale(1.1); 
+        opacity: 1; 
+    }
+    80% { 
+        transform: scale(0.95); 
+    }
+    100% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+}
+
+@keyframes bubbleBounceOut {
+    0% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+    20% { 
+        transform: scale(1.2); 
+        opacity: 0.8; 
+    }
+    100% { 
+        transform: scale(0); 
+        opacity: 0; 
+    }
+}
+
 .board-switching .board {
     animation: motionBlur 0.3s ease-in-out;
 }
@@ -379,9 +413,14 @@ body { background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; height:
     background-color: rgba(0, 0, 0, 0.1); 
     font-size: 16px; 
     line-height: 1; 
-    transform: scale(1);
     transition: transform 0.2s ease-out, background-color 0.2s ease-out, border-color 0.2s ease-out;
     will-change: transform;
+}
+.board-button.new-button {
+    animation: bubbleBounceIn 0.3s ease-out forwards;
+}
+.board-button.removing {
+    animation: bubbleBounceOut 0.2s ease-in forwards;
 }
 .board-button:hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.5); }
 .board-button.active { background-color: rgba(255, 255, 255, 0.2); border-color: white; }
