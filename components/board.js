@@ -205,7 +205,7 @@ function deleteBoard(boardId) {
   if (notes.length || stickers.length) {
     const trashBin = $(".trash-bin");
     const trashRect = trashBin.getBoundingClientRect();
-    setAnimation(trashBin, "binShake 0.5s ease-in-out");
+    trashBin.style.animation = "binShake 0.5s ease-in-out";
 
     notes.forEach((note) => {
       const content = note.querySelector(".sticky-content");
@@ -230,12 +230,16 @@ function deleteBoard(boardId) {
       ];
       note.style.setProperty("--throwX", `${throwX}px`);
       note.style.setProperty("--throwY", `${throwY}px`);
-      setAnimation(note, "paperCrumble 0.5s ease-in forwards");
+      note.style.animation = "paperCrumble 0.5s ease-in forwards";
     });
 
     stickers.forEach((sticker) => sticker.classList.add("deleting"));
     [saveDeletedNotes(), updateTrashCount()];
-    setTimeout(() => continueWithBoardDeletion(boardId), 600);
+    console.log('Setting timeout for continueWithBoardDeletion, boardId:', boardId);
+    setTimeout(() => {
+      console.log('Timeout fired, calling continueWithBoardDeletion');
+      continueWithBoardDeletion(boardId);
+    }, 600);
   } else {
     continueWithBoardDeletion(boardId);
   }
@@ -247,10 +251,12 @@ function deleteBoard(boardId) {
  * @param {number} boardId - The ID of the board being deleted
  */
 function continueWithBoardDeletion(boardId) {
+  console.log('continueWithBoardDeletion called with boardId:', boardId);
   const [boardElement, buttonElement] = [
     $(`.board[data-board-id="${boardId}"]`),
     $(`.board-button[data-board-id="${boardId}"]`),
   ];
+  console.log('Found elements:', { boardElement, buttonElement });
   
   // Clean up event listeners before removing elements
   if (boardElement?._eventCleanup) {
