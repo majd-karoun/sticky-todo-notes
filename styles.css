@@ -300,7 +300,7 @@ body {
   border: none;
   background: transparent;
   font:
-    400 1.2rem/1.4 "Comic Neue",
+    400 24px/1.4 "Comic Neue",
     cursive;
   resize: none;
   padding: 0;
@@ -341,7 +341,7 @@ body {
   user-select: text;
 }
 .sticky-content.bold {
-  font-size: 1.6rem;
+  font-size: 32px;
   font-weight: 700;
 }
 .sticky-content.bold *,
@@ -361,7 +361,7 @@ body {
   align-items: center;
 }
 .done-button {
-  font-size: 1rem;
+  font-size: 16px;
 }
 .bold-toggle {
   font-family: "Comic Neue", cursive !important;
@@ -370,7 +370,7 @@ body {
 .bold-toggle.active {
   background: rgba(0, 0, 0, 0.3) !important;
   color: rgba(0, 0, 0, 1) !important;
-  font-size: 1rem !important;
+  font-size: 16px !important;
 }
 
 /* Consolidated button styles */
@@ -500,7 +500,7 @@ body {
   border-radius: 15px;
   padding: 13px;
   resize: none;
-  font-size: 1.2rem;
+  font-size: 19px;
   line-height: 1.45;
   font-family: "Poppins", sans-serif;
   font-weight: 300;
@@ -539,7 +539,7 @@ body {
   background: transparent;
   color: rgba(0, 0, 0, 0.6);
   padding: 6px 10px;
-  font-size: 0.85rem;
+  font-size: 14px;
   border-radius: 5px;
   font-family: "Poppins", sans-serif;
   font-weight: 600;
@@ -553,14 +553,14 @@ body {
 }
 .shortcut-icon.focus-hint,
 .shortcut-icon.enter-hint {
-  font-size: 0.85rem;
+  font-size: 14px;
 }
 .shortcut-icon.enter-hint {
   background: transparent;
 }
 .shortcut-info {
   font-weight: 300;
-  font-size: 0.6rem;
+  font-size: 10px;
   opacity: 0.8;
 }
 
@@ -572,7 +572,7 @@ body {
   border-radius: 15px;
   color: rgb(151, 151, 151);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 300;
   font-family: "Poppins", sans-serif;
   transition: all 0.2s ease;
@@ -649,7 +649,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
 }
 .bin-text {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.8rem;
+  font-size: 13px;
   font-weight: bold;
   letter-spacing: 0.5px;
 }
@@ -699,7 +699,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   justify-content: center;
   height: 500px;
   color: rgb(151, 151, 151);
-  font-size: 2.5rem;
+  font-size: 40px;
   font-weight: 300;
   letter-spacing: 0.05em;
   animation: fadeIn 0.3s ease-out;
@@ -715,7 +715,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .modal-header h2 {
-  font-size: 1.5rem;
+  font-size: 24px;
   font-weight: 300;
   color: rgb(151, 151, 151);
   font-family: "Poppins", sans-serif;
@@ -729,7 +729,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 16px;
   transition: all 0.2s ease;
   background: transparent;
   font-family: "Poppins", sans-serif;
@@ -747,7 +747,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   width: 160px;
   height: 36px;
   padding: 0 12px;
-  font-size: 0.85rem;
+  font-size: 14px;
   font-weight: 500;
   border-radius: 8px;
   display: flex;
@@ -776,7 +776,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   backdrop-filter: blur(10px);
   cursor: pointer;
   margin-left: 15px;
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 300;
   padding: 0;
   line-height: 1;
@@ -862,7 +862,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   margin-bottom: 15px;
   word-break: break-word;
   color: black;
-  font-size: 1.2rem;
+  font-size: 24px;
   overflow-y: auto;
   padding-right: 8px;
   font-family: "Comic Neue", cursive;
@@ -883,7 +883,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   font-weight: 700;
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.2px;
-  font-size: 1.5rem;
+  font-size: 38px;
 }
 .deleted-note-content *,
 .deleted-note-content div,
@@ -927,7 +927,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   padding: 0 12px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 14px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background-color: rgb(255, 255, 255, 0.2);
   color: rgb(79, 79, 79);
@@ -948,7 +948,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   padding: 0 12px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 14px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(
     135deg,
@@ -1045,7 +1045,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   color: rgba(255, 255, 255, 0.5);
   background: rgba(0, 0, 0, 0.3);
   border-radius: 20px;
-  font-size: 1rem;
+  font-size: 16px;
   position: absolute;
   bottom: 50px;
   left: 50%;
@@ -1352,7 +1352,7 @@ body.selecting * {
 }
 .transfer-text {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 200;
   font-family: "Poppins", sans-serif;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -1365,7 +1365,7 @@ body.selecting * {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 32px;
 }
 @keyframes arrowBounce {
   0%,
@@ -1946,7 +1946,7 @@ body.selecting * {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: auto;
-  font-size: 1.8rem;
+  font-size: 29px;
   padding: 0 25px;
 }
 .board-title-input::placeholder {
