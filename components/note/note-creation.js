@@ -117,6 +117,7 @@ function addNote() {
         return false;
     };
 
+
     /**
      * Handles positioning for pattern-based boards (weekdays/days)
      * @param {boolean} isWeekday - True for weekdays pattern, false for days pattern
@@ -149,8 +150,10 @@ function addNote() {
         if (hasWeekdaysPattern || hasDaysPattern) {
             if (handlePatternPositioning(hasWeekdaysPattern) === false) return;
         } else {
-            // Regular board - place first note in a good starting position
-            [positionX, positionY] = [Math.max(150, window.innerWidth / 4), 50];
+            // Regular board - use next position logic to avoid collisions
+            const defaultX = Math.max(150, window.innerWidth / 4);
+            const defaultY = 50;
+            ({ x: positionX, y: positionY } = getNextNotePosition(defaultX - 250, defaultY - 70));
         }
     } else if (hasWeekdaysPattern || hasDaysPattern) {
         // Pattern boards - use column-based positioning
