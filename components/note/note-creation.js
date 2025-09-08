@@ -98,10 +98,10 @@ function addNote() {
             const { positionX: colX, columnNotes } = getColumnData(columnIndex, columnCount);
             
             // Find the lowest note in this column
-            let lastY = 60, lastNote = null;
+            let lastY = 0, lastNote = null;
             columnNotes.forEach(note => {
                 const noteY = parsePosition(note.style.top);
-                if (noteY >= lastY) { lastY = noteY; lastNote = note; }
+                if (noteY > lastY) { lastY = noteY; lastNote = note; }
             });
             
             // Calculate new position below the last note
