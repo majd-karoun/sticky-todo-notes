@@ -110,15 +110,15 @@ const animateNoteToTrash = note => {
 
     note.style.setProperty('--throwX', `${throwX}px`);
     note.style.setProperty('--throwY', `${throwY}px`);
-    note.style.animation = 'paperCrumble 0.5s ease-in forwards';
-    trashBin.style.animation = 'binShake 0.5s ease-in-out';
+    note.style.animation = 'paperCrumble 0.6s ease-in forwards';
+    trashBin.style.animation = 'binShake 0.6s ease-in-out';
 
     setTimeout(() => {
         note.remove();
         trashBin.style.animation = '';
         saveActiveNotes();
         updateBoardIndicators();
-    }, 500);
+    }, 600);
 };
 
 /**

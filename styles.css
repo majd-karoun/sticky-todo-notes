@@ -11,13 +11,26 @@
 body {
   background: #1a1a1a;
   color: #fff;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   overflow: hidden;
 }
-
-
-
-
+/* Utility Classes */
+.no-select {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
 .status-bar {
   position: fixed;
   bottom: 5px;
@@ -33,13 +46,7 @@ body {
   padding: 0 20px;
   border-radius: 20px;
   font-weight: 200;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
-
-
-
 @keyframes paperPop {
   0% {
     transform: scale(0.3) rotate(15deg);
@@ -54,7 +61,6 @@ body {
     opacity: 1;
   }
 }
-
 @keyframes paperCrumble {
   0% {
     transform: scale(1) rotate(0deg);
@@ -69,7 +75,6 @@ body {
     opacity: 0;
   }
 }
-
 @keyframes noteSuck {
   0% {
     transform: scale(1) rotate(0deg);
@@ -85,7 +90,6 @@ body {
     opacity: 0;
   }
 }
-
 @keyframes noteSuckHover {
   0% {
     transform: scale(1) translate(0, 0);
@@ -97,7 +101,6 @@ body {
     opacity: 0.5;
   }
 }
-
 @keyframes noteSuckComplete {
   0% {
     transform: scale(0.5)
@@ -110,7 +113,6 @@ body {
     opacity: 0;
   }
 }
-
 @keyframes noteSuckReverse {
   0% {
     transform: scale(0.5)
@@ -122,7 +124,6 @@ body {
     opacity: 1;
   }
 }
-
 @keyframes binShake {
   0% {
     transform: rotate(0deg);
@@ -162,6 +163,17 @@ body {
   100% {
     opacity: 0;
     transform: scale(0.95);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -236,46 +248,36 @@ body {
   }
 }
 
-
 .board-switching .board {
   animation: motionBlur 0.3s ease-in-out;
 }
 
-
-
-
+/* Core board and note styles */
 .board {
   width: 100vw;
   height: 100vh;
 }
-
-
-/*-------------------- Note -------------*/
-
 .sticky-note {
   position: absolute;
   width: 200px;
   min-width: 150px;
   min-height: 150px;
-  padding: 8px;
-  padding-bottom: 2px;
-  border-radius: 0px;
+  padding: 8px 8px 2px;
+  border-radius: 0;
   color: #000;
   animation: paperPop 0.3s ease-out forwards;
   cursor: grab;
-  border: rgb(79, 79, 79) 1px solid;
+  border: 1px solid rgb(79, 79, 79);
   z-index: 1;
   transition:
     background-color 0.3s ease,
     transform 0.2s ease-out,
     box-shadow 0.2s ease-out,
-    
+    outline 0.2s ease-out;
 }
-
 .sticky-note.selected {
-
-  border: 3px solid rgb(255, 255, 255);
-  
+  outline: 3px solid rgb(255, 255, 255);
+  outline-offset: 1px;
 }
 
 .sticky-note:hover {
@@ -284,12 +286,10 @@ body {
     0 12px 30px rgba(0, 0, 0, 0.22),
     0 18px 40px rgba(0, 0, 0, 0.15);
   z-index: 9999;
-  transition:
-    box-shadow 0.3s ease-out;
-    
+  transition: box-shadow 0.3s ease-out;
 }
 
-
+/* Consolidated sticky content */
 .sticky-content {
   width: 100%;
   height: calc(100% - 40px);
@@ -298,22 +298,19 @@ body {
   cursor: text;
   outline: none;
   border: none;
-  font-size: 1.2rem;
-  color: inherit;
+  background: transparent;
+  font:
+    400 1.2rem/1.4 "Comic Neue",
+    cursive;
   resize: none;
-  padding: 0 8px 0 0;
-  line-height: 1.1;
+  padding: 0;
+  margin: 0;
+  color: inherit;
   white-space: pre-wrap;
-  font-family: "Comic Neue", cursive;
-  font-weight: 400;
   letter-spacing: 0.01em;
   transition: font-size 0.3s ease;
   user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
 }
-
 .sticky-content *,
 .sticky-content div,
 .sticky-content p,
@@ -322,8 +319,6 @@ body {
   font-weight: 400 !important;
   letter-spacing: 0.01em !important;
 }
-
-
 .sticky-content::-webkit-scrollbar {
   width: 6px;
 }
@@ -344,16 +339,11 @@ body {
 .sticky-content:focus {
   background: rgba(0, 0, 0, 0.05);
   user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
 }
-
 .sticky-content.bold {
   font-size: 1.6rem;
   font-weight: 700;
 }
-
 .sticky-content.bold *,
 .sticky-content.bold div,
 .sticky-content.bold p,
@@ -370,27 +360,6 @@ body {
   gap: 5px;
   align-items: center;
 }
-.done-button,
-.bold-toggle {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.1);
-  color: rgba(0, 0, 0, 0.6);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-.done-button:hover,
-.bold-toggle:hover {
-  background: rgba(0, 0, 0, 0.2);
-}
 .done-button {
   font-size: 1rem;
 }
@@ -404,25 +373,51 @@ body {
   font-size: 1rem !important;
 }
 
+/* Consolidated button styles */
 .color-button {
   width: 24px;
   height: 24px;
   border-radius: 50%;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
   border: 2px solid rgba(0, 0, 0, 0.1);
-  transition:
-    transform 0.2s,
-    background-color 0.3s ease;
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.6);
   position: relative;
 }
-.sticky-note.color-transition {
-  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+.done-button,
+.bold-toggle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  position: relative;
 }
-.color-button.color-transition {
-  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.color-button:hover {
+.color-button:hover{
   transform: scale(1.1);
+}
+
+.done-button:hover,
+.bold-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.bold-toggle:hover {
+  transform: scale(1.05);
+}
+
+.sticky-note.color-transition,
+.color-button.color-transition {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .color-palette {
@@ -490,9 +485,6 @@ body {
   backdrop-filter: blur(5px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 0;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 .textarea-container {
   position: relative;
@@ -593,6 +585,7 @@ body {
   transform: translateY(1px);
 }
 
+/* Consolidated trash bin styles */
 .trash-bin {
   position: fixed;
   bottom: 5px;
@@ -606,7 +599,6 @@ body {
 .trash-bin:hover .trash-shortcut-hint {
   opacity: 1;
 }
-
 .trash-count {
   position: absolute;
   top: -10px;
@@ -638,9 +630,7 @@ body {
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 .trash-bin:hover .bin-lid,
-.trash-modal.visible .bin-lid {
-  transform: rotate(10deg);
-}
+.trash-modal.visible .bin-lid,
 body:has(.trash-modal.visible) .trash-bin .bin-lid {
   transform: rotate(10deg);
 }
@@ -663,7 +653,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   font-weight: bold;
   letter-spacing: 0.5px;
 }
-
+/* Consolidated trash modal */
 .trash-modal {
   display: none;
   position: fixed;
@@ -676,6 +666,9 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   z-index: 100000;
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+.trash-modal.visible {
+  opacity: 1;
 }
 .modal-content {
   position: fixed;
@@ -695,16 +688,12 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   flex-direction: column;
   backdrop-filter: blur(5px);
 }
-.trash-modal.visible {
-  opacity: 1;
-}
 .trash-modal.visible .modal-content {
   transform: translate(-50%, -50%);
   opacity: 1;
 }
-
 .empty-state {
-  grid-column: 1 / -1;
+  grid-column: 1/-1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -713,11 +702,10 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   font-size: 2.5rem;
   font-weight: 300;
   letter-spacing: 0.05em;
-  animation: fadeIn 0.8s ease-out;
+  animation: fadeIn 0.3s ease-out;
   text-align: center;
   font-family: "Poppins", sans-serif;
 }
-
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -747,17 +735,15 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   font-family: "Poppins", sans-serif;
   font-weight: 300;
 }
-
 .clear-trash-btn {
   color: #ff6b6b;
-  border: none;
+  border: 1px solid rgba(255, 107, 107, 0.3);
   background: linear-gradient(
     135deg,
     rgba(255, 107, 107, 0.15),
     rgba(255, 107, 107, 0.25)
   );
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 107, 107, 0.3);
   width: 160px;
   height: 36px;
   padding: 0 12px;
@@ -772,7 +758,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
 .clear-trash-btn:hover {
   background: rgba(114, 45, 45, 0.2);
 }
-
 .close-modal-btn {
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.9);
@@ -802,6 +787,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   background: rgba(114, 120, 120, 0.2);
 }
 
+/* Consolidated deleted notes */
 .deleted-notes-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, 320px);
@@ -823,7 +809,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
-
 .deleted-note {
   opacity: 0;
   transform: translateY(20px) scale(1);
@@ -839,12 +824,15 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   backdrop-filter: blur(3px);
   animation: fadeInScale 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-
-
-
 .trash-modal.visible .deleted-note {
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+.deleted-note.shrinking {
+  animation: shrinkOut 170ms ease-out forwards;
+}
+.deleted-note.removing {
+  animation: shrinkOut 0.3s ease-out forwards;
 }
 @keyframes fadeInScale {
   from {
@@ -869,13 +857,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
     transform: translateY(0) translateX(-50px) scale(0) rotate(-10deg);
   }
 }
-.deleted-note.shrinking {
-  animation: shrinkOut 170ms ease-out forwards;
-}
-.deleted-note.removing {
-  animation: shrinkOut 0.3s ease-out forwards;
-}
-
 .deleted-note-content {
   flex-grow: 1;
   margin-bottom: 15px;
@@ -904,7 +885,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   letter-spacing: 0.2px;
   font-size: 1.5rem;
 }
-
 .deleted-note-content *,
 .deleted-note-content div,
 .deleted-note-content p,
@@ -913,7 +893,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   font-weight: 400 !important;
   letter-spacing: 0.01em !important;
 }
-
 .deleted-note-content.bold *,
 .deleted-note-content.bold div,
 .deleted-note-content.bold p,
@@ -965,7 +944,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
 .restore-btn:hover {
   background-color: rgba(255, 255, 255, 0.4);
 }
-
 .delete-btn {
   padding: 0 12px;
   border-radius: 8px;
@@ -1012,9 +990,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 25px;
   backdrop-filter: blur(5px);
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 
 .status-weather {
@@ -1129,6 +1104,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   backdrop-filter: blur(0px);
 }
 
+/* Consolidated board buttons */
 .board-button,
 .add-board-button {
   width: 40px;
@@ -1139,7 +1115,7 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  font-weight: 200;
   cursor: pointer;
   transition:
     all 0.2s ease,
@@ -1148,20 +1124,18 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
   font-family: "Poppins", sans-serif;
-  font-weight: 200;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 .board-button {
-  background-color: rgba(0, 0, 0, 0.1);
   font-size: 16px;
   line-height: 1;
-  transition:
-    transform 0.2s ease-out,
-    background-color 0.2s ease-out,
-    border-color 0.2s ease-out;
   will-change: transform;
+}
+.add-board-button {
+  font-size: 24px;
+  line-height: 1;
+  font-family: Arial, sans-serif;
+  font-weight: 100;
 }
 .board-button.new-button {
   animation: bubbleBounceIn 0.3s ease-out forwards;
@@ -1169,7 +1143,8 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
 .board-button.removing {
   animation: bubbleBounceOut 0.2s ease-in forwards;
 }
-.board-button:hover {
+.board-button:hover,
+.add-board-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.5);
 }
@@ -1177,14 +1152,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   background-color: rgba(255, 255, 255, 0.2);
   border-color: white;
 }
-.add-board-button {
-  background-color: rgba(0, 0, 0, 0.1);
-  font-size: 24px;
-}
-.add-board-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
 .add-board-button.disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -1192,7 +1159,6 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
   background-color: rgba(100, 100, 100, 0.2);
   border-color: rgba(150, 150, 150, 0.3);
 }
-
 .board-button .delete-board {
   position: absolute;
   top: -5px;
@@ -1217,7 +1183,8 @@ body:has(.trash-modal.visible) .trash-bin .bin-lid {
 }
 .board-button.drag-hover .delete-board,
 .board-button.drag-proximity .delete-board,
-body.drag-in-progress .board-button .delete-board {
+body.drag-in-progress .board-button .delete-board,
+body.drag-in-progress .board-button:hover .delete-board {
   opacity: 0 !important;
   pointer-events: none !important;
 }
@@ -1228,25 +1195,19 @@ body.drag-in-progress .board-button:hover .delete-board {
 .board-button:first-child .delete-board {
   display: none;
 }
-.board-button::after {
-  content: "";
+
+/* Green dot indicator for boards with notes */
+.board-button.has-notes::after {
+  content: '';
   position: absolute;
-  bottom: -5px;
+  bottom: -1px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(50%);
   width: 8px;
   height: 8px;
+  background-color: #4CAF50;
   border-radius: 50%;
-  background-color: transparent;
-  transition:
-    background-color 0.3s ease,
-    transform 0.3s ease;
-  z-index: 2;
-}
-
-.board-button.has-notes::after {
-  background-color: rgba(76, 175, 80, 0.8);
-  transform: translateX(-50%) scale(1);
+  z-index: 10;
 }
 
 /* Drag-and-drop hover effect for board buttons */
@@ -1284,76 +1245,6 @@ body.drag-in-progress .board-button:hover .delete-board {
   margin: -8px !important;
 }
 
-.button-pattern-dots {
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.4) 1px,
-    transparent 1px
-  );
-  background-size: 6px 6px;
-}
-.button-pattern-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
-  background-size: 6px 6px;
-}
-.button-pattern-lines {
-  background-image: linear-gradient(
-    0deg,
-    transparent 5px,
-    rgba(255, 255, 255, 0.4) 6px
-  );
-  background-size: 6px 6px;
-}
-
-.button-pattern-weekdays,
-.button-pattern-days {
-  /* For board buttons */
-  position: relative;
-  overflow: visible; /* Was hidden for preview, visible for button */
-  background-image:
-    linear-gradient(
-      90deg,
-      transparent calc(33.33% - 1px),
-      rgba(255, 255, 255, 0.3) 33.33%,
-      transparent calc(33.33% + 1px)
-    ),
-    linear-gradient(
-      90deg,
-      transparent calc(66.66% - 1px),
-      rgba(255, 255, 255, 0.3) 66.66%,
-      transparent calc(66.66% + 1px)
-    ) !important;
-  background-size: 100% 100%;
-}
-.button-pattern-weekdays::before,
-.button-pattern-days::before {
-  position: absolute;
-  top: 2px;
-  left: 0;
-  right: 0;
-  height: 8px;
-  border-radius: 25px 25px 0 0; /* Specific to button */
-  background-color: transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  z-index: 1;
-  font-size: 10px;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.9);
-  font-family: "Poppins", sans-serif;
-  font-weight: 300;
-  line-height: 1;
-  padding-top: 1px;
-  pointer-events: none;
-  overflow: hidden;
-}
-.button-pattern-weekdays::before {
-  content: "Mon";
-}
-.button-pattern-days::before {
-  content: "Day 1";
-}
-
 .selection-box {
   position: absolute;
   border: 2px dashed rgba(255, 255, 255, 0.8);
@@ -1363,110 +1254,17 @@ body.drag-in-progress .board-button:hover .delete-board {
 }
 body.selecting * {
   user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
 }
 
-@media not all and (max-width: 400px) and (min-resolution: 0.001dpcm) {
-  @supports (-webkit-appearance: none) and (stroke-color: transparent) {
-    .note-input textarea {
-      font-size: 1.5rem;
-    }
-    .shortcut-icon {
-      font-size: 1.2rem;
-      padding: 6px 12px;
-      color: #777777;
-    }
-    .shortcut-icon.focus-hint,
-    .shortcut-icon.enter-hint {
-      font-size: 1.2rem;
-    }
-    .sticky-content {
-      font-size: 2rem;
-    }
-    .sticky-content.bold {
-      font-size: 2.8rem;
-    }
-    .bold-toggle {
-      font-size: 1.2rem !important;
-      font-family: "Comic Neue", cursive !important;
-      -webkit-font-smoothing: antialiased;
-      width: 28px !important;
-      height: 28px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-    .bold-toggle.active {
-      font-size: 1.5rem !important;
-      font-family: "Comic Neue", cursive !important;
-      font-weight: 800 !important; /* Was 700 in other definition, ensure consistency or specific override */
-      background-color: rgba(0, 0, 0, 0.3) !important;
-    }
-    .note-input button {
-      font-size: 1.2rem;
-    }
-    .empty-state {
-      font-size: 2.5rem;
-    }
-    .restore-btn,
-    .delete-btn {
-      font-size: 1.2rem;
-    }
-    .deleted-note-content {
-      font-size: 1.5rem;
-    }
-    .deleted-note-content.bold {
-      font-size: 2rem;
-      font-family: "Comic Neue", cursive;
-      font-weight: 700;
-    }
-    .done-button {
-      font-size: 1.2rem;
-    }
-    .button-pattern-weekdays::before,
-    .button-pattern-days::before {
-      font-size: 12px;
-    }
-    .status-bar {
-      font-size: 1.2em;
-    }
-    .status-time,
-    .status-date,
-    .weather-temp,
-    .weather-icon {
-      font-size: 1.2em;
-    }
-    .transfer-text {
-      font-size: 1.1rem;
-    }
-    .transfer-arrow {
-      font-size: 2.3rem;
-    }
-    .shortcut-hint {
-      font-size: 1.1rem;
-    }
-    .day-header {
-      font-size: 1.2rem;
-    }
-    .weekday-header {
-      font-size: 1.2rem;
-    }
-  }
-}
-
-.debug-modal {
-  display: none;
-}
-
+/* Consolidated emoji picker system */
 .emoji-picker-container {
   margin-top: 10px;
   width: 100%;
   opacity: 0;
   transform: translateY(5px);
-}
-.emoji-item.recent-emoji {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
 }
 .emoji-picker {
   display: grid;
@@ -1481,7 +1279,6 @@ body.selecting * {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
-
 .emoji-picker::-webkit-scrollbar {
   width: 6px;
 }
@@ -1521,6 +1318,7 @@ body.selecting * {
   transform: scale(0.95);
 }
 
+/* Consolidated emoji messages and stickers */
 .drag-transfer-message,
 .emoji-limit-message {
   position: fixed;
@@ -1539,7 +1337,6 @@ body.selecting * {
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
-
 .transfer-content {
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 20px;
@@ -1550,7 +1347,7 @@ body.selecting * {
   align-items: center;
   gap: 6px;
   justify-content: space-between;
-  margin-bottom: 0px;
+  margin-bottom: 0;
   z-index: 999;
 }
 .transfer-text {
@@ -1581,7 +1378,6 @@ body.selecting * {
     opacity: 1;
   }
 }
-
 .emoji-sticker {
   position: absolute;
   font-size: 120px;
@@ -1589,9 +1385,6 @@ body.selecting * {
   z-index: 10000;
   transition: transform 0.2s ease;
   user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   text-shadow:
     -3px -3px 0 rgba(255, 255, 255, 0.8),
     3px -3px 0 rgba(255, 255, 255, 0.8),
@@ -1606,7 +1399,6 @@ body.selecting * {
   transform: translateZ(0);
   backface-visibility: hidden;
 }
-
 .emoji-sticker .delete-button {
   position: absolute;
   top: 5px;
@@ -1637,7 +1429,13 @@ body.selecting * {
   background: rgba(255, 68, 68, 1);
   transform: scale(1.1);
 }
-
+.emoji-sticker.new {
+  animation: emojiPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+.emoji-sticker.deleting {
+  animation: emojiDelete 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  pointer-events: none;
+}
 @keyframes emojiPop {
   0% {
     transform: scale(0) rotate(0deg);
@@ -1665,13 +1463,6 @@ body.selecting * {
     transform: scale(0) rotate(0deg);
     opacity: 0;
   }
-}
-.emoji-sticker.new {
-  animation: emojiPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-}
-.emoji-sticker.deleting {
-  animation: emojiDelete 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
-  pointer-events: none;
 }
 
 .board-style-button {
@@ -1707,6 +1498,7 @@ body.selecting * {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Consolidated style menu */
 .board-style-menu {
   position: absolute;
   top: -660px;
@@ -1716,22 +1508,17 @@ body.selecting * {
   padding: 15px;
   display: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  -webkit-backdrop-filter: blur(15px) saturate(180%);
   backdrop-filter: blur(15px) saturate(180%);
   transform-origin: bottom left;
   opacity: 0;
   transition:
     transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.3s ease;
-  will-change: transform, opacity;
   z-index: 1001;
 }
-
 @supports (backdrop-filter: blur(1px)) {
   .board-style-menu {
     background: rgba(0, 0, 0, 0.7);
-    -webkit-backdrop-filter: blur(15px) saturate(180%);
-    backdrop-filter: blur(15px) saturate(180%);
   }
 }
 .board-style-menu.closing {
@@ -1757,7 +1544,6 @@ body.selecting * {
 .style-option-label:nth-of-type(3) {
   margin-top: 20px;
 }
-
 .board-style-colors,
 .board-style-patterns {
   background: rgba(110, 110, 110, 0.2);
@@ -1765,25 +1551,21 @@ body.selecting * {
   padding: 8px;
   opacity: 0;
   transform: translateY(5px);
+  gap: 8px;
+  margin-bottom: 5px;
 }
 .board-style-colors {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 5px;
 }
 .board-style-patterns {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-bottom: 5px;
 }
 .board-style-menu.visible .board-style-colors {
   animation: menuItemFadeIn 0.3s ease forwards;
 }
-.board-style-menu.visible .board-style-patterns {
-  animation: menuItemFadeIn 0.3s ease forwards 0.1s;
-}
+.board-style-menu.visible .board-style-patterns,
 .board-style-menu.visible .emoji-picker-container {
   animation: menuItemFadeIn 0.3s ease forwards 0.1s;
 }
@@ -1832,8 +1614,6 @@ body.selecting * {
   height: 100%;
   border-radius: 2px;
   background-color: #333;
-  will-change: transform;
-  transform: translateZ(0);
   transition:
     background-color 0.5s ease,
     opacity 0.3s ease;
@@ -1885,7 +1665,7 @@ body.selecting * {
 .pattern-weekdays::before,
 .pattern-days::before {
   position: absolute;
-  top: 0px;
+  top: 0;
   left: 0;
   right: 0;
   height: 12px;
@@ -1930,9 +1710,6 @@ body.selecting * {
   z-index: 1;
   pointer-events: none;
   user-select: none !important;
-  -webkit-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
 }
 .weekday-header span,
 .day-header span {
@@ -2035,6 +1812,7 @@ body.selecting * {
   justify-content: center;
   align-items: center;
 }
+
 .error-content {
   text-align: center;
   padding: 40px;
@@ -2130,6 +1908,7 @@ body.selecting * {
   }
 }
 
+/* Consolidated board title */
 .board-title-circle {
   position: absolute;
   top: 20px;
@@ -2148,13 +1927,11 @@ body.selecting * {
   overflow: hidden;
   pointer-events: auto;
 }
-
 .board-title-circle:hover,
 .board-title-circle.delayed-close,
 .board-title-circle.show-temporary {
   width: 250px !important;
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 .board-title-input {
   width: 100%;
@@ -2169,6 +1946,8 @@ body.selecting * {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: auto;
+  font-size: 1.8rem;
+  padding: 0 25px;
 }
 .board-title-input::placeholder {
   opacity: 1;
@@ -2187,20 +1966,18 @@ body.selecting * {
 .board-title-input:focus {
   opacity: 1 !important;
 }
-
 .board-title-input::after {
   content: attr(data-counter);
   position: absolute;
-  right: 15px;
-  bottom: 10px;
+  right: 20px;
+  bottom: 12px;
   color: rgba(255, 255, 255, 0.6);
   pointer-events: none;
+  font-size: 17px;
 }
 .board-title-input[data-counter="50"]::after {
   color: #ff4444;
 }
-
-/* WebKit browser specific sizing for board title circles */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   .board-title-circle {
     width: 30px !important;
@@ -2215,134 +1992,50 @@ body.selecting * {
   }
 }
 
-.board-title-input,
-.board-title-circle.show-temporary .board-title-input {
-  font-size: 1.8rem;
-  padding: 0 25px;
-}
-.board-title-input::after {
-  font-size: 17px;
-  right: 20px;
-  bottom: 12px;
-}
-.radio-control i {
-  font-size: 25px;
-}
-.radio-mute {
-  font-size: 21px;
-}
-.radio-volume {
-  font-size: 21px;
-  color: white;
-  display: none;
-  transition: all 0.3s ease;
-}
-
-.board-pattern-dots {
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.4) 1px,
-    transparent 1px
-  );
-  background-size: 20px 20px;
-}
-.board-pattern-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-.board-pattern-lines {
-  background-image: linear-gradient(
-    0deg,
-    transparent 19px,
-    rgba(255, 255, 255, 0.4) 20px
-  );
-  background-size: 20px 20px;
-}
-
-.board-button::after {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: transparent;
-  transition:
-    background-color 0.3s ease,
-    transform 0.3s ease;
-  z-index: 2;
-}
-
-.board-button.has-notes::after {
-  background-color: rgba(76, 175, 80, 0.8);
-  transform: translateX(-50%) scale(1);
-}
-
-/* Drag-and-drop hover effect for board buttons */
-.board-button.drag-hover {
-  border-color: rgba(76, 175, 80, 1) !important;
-  transition: all 0.3s ease;
-}
-
-.board-button.drag-hover.has-notes::after {
-  background-color: rgba(76, 175, 80, 1) !important;
-}
-
-/* Base transition for all board buttons during drag */
-.board-button.drag-active {
-  transition:
-    width 0.2s ease-out,
-    height 0.2s ease-out,
-    margin 0.2s ease-out !important;
-  will-change: width, height, margin !important;
-}
-
-/* Proximity scaling effect for board buttons */
-.board-button.drag-proximity {
-  width: 56px !important;
-  height: 56px !important;
-  margin: -8px !important;
-  z-index: 1000 !important;
-}
-
-/* Pause animation when dragging over new buttons instead of removing it */
-.board-button.new-button.drag-proximity {
-  animation-play-state: paused !important;
-  width: 56px !important;
-  height: 56px !important;
-  margin: -8px !important;
-}
-
+/* Consolidated pattern styles - board (20px) and button (6px) variants */
+.board-pattern-dots,
 .button-pattern-dots {
   background-image: radial-gradient(
     rgba(255, 255, 255, 0.4) 1px,
     transparent 1px
   );
+}
+.board-pattern-dots {
+  background-size: 20px 20px;
+}
+.button-pattern-dots {
   background-size: 6px 6px;
 }
+.board-pattern-grid,
 .button-pattern-grid {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+}
+.board-pattern-grid {
+  background-size: 20px 20px;
+}
+.button-pattern-grid {
   background-size: 6px 6px;
 }
+.board-pattern-lines,
 .button-pattern-lines {
   background-image: linear-gradient(
     0deg,
-    transparent 5px,
-    rgba(255, 255, 255, 0.4) 6px
+    transparent calc(100% - 1px),
+    rgba(255, 255, 255, 0.4) 100%
   );
+}
+.board-pattern-lines {
+  background-size: 20px 20px;
+}
+.button-pattern-lines {
   background-size: 6px 6px;
 }
-
 .button-pattern-weekdays,
 .button-pattern-days {
-  /* For board buttons */
   position: relative;
-  overflow: visible; /* Was hidden for preview, visible for button */
+  overflow: visible;
   background-image:
     linear-gradient(
       90deg,
@@ -2365,7 +2058,7 @@ body.selecting * {
   left: 0;
   right: 0;
   height: 8px;
-  border-radius: 25px 25px 0 0; /* Specific to button */
+  border-radius: 25px 25px 0 0;
   background-color: transparent;
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   z-index: 1;
@@ -2393,98 +2086,53 @@ body.selecting * {
   pointer-events: none;
   z-index: 999;
 }
+
 body.selecting * {
   user-select: none !important;
-}
-
-@media not all and (max-width: 400px) and (min-resolution: 0.001dpcm) {
-  @supports (-webkit-appearance: none) and (stroke-color: transparent) {
-    .note-input textarea {
-      font-size: 1.5rem;
-    }
-    .shortcut-icon {
-      font-size: 1.2rem;
-      padding: 6px 12px;
-      color: #777777;
-    }
-    .shortcut-icon.focus-hint,
-    .shortcut-icon.enter-hint {
-      font-size: 1.2rem;
-    }
-    .sticky-content {
-      font-size: 2rem;
-    }
-    .sticky-content.bold {
-      font-size: 2.8rem;
-    }
-    .bold-toggle {
-      font-size: 1.2rem !important;
-      font-family: "Comic Neue", cursive !important;
-      -webkit-font-smoothing: antialiased;
-      width: 28px !important;
-      height: 28px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-    .bold-toggle.active {
-      font-size: 1.5rem !important;
-      font-family: "Comic Neue", cursive !important;
-      font-weight: 800 !important; /* Was 700 in other definition, ensure consistency or specific override */
-      background-color: rgba(0, 0, 0, 0.3) !important;
-    }
-    .note-input button {
-      font-size: 1.2rem;
-    }
-    .empty-state {
-      font-size: 2.5rem;
-    }
-    .restore-btn,
-    .delete-btn {
-      font-size: 1.2rem;
-    }
-    .deleted-note-content {
-      font-size: 1.5rem;
-    }
-    .deleted-note-content.bold {
-      font-size: 2rem;
-      font-family: "Comic Neue", cursive;
-      font-weight: 700;
-    }
-    .done-button {
-      font-size: 1.2rem;
-    }
-    .button-pattern-weekdays::before,
-    .button-pattern-days::before {
-      font-size: 12px;
-    }
-    .status-bar {
-      font-size: 1.2em;
-    }
-    .status-time,
-    .status-date,
-    .weather-temp,
-    .weather-icon {
-      font-size: 1.2em;
-    }
-    .transfer-text {
-      font-size: 1.1rem;
-    }
-    .transfer-arrow {
-      font-size: 2.3rem;
-    }
-    .shortcut-hint {
-      font-size: 1.1rem;
-    }
-    .day-header {
-      font-size: 1.2rem;
-    }
-    .weekday-header {
-      font-size: 1.2rem;
-    }
-  }
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
 }
 
 .debug-modal {
   display: none;
+}
+
+
+/* safari*/ 
+
+@media not all and (max-width: 400px) and (min-resolution: 0.001dpcm) {
+  @supports (-webkit-appearance:none) and (stroke-color:transparent) {
+      .note-input textarea { font-size: 1.5rem; }
+      .shortcut-icon { font-size: 1.2rem; padding: 6px 12px; color: #777777; }
+      .shortcut-icon.focus-hint, .shortcut-icon.enter-hint { font-size: 1.2rem; }
+      .sticky-content { font-size: 2rem; }
+      .sticky-content.bold { font-size: 2.8rem; }
+      .bold-toggle {
+          font-size: 1.2rem !important;
+          font-family: 'Comic Neue', cursive !important;
+          -webkit-font-smoothing: antialiased;
+      }
+      .bold-toggle.active {
+          font-size: 1.5rem !important;
+          font-family: 'Comic Neue', cursive !important;
+          font-weight: 800 !important; /* Was 700 in other definition, ensure consistency or specific override */
+          background-color: rgba(0,0,0,0.3) !important;
+      }
+      .note-input button { font-size: 1.2rem; }
+      .empty-state { font-size: 2.5rem; }
+      .restore-btn, .delete-btn { font-size: 1.2rem; }
+      .deleted-note-content { font-size: 1.5rem; }
+      .deleted-note-content.bold { font-size: 2rem; font-family: 'Comic Neue', cursive; font-weight: 700; }
+      .done-button { font-size: 1.2rem; }
+      .button-pattern-weekdays::before, .button-pattern-days::before { font-size: 12px; }
+      .status-bar { font-size: 1.2em; }
+      .status-time, .status-date, .weather-temp, .weather-icon { font-size: 1.2em; }
+      .transfer-text { font-size: 1.1rem; }
+      .transfer-arrow { font-size: 2.3rem; }
+      .shortcut-hint { font-size: 1.1rem; }
+      .day-header { font-size: 1.2rem; }
+      .weekday-header { font-size: 1.2rem; }
+
+  }
 }

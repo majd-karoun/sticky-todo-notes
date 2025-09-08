@@ -246,13 +246,31 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
         <div class="resize-handle"></div>`
     });
     
+    // Determine z-index based on board pattern and note type
+    let noteZIndex;
+    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    const hasPattern = boardElement && (boardElement.classList.contains('board-pattern-weekdays') || boardElement.classList.contains('board-pattern-days'));
+    
+    if (repositioned) {
+        // Repositioned notes get higher z-index to appear on top
+        noteZIndex = ++globalZIndex;
+    } else if (hasPattern && !isRestored) {
+        // New notes in pattern boards get lower z-index to appear underneath repositioned notes
+        // Find the minimum z-index of repositioned notes, or use base if none exist
+        const repositionedZIndexes = Object.values(noteZIndexes).filter(z => z > 1000);
+        noteZIndex = repositionedZIndexes.length > 0 ? Math.min(...repositionedZIndexes) - 1 : 1000;
+    } else {
+        // Regular boards or restored notes use incremental z-index
+        noteZIndex = ++globalZIndex;
+    }
+    
     // Apply styling and positioning
-    note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${++globalZIndex};`;
+    note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${noteZIndex};`;
     note.dataset.noteId = noteId;
     if (repositioned) { note.dataset.repositioned = 'true'; repositionedNotes.add(noteId); }
     
     // Store z-index for layering management
-    noteZIndexes[noteId] = globalZIndex;
+    noteZIndexes[noteId] = noteZIndex;
     saveNoteZIndexes();
 
     // Add click handler to bring note to front (avoid triggering on controls)
@@ -266,10 +284,10 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     setupNote(note);
     
     // Add to target board
-    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
-    if (!boardElement) { console.error(`Board element with ID ${boardId} not found.`); return null; }
+    const targetBoard = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    if (!targetBoard) { console.error(`Board element with ID ${boardId} not found.`); return null; }
     
-    boardElement.appendChild(note);
+    targetBoard.appendChild(note);
     note.style.animation = 'paperPop 0.3s ease-out forwards'; // Entry animation
     if (!isRestored) saveActiveNotes();
     return note;
