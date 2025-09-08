@@ -278,11 +278,17 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     saveNoteZIndexes();
 
     // Add click handler to bring note to front (avoid triggering on controls)
-    note.addEventListener('click', (e) => {
+    const clickHandler = (e) => {
         if (!e.target.closest('.note-controls, .sticky-content[contenteditable="true"]')) {
             bringNoteToFront(note);
         }
-    });
+    };
+    note.addEventListener('click', clickHandler);
+    
+    // Store cleanup function for later removal
+    note._eventCleanup = () => {
+        note.removeEventListener('click', clickHandler);
+    };
 
     // Setup interaction handlers (drag, resize, edit)
     setupNote(note);

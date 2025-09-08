@@ -96,10 +96,15 @@ function createBoardUI(boardId) {
   const titleCircle = Object.assign(document.createElement("div"), {
     className: "board-title-circle",
   });
-  titleCircle.setAttribute(
-    "onclick",
-    "this.querySelector('.board-title-input').focus()",
-  );
+  
+  // Store event handlers for cleanup
+  const boardEventHandlers = [];
+  
+  const titleCircleClickHandler = () => {
+    titleCircle.querySelector('.board-title-input')?.focus();
+  };
+  titleCircle.addEventListener('click', titleCircleClickHandler);
+  boardEventHandlers.push({ element: titleCircle, event: 'click', handler: titleCircleClickHandler });
 
   const titleInput = Object.assign(document.createElement("input"), {
     type: "text",
@@ -118,10 +123,13 @@ function createBoardUI(boardId) {
     saveBoardTitle(boardId, title);
     updateCharCounter(titleInput);
   };
-  titleInput.addEventListener("input", () => {
+  
+  const titleInputHandler = () => {
     clearTimeout(titleSaveTimeout);
     titleSaveTimeout = setTimeout(saveTitleDebounced, 500);
-  });
+  };
+  titleInput.addEventListener("input", titleInputHandler);
+  boardEventHandlers.push({ element: titleInput, event: 'input', handler: titleInputHandler });
   [
     updateCharCounter(titleInput),
     titleCircle.appendChild(titleInput),
@@ -133,19 +141,32 @@ function createBoardUI(boardId) {
     textContent: boardId,
   });
   buttonElement.dataset.boardId = boardId;
-  buttonElement.addEventListener("click", () => switchToBoard(boardId));
+  
+  const buttonClickHandler = () => switchToBoard(boardId);
+  buttonElement.addEventListener("click", buttonClickHandler);
+  boardEventHandlers.push({ element: buttonElement, event: 'click', handler: buttonClickHandler });
 
   if (boardId > 1) {
     const deleteButton = Object.assign(document.createElement("div"), {
       className: "delete-board",
       textContent: "×",
     });
-    deleteButton.addEventListener("click", (e) => {
+    const deleteClickHandler = (e) => {
       e.stopPropagation();
       deleteBoard(boardId);
-    });
+    };
+    deleteButton.addEventListener("click", deleteClickHandler);
+    boardEventHandlers.push({ element: deleteButton, event: 'click', handler: deleteClickHandler });
     buttonElement.appendChild(deleteButton);
   }
+  
+  // Store cleanup function on board element
+  boardElement._eventCleanup = () => {
+    boardEventHandlers.forEach(({ element, event, handler }) => {
+      element.removeEventListener(event, handler);
+    });
+    clearTimeout(titleSaveTimeout);
+  };
 
   $(".boards-navigation")
     .insertBefore(buttonElement, $(".add-board-button"));
@@ -230,6 +251,12 @@ function continueWithBoardDeletion(boardId) {
     $(`.board[data-board-id="${boardId}"]`),
     $(`.board-button[data-board-id="${boardId}"]`),
   ];
+  
+  // Clean up event listeners before removing elements
+  if (boardElement?._eventCleanup) {
+    boardElement._eventCleanup();
+  }
+  
   if (boardElement) boardElement.remove();
   if (buttonElement) buttonElement.classList.add("removing");
 
@@ -432,29 +459,45 @@ function switchToBoard(boardId) {
   setTimeout(() => showBoardTitleTemporarily(currentBoardId), 300);
 }
 
+// Global navigation event handlers storage
+let globalNavigationHandlers = [];
+
 /**
  * Sets up all board navigation functionality
  * Includes keyboard shortcuts and button handlers
  */
 function setupBoardNavigation() {
-  $(".add-board-button")
-    .addEventListener("click", createNewBoard);
+  // Clean up existing global handlers first
+  cleanupGlobalNavigationHandlers();
+  
+  const addBoardClickHandler = createNewBoard;
+  $(".add-board-button").addEventListener("click", addBoardClickHandler);
+  globalNavigationHandlers.push({ 
+    element: $(".add-board-button"), 
+    event: "click", 
+    handler: addBoardClickHandler 
+  });
+  
   $$(".board-button").forEach((button) => {
     const [boardId, newButton] = [
       parseInt(button.dataset.boardId),
       button.cloneNode(true),
     ];
-    newButton.addEventListener("click", () => switchToBoard(boardId));
+    const buttonClickHandler = () => switchToBoard(boardId);
+    newButton.addEventListener("click", buttonClickHandler);
+    
     const deleteButton = newButton.querySelector(".delete-board");
-    if (deleteButton)
-      deleteButton.addEventListener("click", (e) => {
+    if (deleteButton) {
+      const deleteClickHandler = (e) => {
         e.stopPropagation();
         deleteBoard(boardId);
-      });
+      };
+      deleteButton.addEventListener("click", deleteClickHandler);
+    }
     button.parentNode.replaceChild(newButton, button);
   });
 
-  document.addEventListener("keydown", (e) => {
+  const documentKeydownHandler = (e) => {
     const [targetTagName, isEditable] = [
       e.target.tagName,
       e.target.getAttribute("contenteditable") === "true",
@@ -492,7 +535,24 @@ function setupBoardNavigation() {
     const keyNum = parseInt(e.key);
     if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= 9 && keyNum <= boardCount)
       switchToBoard(keyNum);
+  };
+  
+  document.addEventListener("keydown", documentKeydownHandler);
+  globalNavigationHandlers.push({ 
+    element: document, 
+    event: "keydown", 
+    handler: documentKeydownHandler 
   });
+}
+
+/**
+ * Cleans up global navigation event handlers
+ */
+function cleanupGlobalNavigationHandlers() {
+  globalNavigationHandlers.forEach(({ element, event, handler }) => {
+    element.removeEventListener(event, handler);
+  });
+  globalNavigationHandlers = [];
 }
 
 /**

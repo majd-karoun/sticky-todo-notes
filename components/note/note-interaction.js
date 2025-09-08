@@ -21,7 +21,19 @@ function setupNote(note) {
     let isDragging = false, isResizing = false, isEditing = false, startX, startY, initialX, initialY, initialW, initialH, holdTimer;
     const [colorButton, colorPalette, content] = ['.color-button', '.color-palette', '.sticky-content'].map(s => note.querySelector(s));
     const saveContent = () => saveActiveNotes();
-    ['blur', 'input'].forEach(event => content.addEventListener(event, saveContent));
+    
+    // Store event handlers for cleanup
+    const eventHandlers = [];
+    
+    // Content event handlers
+    const contentBlurHandler = () => saveActiveNotes();
+    const contentInputHandler = () => saveActiveNotes();
+    content.addEventListener('blur', contentBlurHandler);
+    content.addEventListener('input', contentInputHandler);
+    eventHandlers.push(
+        { element: content, event: 'blur', handler: contentBlurHandler },
+        { element: content, event: 'input', handler: contentInputHandler }
+    );
 
     /**
      * Cancels editing mode when clicking outside the note content
@@ -39,7 +51,7 @@ function setupNote(note) {
      * CONTENT EDITING SETUP
      * Double-click to enter edit mode with proper cursor positioning
      */
-    content.addEventListener('dblclick', e => {
+    const contentDblClickHandler = e => {
         [isEditing, content.contentEditable] = [true, "true"];
         setTimeout(() => {
             const [range, selection] = [document.createRange(), window.getSelection()];
@@ -65,7 +77,9 @@ function setupNote(note) {
         }, 0);
         setTimeout(() => document.addEventListener('click', cancelEditing), 0);
         e.stopPropagation();
-    });
+    };
+    content.addEventListener('dblclick', contentDblClickHandler);
+    eventHandlers.push({ element: content, event: 'dblclick', handler: contentDblClickHandler });
 
     /**
      * Z-INDEX HOVER MANAGEMENT
@@ -74,27 +88,34 @@ function setupNote(note) {
     let originalZIndex = null;
     let isHovering = false;
     
-    note.addEventListener('mouseenter', () => {
+    const mouseEnterHandler = () => {
         if (!isDragging && !isResizing) {
             isHovering = true;
             originalZIndex = note.style.zIndex || '1';
             note.style.zIndex = '9999'; // Bring to front temporarily
         }
-    });
+    };
     
-    note.addEventListener('mouseleave', () => {
+    const mouseLeaveHandler = () => {
         if (!isDragging && !isResizing && originalZIndex !== null) {
             isHovering = false;
             note.style.zIndex = originalZIndex; // Restore original z-index
             originalZIndex = null;
         }
-    });
+    };
+    
+    note.addEventListener('mouseenter', mouseEnterHandler);
+    note.addEventListener('mouseleave', mouseLeaveHandler);
+    eventHandlers.push(
+        { element: note, event: 'mouseenter', handler: mouseEnterHandler },
+        { element: note, event: 'mouseleave', handler: mouseLeaveHandler }
+    );
 
     /**
      * CONTENT EDITING KEYBOARD HANDLERS
      */
-    content.addEventListener('blur', () => content.contentEditable = "false");
-    content.addEventListener('keydown', e => {
+    const contentBlurHandler2 = () => content.contentEditable = "false";
+    const contentKeydownHandler = e => {
         if (e.key === 'Enter') {
             e.preventDefault();
             if (e.shiftKey) { 
@@ -116,7 +137,14 @@ function setupNote(note) {
                 selection.addRange(range);
             }
         }
-    });
+    };
+    
+    content.addEventListener('blur', contentBlurHandler2);
+    content.addEventListener('keydown', contentKeydownHandler);
+    eventHandlers.push(
+        { element: content, event: 'blur', handler: contentBlurHandler2 },
+        { element: content, event: 'keydown', handler: contentKeydownHandler }
+    );
 
     /**
      * Updates the last known position for this note's board
@@ -186,13 +214,22 @@ function setupNote(note) {
     };
 
     // Color button click handler
-    colorButton.addEventListener('click', e => {
+    const colorButtonClickHandler = e => {
         e.stopPropagation();
         colorPalette.classList.contains('visible') ? hidePalette() : showPalette();
-    });
+    };
+    colorButton.addEventListener('click', colorButtonClickHandler);
+    eventHandlers.push({ element: colorButton, event: 'click', handler: colorButtonClickHandler });
     
     // Palette hover handlers
-    ['mouseenter', 'mouseleave'].forEach((event, i) => colorPalette.addEventListener(event, i ? hidePalette : () => clearTimeout(hoverTimeout)));
+    const paletteMouseEnterHandler = () => clearTimeout(hoverTimeout);
+    const paletteMouseLeaveHandler = () => hidePalette();
+    colorPalette.addEventListener('mouseenter', paletteMouseEnterHandler);
+    colorPalette.addEventListener('mouseleave', paletteMouseLeaveHandler);
+    eventHandlers.push(
+        { element: colorPalette, event: 'mouseenter', handler: paletteMouseEnterHandler },
+        { element: colorPalette, event: 'mouseleave', handler: paletteMouseLeaveHandler }
+    );
 
     /**
      * DRAG AND DROP INTERACTION HANDLERS
@@ -318,9 +355,37 @@ function setupNote(note) {
      * EVENT LISTENER SETUP
      * Attach mouse event handlers for drag/resize functionality
      */
-    note.addEventListener('mousedown', e => handleInteractionStart(e, e.clientX, e.clientY));
-    document.addEventListener('mousemove', e => handleInteractionMove(e.clientX, e.clientY));
-    document.addEventListener('mouseup', handleInteractionEnd);
+    const noteMouseDownHandler = e => handleInteractionStart(e, e.clientX, e.clientY);
+    const documentMouseMoveHandler = e => handleInteractionMove(e.clientX, e.clientY);
+    const documentMouseUpHandler = handleInteractionEnd;
+    
+    note.addEventListener('mousedown', noteMouseDownHandler);
+    document.addEventListener('mousemove', documentMouseMoveHandler);
+    document.addEventListener('mouseup', documentMouseUpHandler);
+    
+    eventHandlers.push(
+        { element: note, event: 'mousedown', handler: noteMouseDownHandler },
+        { element: document, event: 'mousemove', handler: documentMouseMoveHandler },
+        { element: document, event: 'mouseup', handler: documentMouseUpHandler }
+    );
+    
+    // Store cleanup function on the note element for later removal
+    if (note._eventCleanup) {
+        // Merge with existing cleanup function
+        const existingCleanup = note._eventCleanup;
+        note._eventCleanup = () => {
+            existingCleanup();
+            eventHandlers.forEach(({ element, event, handler }) => {
+                element.removeEventListener(event, handler);
+            });
+        };
+    } else {
+        note._eventCleanup = () => {
+            eventHandlers.forEach(({ element, event, handler }) => {
+                element.removeEventListener(event, handler);
+            });
+        };
+    }
 }
 
 /**

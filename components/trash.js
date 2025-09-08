@@ -60,6 +60,11 @@ const markNoteAsDone = note => {
         return;
     }
     
+    // Clean up event listeners before deletion
+    if (note._eventCleanup) {
+        note._eventCleanup();
+    }
+    
     const content = note.querySelector('.sticky-content');
     const noteData = {
         text: content.innerHTML,
