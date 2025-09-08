@@ -706,7 +706,7 @@ function changeBoardColor(color) {
 function createPatternOverlay(pattern) {
   const overlay = Object.assign(document.createElement("div"), {
     style:
-      "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; transition:opacity 0.5s ease; opacity:0;",
+      "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; transition:opacity 0.3s ease-out; opacity:0;",
   });
   const board = $(
     `.board[data-board-id="${currentBoardId}"]`,
@@ -762,8 +762,9 @@ function changeBoardPattern(pattern) {
     cleanupDaysPatternData(boardId);
   boardStyles.patterns.current = pattern;
 
+  // Remove all existing pattern overlays and classes
   activeBoard
-    .querySelectorAll(".pattern-overlay, .lines-overlay")
+    .querySelectorAll(".pattern-overlay, .lines-overlay, .weekday-header, .day-header")
     .forEach((el) => el.remove());
   activeBoard.classList.remove(
     "board-pattern-dots",
@@ -772,50 +773,56 @@ function changeBoardPattern(pattern) {
     "board-pattern-weekdays",
     "board-pattern-days",
   );
+  
+  // More aggressive cleanup - remove all overlay divs
+  Array.from(activeBoard.children).forEach((child) => {
+    if (child.tagName === 'DIV' && 
+        child.style.position === 'absolute' && 
+        child.style.pointerEvents === 'none' &&
+        (child.style.zIndex === '0' || child.style.zIndex === '1' || 
+         child.style.top === '0px' || child.style.left === '0px')) {
+      child.remove();
+    }
+  });
 
   if (pattern === "days") saveDaysPatternStartDate(boardId);
 
   const patternOverlay = createPatternOverlay(pattern);
-  [
-    activeBoard.appendChild(patternOverlay),
-    void patternOverlay.offsetWidth,
-    (patternOverlay.style.opacity = "1"),
-  ];
+  activeBoard.appendChild(patternOverlay);
 
   let linesOverlay = null;
   if (pattern === "weekdays" || pattern === "days") {
     linesOverlay = Object.assign(document.createElement("div"), {
       className: `lines-overlay lines-overlay-${pattern}`,
       style:
-        "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; opacity:0; transition:opacity 0.5s ease;",
+        "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; opacity:0; transition:opacity 0.3s ease;",
     });
-    [
-      activeBoard.appendChild(linesOverlay),
-      void linesOverlay.offsetWidth,
-      (linesOverlay.style.opacity = "1"),
-    ];
+    activeBoard.appendChild(linesOverlay);
   }
 
-  setTimeout(() => {
+  // Force reflow before starting transitions
+  void patternOverlay.offsetWidth;
+  
+  // Start transitions smoothly
+  requestAnimationFrame(() => {
+    patternOverlay.style.opacity = "1";
+    if (linesOverlay) linesOverlay.style.opacity = "1";
+  });
+
+  // Wait for transition to complete before making any changes
+  patternOverlay.addEventListener('transitionend', () => {
     if (pattern === "weekdays" || pattern === "days") {
-      [
-        activeBoard.classList.add(`board-pattern-${pattern}`),
-        (patternOverlay.style.height = "auto"),
-        (patternOverlay.style.zIndex = "1"),
-        patternOverlay.classList.add("pattern-overlay"),
-      ];
-      if (linesOverlay)
-        [
-          (linesOverlay.style.zIndex = "0"),
-          linesOverlay.classList.add("pattern-overlay"),
-        ];
+      activeBoard.classList.add(`board-pattern-${pattern}`);
+      patternOverlay.classList.add("pattern-overlay");
+      if (linesOverlay) {
+        linesOverlay.classList.add("pattern-overlay");
+      }
     } else {
-      [patternOverlay.remove(), linesOverlay?.remove()];
       if (pattern !== "none")
         activeBoard.classList.add(`board-pattern-${pattern}`);
     }
     updateBoardIndicators();
-  }, 500);
+  }, { once: true });
   saveBoardStyles();
 }
 
