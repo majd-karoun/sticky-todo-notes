@@ -26,7 +26,7 @@ const createSelectionBox = () => {
  * Prevents default behavior on board areas to enable custom selection
  */
 function initBoardSelectionHandlers() {
-    const boardsContainer = document.querySelector('.boards-container');
+    const boardsContainer = $('.boards-container');
     // Prevent default selection behavior on board areas (but not on interactive elements)
     document.addEventListener('mousedown', e => {
         e.target.closest('.board') && !e.target.closest('.sticky-note, .note-input, .boards-navigation, .trash-bin, .board-style-button') && e.preventDefault();
@@ -48,7 +48,7 @@ function startSelection(e) {
     e.preventDefault();
     
     // Blur textarea if it's focused to prevent interference
-    const textarea = document.querySelector('.note-input textarea');
+    const textarea = $('.note-input textarea');
     textarea && document.activeElement === textarea && textarea.blur();
     
     // Clear existing selection unless Shift is held (for additive selection)
@@ -93,7 +93,7 @@ const endSelection = () => {
  */
 function checkNotesInSelection() {
     const selectionRect = selectionBox.getBoundingClientRect();
-    const currentBoardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+    const currentBoardElement = $(`.board[data-board-id="${currentBoardId}"]`);
     if (!currentBoardElement) return;
 
     /**

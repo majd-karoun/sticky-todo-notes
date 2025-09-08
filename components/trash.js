@@ -20,7 +20,7 @@ const TRASH_LIMIT = 100, ANIMATION_DELAY = 50, DEFAULT_COLOR = '#ffd700';
  * Provides visual feedback to encourage trash clearing
  */
 const openTrashDueToLimit = () => {
-    const [modal, clearButton] = [document.getElementById('trashModal'), document.querySelector('.clear-trash-btn')];
+    const [modal, clearButton] = [$('#trashModal'), $('.clear-trash-btn')];
     if (modal && !modal.classList.contains('visible')) {
         modal.style.display = 'block';
         modal.classList.add('visible');
@@ -102,7 +102,7 @@ const updateNoteColumns = note => {
  * @param {Element} note - The note element to animate
  */
 const animateNoteToTrash = note => {
-    const trashBin = document.querySelector('.trash-bin');
+    const trashBin = $('.trash-bin');
     const trashRect = trashBin.getBoundingClientRect();
     const noteRect = note.getBoundingClientRect();
     const throwX = trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2);
@@ -128,7 +128,7 @@ const animateNoteToTrash = note => {
  */
 const checkTrashCollision = note => {
     const [trashRect, noteRect] = [
-        document.querySelector('.trash-bin').getBoundingClientRect(),
+        $('.trash-bin').getBoundingClientRect(),
         note.getBoundingClientRect()
     ];
     
@@ -163,7 +163,7 @@ const toggleTrashModal = () => {
  * Creates HTML for each deleted note with restore functionality
  */
 const renderDeletedNotes = () => {
-    const container = document.querySelector('.deleted-notes-container');
+    const container = $('.deleted-notes-container');
     // Force container to calculate layout first
     container.style.minHeight = '200px';
     container.innerHTML = deletedNotes.length ? 
@@ -182,7 +182,7 @@ const renderDeletedNotes = () => {
  * @param {number} index - Index of the note in the deletedNotes array
  */
 const restoreNote = index => {
-    const noteElement = document.querySelectorAll('.deleted-note')[index];
+    const noteElement = $$('.deleted-note')[index];
     noteElement?.classList.add('shrinking');
     
     setTimeout(() => {
@@ -203,7 +203,7 @@ const clearTrash = () => {
         return;
     }
     
-    const notes = [...document.querySelectorAll('.deleted-note')].slice(0, 6);
+    const notes = [...$$('.deleted-note')].slice(0, 6);
     notes.forEach((note, i) => {
         note.classList.add('note-deleting');
         note.style.animationDelay = `${i * ANIMATION_DELAY}ms`;
@@ -238,7 +238,7 @@ const clearTrash = () => {
  * Updates the trash count display in the UI
  */
 const updateTrashCount = () => {
-    document.querySelector('.trash-count').textContent = deletedNotes.length;
+    $('.trash-count').textContent = deletedNotes.length;
 };
 
 // EVENT HANDLERS
@@ -247,6 +247,6 @@ const updateTrashCount = () => {
  * Closes trash modal when clicking outside the modal content
  */
 document.addEventListener('click', e => {
-    const modal = document.getElementById('trashModal');
+    const modal = $('#trashModal');
     modal?.classList.contains('visible') && e.target === modal && toggleTrashModal();
 });

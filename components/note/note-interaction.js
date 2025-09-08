@@ -133,7 +133,7 @@ function setupNote(note) {
     let mouseX = 0, mouseY = 0, hoverTimeout = null;
     document.addEventListener('mousemove', e => {
         [mouseX, mouseY] = [e.clientX, e.clientY];
-        document.querySelectorAll('.color-palette.visible').forEach(palette => {
+        $$('.color-palette.visible').forEach(palette => {
             const [rect, button] = [palette.getBoundingClientRect(), palette.closest('.note-controls')?.querySelector('.color-button')];
             if (!button) return;
             const buttonRect = button.getBoundingClientRect();
@@ -158,7 +158,7 @@ function setupNote(note) {
         colorPalette.classList.add('visible');
         
         // Hide other palettes
-        document.querySelectorAll('.color-palette').forEach(p => {
+        $$('.color-palette').forEach(p => {
             if (p !== colorPalette) {
                 p.classList.add('closing');
                 setTimeout(() => p.classList.remove('visible', 'closing'), 180);
@@ -332,7 +332,7 @@ function setupNote(note) {
  * Used when clicking outside or switching between notes
  */
 function hideAllColorPalettes() {
-    document.querySelectorAll('.color-palette').forEach(palette => {
+    $$('.color-palette').forEach(palette => {
         if (palette.style.display !== 'none') {
             palette.classList.add('closing');
             setTimeout(() => { palette.style.display = 'none'; palette.classList.remove('closing'); }, 200);

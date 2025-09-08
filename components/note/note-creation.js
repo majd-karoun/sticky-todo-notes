@@ -33,11 +33,11 @@ function showNoteLimitMessage(message) {
  * Supports weekdays pattern, days pattern, and regular free-form layout
  */
 function addNote() {
-    const textarea = document.querySelector('.note-input textarea');
+    const textarea = $('.note-input textarea');
     const text = textarea.value.trim();
     if (!text) return;
 
-    const boardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+    const boardElement = $(`.board[data-board-id="${currentBoardId}"]`);
     const notes = Array.from(boardElement.querySelectorAll('.sticky-note'));
     const [hasWeekdaysPattern, hasDaysPattern, hasNoNotes] = [
         boardElement.classList.contains('board-pattern-weekdays'),
@@ -257,7 +257,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     
     // Determine z-index based on board pattern and note type
     let noteZIndex;
-    const boardElement = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    const boardElement = $(`.board[data-board-id="${boardId}"]`);
     const hasPattern = boardElement && (boardElement.classList.contains('board-pattern-weekdays') || boardElement.classList.contains('board-pattern-days'));
     
     if (repositioned) {
@@ -288,7 +288,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     setupNote(note);
     
     // Add to target board
-    const targetBoard = document.querySelector(`.board[data-board-id="${boardId}"]`);
+    const targetBoard = $(`.board[data-board-id="${boardId}"]`);
     if (!targetBoard) { console.error(`Board element with ID ${boardId} not found.`); return null; }
     
     targetBoard.appendChild(note);
@@ -308,7 +308,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
  */
 function changeNoteColor(option, color) {
     const note = option.closest('.sticky-note');
-    const notesToChange = note.classList.contains('selected') ? document.querySelectorAll('.sticky-note.selected') : [note];
+    const notesToChange = note.classList.contains('selected') ? $$('.sticky-note.selected') : [note];
     notesToChange.forEach(n => {
         const colorButton = n.querySelector('.color-button');
         [n, colorButton].forEach(el => el.classList.add('color-transition'));
@@ -334,7 +334,7 @@ const toggleBold = button => {
  */
 
 // Create and manage keyboard shortcut indicator
-const shortcutIcon = document.getElementById('shortcutIcon') || document.querySelector('.textarea-container').appendChild(Object.assign(document.createElement('div'), {className: 'shortcut-icon', id: 'shortcutIcon'}));
+const shortcutIcon = $('#shortcutIcon') || $('.textarea-container').appendChild(Object.assign(document.createElement('div'), {className: 'shortcut-icon', id: 'shortcutIcon'}));
 
 /**
  * Updates the shortcut icon based on platform
@@ -347,6 +347,6 @@ const updateShortcutIcon = () => {
 updateShortcutIcon();
 
 // Handle keyboard shortcuts for note creation
-document.querySelector('.note-input textarea').addEventListener('keydown', e => {
+$('.note-input textarea').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.shiftKey || e.metaKey || e.ctrlKey)) [e.preventDefault(), addNote()];
 });

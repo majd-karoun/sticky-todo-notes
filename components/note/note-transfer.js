@@ -17,7 +17,7 @@
  */
 function checkBoardButtonHover(clientX, clientY) {
     if (hoverDetectionDisabled) return;
-    const statusBar = document.querySelector('.status-bar');
+    const statusBar = $('.status-bar');
     if (!statusBar) return;
     
     // Calculate distance from mouse to status bar (board buttons area)
@@ -34,7 +34,7 @@ function checkBoardButtonHover(clientX, clientY) {
      */
     const findClosestButton = () => {
         let [closestButton, closestDistance] = [null, Infinity];
-        document.querySelectorAll('.board-button:not(.disabled)').forEach(button => {
+        $$('.board-button:not(.disabled)').forEach(button => {
             const rect = button.getBoundingClientRect();
             const buttonDistance = Math.sqrt(Math.pow(clientX - (rect.left + rect.width / 2), 2) + Math.pow(clientY - (rect.top + rect.height / 2), 2));
             if (buttonDistance < closestDistance) [closestButton, closestDistance] = [button, buttonDistance];
@@ -46,14 +46,14 @@ function checkBoardButtonHover(clientX, clientY) {
     if (isNearMenu !== wasNearMenu) {
         if (isNearMenu) {
             // Entering proximity - activate all buttons and start hover effects
-            const boardButtons = document.querySelectorAll('.board-button:not(.disabled)');
+            const boardButtons = $$('.board-button:not(.disabled)');
             hoveredBoardButton = findClosestButton();
             boardButtons.forEach(button => button.classList.add('drag-active', 'drag-proximity'));
             if (hoveredBoardButton) hoveredBoardButton.classList.add('drag-hover');
             startHoverAnimation();
         } else {
             // Leaving proximity - deactivate buttons and clear animations
-            document.querySelectorAll('.board-button').forEach(button => {
+            $$('.board-button').forEach(button => {
                 button.classList.remove('drag-hover', 'drag-proximity');
                 setTimeout(() => button.classList.remove('drag-active'), 200);
             });
@@ -69,10 +69,10 @@ function checkBoardButtonHover(clientX, clientY) {
             if (closestButton) {
                 closestButton.classList.add('drag-hover');
                 hideDragTransferMessage();
-                document.querySelector('.shortcut-hint')?.classList.add('hidden-during-drag');
+                $('.shortcut-hint')?.classList.add('hidden-during-drag');
             } else {
                 showDragTransferMessage();
-                if (!dragTransferMessageVisible) document.querySelector('.shortcut-hint')?.classList.remove('hidden-during-drag');
+                if (!dragTransferMessageVisible) $('.shortcut-hint')?.classList.remove('hidden-during-drag');
             }
         }
     }
@@ -118,7 +118,7 @@ function startHoverAnimation() {
  * Uses reverse animation to smoothly transition back
  */
 function clearHoverAnimations() {
-    document.querySelectorAll('.hover-animating').forEach(note => {
+    $$('.hover-animating').forEach(note => {
         // Re-enable text selection
         note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
             textarea.style.removeProperty('user-select');
@@ -157,7 +157,7 @@ function showDragTransferMessage() {
             transferMessage.classList.add('visible');
             dragTransferMessageVisible = true;
         }
-        document.querySelector('.shortcut-hint')?.classList.add('hidden-during-drag');
+        $('.shortcut-hint')?.classList.add('hidden-during-drag');
     }
 }
 
@@ -171,7 +171,7 @@ function hideDragTransferMessage() {
             transferMessage.classList.remove('visible');
             dragTransferMessageVisible = false;
         }
-        document.querySelector('.shortcut-hint')?.classList.remove('hidden-during-drag');
+        $('.shortcut-hint')?.classList.remove('hidden-during-drag');
     }
 }
 
@@ -184,7 +184,7 @@ function hideDragTransferMessage() {
  * Used when drag operation ends or is cancelled
  */
 function clearBoardButtonHover() {
-    document.querySelectorAll('.board-button').forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
+    $$('.board-button').forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
     [hoveredBoardButton] = [null];
     clearHoverAnimations();
     hideDragTransferMessage();
@@ -266,7 +266,7 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
         note.classList.remove('hover-animating');
     } else {
         // Start animation for notes not already animating
-        const targetButton = document.querySelector(`.board-button[data-board-id="${targetBoardId}"]`);
+        const targetButton = $(`.board-button[data-board-id="${targetBoardId}"]`);
         if (!targetButton) return;
 
         const [buttonRect, noteRect, boardRect] = [targetButton.getBoundingClientRect(), note.getBoundingClientRect(), note.closest('.board').getBoundingClientRect()];
@@ -301,7 +301,7 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
         note.remove();
 
         // Add to target board
-        const targetBoard = document.querySelector(`.board[data-board-id="${targetBoardId}"]`);
+        const targetBoard = $(`.board[data-board-id="${targetBoardId}"]`);
         if (targetBoard) {
             // Clean up animation properties
             note.style.animation = '';

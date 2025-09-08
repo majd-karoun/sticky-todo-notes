@@ -1,7 +1,7 @@
 // Utility function to add event listeners with null checks
 function addEventListeners(selectors) {
     selectors.forEach(({selector, event, handler}) => {
-        const element = document.querySelector(selector);
+        const element = $(selector);
         if (element) element.addEventListener(event, handler);
     });
 }
@@ -56,7 +56,7 @@ function setupFirstLetterCapitalization() {
     };
 
     // Setup existing inputs
-    document.querySelectorAll('.board-title-input, .note-input textarea')
+    $$('.board-title-input, .note-input textarea')
         .forEach(setupInputCapitalization);
 
     // Observer for dynamic inputs
@@ -74,7 +74,7 @@ function setupFirstLetterCapitalization() {
         });
     });
 
-    const boardsContainer = document.querySelector('.boards-container');
+    const boardsContainer = $('.boards-container');
     if (boardsContainer) {
         observer.observe(boardsContainer, { childList: true, subtree: true });
     }
@@ -83,7 +83,7 @@ function setupFirstLetterCapitalization() {
 // Function to initialize board button animations on page load
 function initializeBoardButtonAnimations() {
     setTimeout(() => {
-        document.querySelectorAll('.board-button').forEach(button => {
+        $$('.board-button').forEach(button => {
             button.classList.add('transitions-ready');
             button.offsetHeight; // Trigger reflow
             requestAnimationFrame(() => button.style.transform = 'scale(1)');

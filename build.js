@@ -25,8 +25,9 @@ async function build() {
     // Define all JavaScript files in the correct dependency order
     // Order matches HTML script loading sequence to maintain functionality
     const jsFiles = [
+      'components/dom-cache.js',
       'components/utils.js',
-      'components/selection.js', 
+      'components/selection.js',
       'components/trash.js',
       'components/note/note-creation.js',
       'components/note/note-interaction.js',
@@ -63,10 +64,7 @@ window.restoreNote = restoreNote;
 window.changeNoteColor = changeNoteColor;
 window.markAsDone = markAsDone;
 window.toggleBold = toggleBold;
-window.duplicateNote = duplicateNote;
 window.clearTrash = clearTrash;
-window.closeModal = closeModal;
-window.openTrash = openTrash;
 `;
 
     // Create temporary bundle file for esbuild processing
