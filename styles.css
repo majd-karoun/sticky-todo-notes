@@ -1381,7 +1381,7 @@ body.selecting * {
 }
 .emoji-sticker {
   position: absolute;
-  font-size: 120px;
+  font-size: 90px;
   cursor: move;
   z-index: 10000;
   transition: transform 0.2s ease;
