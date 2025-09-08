@@ -52,7 +52,9 @@ function addNote() {
     }
 
     // Get positioning context from last note and board state
-    const lastAddedNote = notes[notes.length - 1];
+    // Find the last note that was actually created (not transferred) on this board
+    const lastAddedNote = notes.reverse().find(note => !note.dataset.repositioned) || null;
+    notes.reverse(); // Restore original order
     let { x: lastX, y: lastY } = lastNotePositions[currentBoardId] || { x: 0, y: 0 };
     let lastColor = lastNoteColors[currentBoardId] || getRandomColor();
     let positionX, positionY;
@@ -90,25 +92,55 @@ function addNote() {
      */
     const findColumnPosition = (startColumn, columnCount) => {
         const bottomThreshold = window.innerHeight - 300;
+        const noteHeight = 150;
+        const noteSpacing = 20;
+        const totalNoteSpace = noteHeight + noteSpacing;
         
         // Try each column starting from preferred column
         for (let attempts = 0; attempts < columnCount; attempts++) {
             const columnIndex = (startColumn + attempts) % columnCount;
             const { positionX: colX, columnNotes } = getColumnData(columnIndex, columnCount);
             
-            // Find the lowest note in this column
-            let lastY = 60, lastNote = null;
-            columnNotes.forEach(note => {
-                const noteY = parsePosition(note.style.top);
-                if (noteY >= lastY) { lastY = noteY; lastNote = note; }
-            });
+            if (columnNotes.length === 0) {
+                // Empty column - place at top
+                positionX = colX;
+                positionY = 60;
+                return true;
+            }
             
-            // Calculate new position below the last note
-            const newY = lastNote ? lastY + 70 : 60;
+            // Sort notes by Y position to find gaps
+            const sortedNotes = columnNotes.sort((a, b) => parsePosition(a.style.top) - parsePosition(b.style.top));
+            
+            // Check for gap at the top (before first note)
+            const firstNoteY = parsePosition(sortedNotes[0].style.top);
+            if (firstNoteY >= 60 + totalNoteSpace) {
+                positionX = colX;
+                positionY = 60;
+                lastColor = sortedNotes[0].style.backgroundColor;
+                return true;
+            }
+            
+            // Check for gaps between notes
+            for (let i = 0; i < sortedNotes.length - 1; i++) {
+                const currentNoteBottom = parsePosition(sortedNotes[i].style.top) + noteHeight;
+                const nextNoteTop = parsePosition(sortedNotes[i + 1].style.top);
+                const availableSpace = nextNoteTop - currentNoteBottom;
+                
+                if (availableSpace >= totalNoteSpace) {
+                    positionX = colX;
+                    positionY = currentNoteBottom + noteSpacing;
+                    lastColor = sortedNotes[i].style.backgroundColor;
+                    return true;
+                }
+            }
+            
+            // Check for space at the bottom (after last note)
+            const lastNote = sortedNotes[sortedNotes.length - 1];
+            const newY = parsePosition(lastNote.style.top) + totalNoteSpace;
             if (newY <= bottomThreshold) {
                 positionX = colX;
                 positionY = newY;
-                if (lastNote) lastColor = lastNote.style.backgroundColor; // Inherit color from column
+                lastColor = lastNote.style.backgroundColor;
                 return true;
             }
         }
@@ -125,14 +157,32 @@ function addNote() {
         let columnIndex;
         const columnCount = isWeekday ? 6 : 5; // 6 weekdays (Mon-Sat) or 5 days
         
-        // Always continue from the last added note's position (like regular patterns)
+        // Find the column with the most available space instead of using last note position
         if (lastAddedNote) {
-            // Calculate which column the last note is in
-            const noteX = parsePosition(lastAddedNote.style.left);
-            const columnWidth = boardElement.offsetWidth / columnCount;
-            columnIndex = Math.floor(noteX / columnWidth);
-            // Ensure column index is within valid range
-            columnIndex = Math.max(0, Math.min(columnIndex, columnCount - 1));
+            // Find the column with the least notes or most available space
+            let bestColumn = 0;
+            let minColumnHeight = Infinity;
+            
+            for (let col = 0; col < columnCount; col++) {
+                const { columnNotes } = getColumnData(col, columnCount);
+                
+                // Calculate the effective height used in this column
+                let columnHeight = 60; // Starting position
+                if (columnNotes.length > 0) {
+                    const bottomMostNote = columnNotes.reduce((lowest, note) => {
+                        const noteY = parsePosition(note.style.top);
+                        return noteY > lowest ? noteY : lowest;
+                    }, 0);
+                    columnHeight = bottomMostNote + 150; // Note height + spacing
+                }
+                
+                // Choose column with least height (most available space)
+                if (columnHeight < minColumnHeight) {
+                    minColumnHeight = columnHeight;
+                    bestColumn = col;
+                }
+            }
+            columnIndex = bestColumn;
         } else {
             // Default behavior: use current day's column (only when no notes exist)
             columnIndex = isWeekday ? getDayColumnIndex() : (getCurrentDayNumber(currentBoardId) || 0);
