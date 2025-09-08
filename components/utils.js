@@ -51,8 +51,42 @@ const ACTIVE_NOTES_KEY = 'stickyNotes_active', DELETED_NOTES_KEY = 'stickyNotes_
 const parsePosition = value => parseInt(String(value).replace('px', '')) || 0;
 
 /**
+ * Checks if a position would overlap with existing notes' top edges
+ * @param {number} x - X coordinate to check
+ * @param {number} y - Y coordinate to check
+ * @param {number} noteHeight - Height of the note (default 150px)
+ * @returns {boolean} True if position would cover another note's top edge
+ */
+const wouldCoverNoteTopEdge = (x, y, noteHeight = 150) => {
+    const boardElement = document.querySelector(`.board[data-board-id="${currentBoardId}"]`);
+    if (!boardElement) return false;
+    
+    const existingNotes = boardElement.querySelectorAll('.sticky-note');
+    const tolerance = 20; // Pixels of tolerance for overlap detection
+    
+    for (const note of existingNotes) {
+        const noteX = parsePosition(note.style.left);
+        const noteY = parsePosition(note.style.top);
+        const noteWidth = parsePosition(note.style.width) || 200;
+        
+        // Check if new note would horizontally overlap with existing note
+        const horizontalOverlap = (x < noteX + noteWidth + tolerance) && (x + 200 > noteX - tolerance);
+        
+        // Check if new note's bottom edge would cover existing note's top edge area
+        const newNoteBottom = y + noteHeight;
+        const topEdgeArea = noteY + 30; // Consider top 30px as "top edge area"
+        const verticalCover = (y < topEdgeArea) && (newNoteBottom > noteY - tolerance);
+        
+        if (horizontalOverlap && verticalCover) {
+            return true;
+        }
+    }
+    return false;
+};
+
+/**
  * Calculates the next position for a new note using intelligent layout algorithm
- * Implements column-based wrapping with natural positioning variations
+ * Implements column-based wrapping with natural positioning variations and collision avoidance
  * @param {number} lastX - X coordinate of the last placed note
  * @param {number} lastY - Y coordinate of the last placed note
  * @returns {Object} Object with x and y coordinates for the new note
@@ -62,16 +96,44 @@ const getNextNotePosition = (lastX, lastY) => {
     let newX = lastX + horizontalOffset, newY = lastY + 70;
     const padding = 5, maxX = window.innerWidth - 200; // Account for full note width
     const bottomThreshold = window.innerHeight - 300; // Break line when reaching 300px from bottom
+    const maxAttempts = 20; // Prevent infinite loops
+    let attempts = 0;
+    
+    // Keep trying positions until we find one that doesn't cover another note's top edge
+    while (attempts < maxAttempts && wouldCoverNoteTopEdge(newX, newY)) {
+        newY += 40; // Move down by smaller increments to find next available space
+        attempts++;
+        
+        // If we've tried many positions vertically and still have conflicts, try next column
+        if (attempts > 10) {
+            newX = lastX + 250; // Move to next column
+            newY = 50; // Reset to top
+            attempts = 0; // Reset attempt counter for new column
+        }
+    }
     
     // If the new position would be too close to the bottom, start a new line
     if (newY > bottomThreshold) { 
         newY = 50; // Start new line at top
         newX = lastX + 250; // Move to next column (note width + more spacing)
         
+        // Check collision again in new column
+        while (attempts < maxAttempts && wouldCoverNoteTopEdge(newX, newY)) {
+            newY += 40;
+            attempts++;
+        }
+        
         // If we've reached the right edge, start from the far left again
         if (newX > maxX) {
             newX = padding + 50; // Start from far left with some padding
             newY = 50; // Keep at top for new row
+            
+            // Final collision check from the left
+            attempts = 0;
+            while (attempts < maxAttempts && wouldCoverNoteTopEdge(newX, newY)) {
+                newY += 40;
+                attempts++;
+            }
         }
     }
     

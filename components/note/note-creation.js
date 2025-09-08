@@ -149,8 +149,10 @@ function addNote() {
         if (hasWeekdaysPattern || hasDaysPattern) {
             if (handlePatternPositioning(hasWeekdaysPattern) === false) return;
         } else {
-            // Regular board - place first note in a good starting position
-            [positionX, positionY] = [Math.max(150, window.innerWidth / 4), 50];
+            // Regular board - place first note in a good starting position with collision detection
+            const startX = Math.max(150, window.innerWidth / 4);
+            const startY = 50;
+            ({ x: positionX, y: positionY } = getNextNotePosition(startX, startY - 70)); // Subtract 70 since getNextNotePosition adds it
         }
     } else if (hasWeekdaysPattern || hasDaysPattern) {
         // Pattern boards - use column-based positioning
@@ -261,13 +263,8 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     if (repositioned) {
         // Repositioned notes get higher z-index to appear on top
         noteZIndex = ++globalZIndex;
-    } else if (hasPattern && !isRestored) {
-        // New notes in pattern boards get lower z-index to appear underneath repositioned notes
-        // Find the minimum z-index of repositioned notes, or use base if none exist
-        const repositionedZIndexes = Object.values(noteZIndexes).filter(z => z > 1000);
-        noteZIndex = repositionedZIndexes.length > 0 ? Math.min(...repositionedZIndexes) - 1 : 1000;
     } else {
-        // Regular boards or restored notes use incremental z-index
+        // All new notes (pattern boards, regular boards, restored notes) use incremental z-index to appear on top
         noteZIndex = ++globalZIndex;
     }
     
