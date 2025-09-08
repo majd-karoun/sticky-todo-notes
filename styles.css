@@ -1978,7 +1978,19 @@ body.selecting * {
 .board-title-input[data-counter="50"]::after {
   color: #ff4444;
 }
-
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .board-title-circle {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .board-title-circle:hover,
+  .board-title-circle.delayed-close,
+  .board-title-circle.show-temporary {
+    width: 300px !important;
+    height: 60px !important;
+    border-radius: 12px !important;
+  }
+}
 
 /* Consolidated pattern styles - board (20px) and button (6px) variants */
 .board-pattern-dots,
