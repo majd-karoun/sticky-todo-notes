@@ -226,15 +226,13 @@ function checkBoardButtonDrop() {
     // Calculate relative positions for multi-note transfers
     let relativePositions = new Map();
     if (notesToMove.length > 1 && typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
-        let [minLeft, minTop] = [Infinity, Infinity];
+        // Store the actual original positions instead of calculating offsets from minimum
         notesInitialPositions.forEach(notePos => {
             if (notePos && notesToMove.includes(notePos.element)) {
-                [minLeft, minTop] = [Math.min(minLeft, notePos.x), Math.min(minTop, notePos.y)];
-            }
-        });
-        notesInitialPositions.forEach(notePos => {
-            if (notePos && notesToMove.includes(notePos.element)) {
-                relativePositions.set(notePos.element, { offsetX: notePos.x - minLeft, offsetY: notePos.y - minTop });
+                relativePositions.set(notePos.element, { 
+                    originalX: notePos.x, 
+                    originalY: notePos.y 
+                });
             }
         });
     }
@@ -312,12 +310,13 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
 
             // Set position on target board
             if (relativePosition) {
-                // For active board transfers, use the original position if available
+                // Multi-note transfer - use the actual original positions
                 if (relativePosition.originalX !== undefined && relativePosition.originalY !== undefined) {
                     [note.style.left, note.style.top] = [`${relativePosition.originalX}px`, `${Math.max(60, relativePosition.originalY)}px`];
                 } else {
+                    // Fallback for legacy offset-based positioning
                     const [baseLeft, baseTop] = [100, 80];
-                    [note.style.left, note.style.top] = [`${baseLeft + relativePosition.offsetX}px`, `${Math.max(60, baseTop + relativePosition.offsetY)}px`];
+                    [note.style.left, note.style.top] = [`${baseLeft + (relativePosition.offsetX || 0)}px`, `${Math.max(60, baseTop + (relativePosition.offsetY || 0))}px`];
                 }
             } else {
                 // Single note transfer - use stored original position or fallback
