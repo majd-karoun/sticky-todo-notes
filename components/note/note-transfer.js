@@ -34,7 +34,7 @@ function checkBoardButtonHover(clientX, clientY) {
      */
     const findClosestButton = () => {
         let [closestButton, closestDistance] = [null, Infinity];
-        $$('.board-button:not(.disabled)').forEach(button => {
+        $$('.board-button:not(.disabled)', true).forEach(button => {
             const rect = button.getBoundingClientRect();
             const buttonDistance = Math.sqrt(Math.pow(clientX - (rect.left + rect.width / 2), 2) + Math.pow(clientY - (rect.top + rect.height / 2), 2));
             if (buttonDistance < closestDistance) [closestButton, closestDistance] = [button, buttonDistance];
@@ -53,7 +53,7 @@ function checkBoardButtonHover(clientX, clientY) {
             startHoverAnimation();
         } else {
             // Leaving proximity - deactivate buttons and clear animations
-            $$('.board-button').forEach(button => {
+            $$('.board-button', true).forEach(button => {
                 button.classList.remove('drag-hover', 'drag-proximity');
                 setTimeout(() => button.classList.remove('drag-active'), 200);
             });
@@ -118,7 +118,7 @@ function startHoverAnimation() {
  * Uses reverse animation to smoothly transition back
  */
 function clearHoverAnimations() {
-    $$('.hover-animating').forEach(note => {
+    $$('.hover-animating', true).forEach(note => {
         // Re-enable text selection
         note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
             textarea.style.removeProperty('user-select');
@@ -184,7 +184,7 @@ function hideDragTransferMessage() {
  * Used when drag operation ends or is cancelled
  */
 function clearBoardButtonHover() {
-    $$('.board-button').forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
+    $$('.board-button', true).forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
     [hoveredBoardButton] = [null];
     clearHoverAnimations();
     hideDragTransferMessage();
