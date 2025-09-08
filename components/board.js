@@ -663,6 +663,14 @@ function setActiveStyle() {
 }
 
 /**
+ * Gets the currently active board element
+ * @returns {Element} The active board element
+ */
+function getActiveBoard() {
+  return $('.board.active');
+}
+
+/**
  * Changes the background color of the current board
  * @param {string} color - The new color value to apply
  */
