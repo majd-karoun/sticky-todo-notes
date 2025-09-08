@@ -42,7 +42,7 @@ function addNote() {
     const [hasWeekdaysPattern, hasDaysPattern, hasNoNotes] = [
         boardElement.classList.contains('board-pattern-weekdays'),
         boardElement.classList.contains('board-pattern-days'),
-        notes.length === 0
+        notes.filter(note => !note.dataset.transferred).length === 0
     ];
 
     // Check note limits for regular boards (pattern boards have different limits)
@@ -51,8 +51,9 @@ function addNote() {
         return;
     }
 
-    // Get positioning context from last note and board state
-    const lastAddedNote = notes[notes.length - 1];
+    // Get positioning context from last note and board state (ignore transferred notes)
+    const nonTransferredNotes = notes.filter(note => !note.dataset.transferred);
+    const lastAddedNote = nonTransferredNotes[nonTransferredNotes.length - 1];
     let { x: lastX, y: lastY } = lastNotePositions[currentBoardId] || { x: 0, y: 0 };
     let lastColor = lastNoteColors[currentBoardId] || getRandomColor();
     let positionX, positionY;
@@ -134,7 +135,7 @@ function addNote() {
             // Ensure column index is within valid range
             columnIndex = Math.max(0, Math.min(columnIndex, columnCount - 1));
         } else {
-            // Default behavior: use current day's column (only when no notes exist)
+            // Default behavior: use current day's column (only when no non-transferred notes exist)
             columnIndex = isWeekday ? getDayColumnIndex() : (getCurrentDayNumber(currentBoardId) || 0);
         }
         
@@ -211,6 +212,12 @@ function addNote() {
     // Create the note with calculated position and styling
     createNote(text.replace(/\n/g, '<br>'), lastColor, positionX, positionY, false, '200px', '150px', false, currentBoardId);
     [lastNotePositions[currentBoardId], lastNoteColors[currentBoardId], textarea.value] = [{ x: positionX, y: positionY }, lastColor, ''];
+    
+    // Clear transferred status from all notes now that positioning is complete
+    boardElement.querySelectorAll('.sticky-note[data-transferred="true"]').forEach(note => {
+        delete note.dataset.transferred;
+    });
+    
     saveActiveNotes();
     updateBoardIndicators();
 }

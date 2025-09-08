@@ -330,7 +330,7 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
 
             // Update note metadata and tracking
             const noteId = note.dataset.noteId || generateNoteId();
-            [note.dataset.noteId, note.dataset.repositioned] = [noteId, 'true'];
+            [note.dataset.noteId, note.dataset.repositioned, note.dataset.transferred] = [noteId, 'true', 'true'];
             repositionedNotes.add(noteId);
 
             // Add to target board with pop animation
