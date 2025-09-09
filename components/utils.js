@@ -238,7 +238,7 @@ const getNotesData = () => {
   if (!boardElement) return [];
   const notes = Array.from(boardElement.querySelectorAll(".sticky-note"));
   return Array.from(notes).map((note) => ({
-    content: $within(note, ".sticky-content").textContent,
+    content: $within(note, ".sticky-content").innerHTML,
     x: parsePosition(note.style.left),
     y: parsePosition(note.style.top),
     color: note.style.backgroundColor || "#ffeb3b",

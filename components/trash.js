@@ -217,11 +217,14 @@ const restoreNote = index => {
     
     setTimeout(() => {
         const [note] = deletedNotes.splice(index, 1);
-        createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold);
+        const restoredNote = createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold);
         window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
         updateTrashCount();
         renderDeletedNotes();
-        window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+        // Ensure the restored note is saved to storage after DOM is updated
+        requestAnimationFrame(() => {
+            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+        });
         updateBoardIndicators();
     }, 300);
 };
