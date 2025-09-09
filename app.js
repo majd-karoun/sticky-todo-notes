@@ -2,12 +2,18 @@
 function addEventListeners(selectors) {
     selectors.forEach(({selector, event, handler}) => {
         const element = $(selector);
-        if (element) element.addEventListener(event, handler);
+        if (element) {
+            if (window.EventManager) {
+                window.EventManager.registerHandler(event, handler, element);
+            } else {
+                element.addEventListener(event, handler);
+            }
+        }
     });
 }
 
 // Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+const domContentLoadedHandler = function() {
     // Load data and setup core functionality
     loadNoteZIndexes();
     loadSavedData();
@@ -30,7 +36,13 @@ document.addEventListener('DOMContentLoaded', function() {
         {selector: '#trashModal .close-modal-btn', event: 'click', handler: toggleTrashModal},
         {selector: '#trashModal .clear-trash-btn', event: 'click', handler: clearTrash}
     ]);
-});
+};
+
+if (window.EventManager) {
+    window.EventManager.registerHandler('DOMContentLoaded', domContentLoadedHandler);
+} else {
+    document.addEventListener('DOMContentLoaded', domContentLoadedHandler);
+}
 
 // Function to capitalize only the first letter of text inputs
 function setupFirstLetterCapitalization() {
@@ -47,12 +59,20 @@ function setupFirstLetterCapitalization() {
     };
 
     const setupInputCapitalization = (input) => {
-        ['input', 'keyup'].forEach(event => 
-            input.addEventListener(event, e => capitalizeFirstLetter(e.target))
-        );
-        input.addEventListener('paste', e => 
-            setTimeout(() => capitalizeFirstLetter(e.target), 0)
-        );
+        ['input', 'keyup'].forEach(event => {
+            if (window.EventManager) {
+                window.EventManager.registerHandler(event, e => capitalizeFirstLetter(e.target), input);
+            } else {
+                input.addEventListener(event, e => capitalizeFirstLetter(e.target));
+            }
+        });
+        
+        const pasteHandler = e => setTimeout(() => capitalizeFirstLetter(e.target), 0);
+        if (window.EventManager) {
+            window.EventManager.registerHandler('paste', pasteHandler, input);
+        } else {
+            input.addEventListener('paste', pasteHandler);
+        }
     };
 
     // Setup existing inputs

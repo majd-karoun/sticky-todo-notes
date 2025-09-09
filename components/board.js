@@ -234,7 +234,12 @@ function deleteBoard(boardId) {
     });
 
     stickers.forEach((sticker) => sticker.classList.add("deleting"));
-    [saveDeletedNotes(), updateTrashCount()];
+    if (window.DebouncedStorage) {
+        window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
+    } else {
+        saveDeletedNotes();
+    }
+    updateTrashCount();
     console.log('Setting timeout for continueWithBoardDeletion, boardId:', boardId);
     setTimeout(() => {
       console.log('Timeout fired, calling continueWithBoardDeletion');
@@ -503,7 +508,7 @@ function setupBoardNavigation() {
     button.parentNode.replaceChild(newButton, button);
   });
 
-  const documentKeydownHandler = (e) => {
+  const documentKeydownHandler = (e, eventState) => {
     const [targetTagName, isEditable] = [
       e.target.tagName,
       e.target.getAttribute("contenteditable") === "true",
@@ -543,7 +548,10 @@ function setupBoardNavigation() {
       switchToBoard(keyNum);
   };
   
-  document.addEventListener("keydown", documentKeydownHandler);
+  // Register with consolidated event system
+  if (window.eventManager) {
+    window.eventManager.registerHandler('keydown', documentKeydownHandler, 'board-navigation');
+  }
   globalNavigationHandlers.push({ 
     element: document, 
     event: "keydown", 

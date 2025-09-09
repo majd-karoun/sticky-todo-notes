@@ -76,7 +76,13 @@ const markNoteAsDone = note => {
     };
     
     updateNoteColumns(note);
-    [deletedNotes.unshift(noteData), saveDeletedNotes(), updateTrashCount()];
+    deletedNotes.unshift(noteData);
+    if (window.DebouncedStorage) {
+        window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
+    } else {
+        saveDeletedNotes();
+    }
+    updateTrashCount();
     animateNoteToTrash(note);
 };
 
@@ -193,7 +199,19 @@ const restoreNote = index => {
     setTimeout(() => {
         const [note] = deletedNotes.splice(index, 1);
         createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold);
-        [saveDeletedNotes(), updateTrashCount(), renderDeletedNotes(), saveActiveNotes(), updateBoardIndicators()];
+        if (window.DebouncedStorage) {
+            window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
+        } else {
+            saveDeletedNotes();
+        }
+        updateTrashCount();
+        renderDeletedNotes();
+        if (window.DebouncedStorage) {
+            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+        } else {
+            saveActiveNotes();
+        }
+        updateBoardIndicators();
     }, 300);
 };
 
@@ -217,7 +235,13 @@ const clearTrash = () => {
     // Wait for all animations to complete before clearing data and closing modal
     setTimeout(() => {
         deletedNotes = [];
-        [saveDeletedNotes(), updateTrashCount(), renderDeletedNotes()];
+        if (window.DebouncedStorage) {
+            window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
+        } else {
+            saveDeletedNotes();
+        }
+        updateTrashCount();
+        renderDeletedNotes();
         
         // Close modal first, then process pending notes
         setTimeout(() => {

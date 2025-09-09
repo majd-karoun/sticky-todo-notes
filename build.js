@@ -24,8 +24,11 @@ async function build() {
 
     // Define all JavaScript files in the correct dependency order
     // Order matches HTML script loading sequence to maintain functionality
-    const jsFiles = [
-      'components/dom-cache.js',
+    const componentFiles = [
+      'components/optimization/dom-cache.js',
+      'components/optimization/event-manager.js',
+      'components/optimization/animation-batcher.js',
+      'components/optimization/storage-debouncer.js',
       'components/utils.js',
       'components/selection.js',
       'components/trash.js',
@@ -44,7 +47,7 @@ async function build() {
     let totalOriginalSize = 0;
 
     // Process each JavaScript file and add to bundle with source comments
-    for (const file of jsFiles) {
+    for (const file of componentFiles) {
       if (fs.existsSync(file)) {
         const content = fs.readFileSync(file, 'utf8');
         bundledContent += `\n/* ${file} */\n${content}\n`;

@@ -17,7 +17,13 @@ let emojiStickers = {}, draggedEmoji = null, dragOffset = { x: 0, y: 0 }, emojiU
  */
 function initializeEmojiPicker() {
     [loadEmojiUsageOrder(), reorderEmojiPicker(), loadAllEmojiStickers()];
-    $$('.emoji-item').forEach(item => item.addEventListener('click', handleEmojiClick));
+    $$('.emoji-item').forEach(item => {
+        if (window.EventManager) {
+            window.EventManager.registerHandler('click', handleEmojiClick, item);
+        } else {
+            item.addEventListener('click', handleEmojiClick);
+        }
+    });
 }
 
 /**
@@ -40,7 +46,7 @@ function createEmojiSticker(emoji) {
     if (!activeBoard) return;
     
     const boardId = activeBoard.dataset.boardId;
-    if (getEmojiCount(boardId) >= 10) return showEmojiLimitMessage();
+    if (getEmojiCount(boardId) >= 1000) return showEmojiLimitMessage();
     
     const stickerId = generateStickerId(), boardRect = activeBoard.getBoundingClientRect();
     const [maxX, maxY, minY] = [boardRect.width - 120, boardRect.height * 0.8 - 120, 20];
@@ -89,8 +95,14 @@ function setupEmojiDrag(stickerElement) {
         [dragOffset.x, dragOffset.y] = [clientX - rect.left, clientY - rect.top];
         
         stickerElement.classList.add('dragging');
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDrag);
+        // Register with consolidated event system
+        if (window.eventManager) {
+            window.eventManager.registerHandler('mousemove', drag, 'emoji-drag');
+            window.eventManager.registerHandler('mouseup', stopDrag, 'emoji-drag');
+        } else {
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
     }
     
     function drag(e) {
@@ -104,7 +116,12 @@ function setupEmojiDrag(stickerElement) {
             Math.max(0, Math.min(clientX - boardRect.left - dragOffset.x, boardRect.width - 120)),
             Math.max(0, Math.min(clientY - boardRect.top - dragOffset.y, boardRect.height - 120))
         ];
-        Object.assign(draggedEmoji.style, { left: x + 'px', top: y + 'px' });
+        // Use animation batcher for smooth positioning
+        if (window.AnimationUtils) {
+            window.AnimationUtils.updatePosition(draggedEmoji, x, y);
+        } else {
+            Object.assign(draggedEmoji.style, { left: x + 'px', top: y + 'px' });
+        }
     }
     
     function stopDrag() {
@@ -126,8 +143,14 @@ function setupEmojiDrag(stickerElement) {
         }
         
         draggedEmoji = null;
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', stopDrag);
+        // Unregister from consolidated event system
+        if (window.eventManager) {
+            window.eventManager.unregisterHandler('mousemove', 'emoji-drag');
+            window.eventManager.unregisterHandler('mouseup', 'emoji-drag');
+        } else {
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
     }
 }
 
@@ -137,7 +160,13 @@ const deleteEmojiSticker = (stickerId, boardId) => {
     emojiStickers[boardId] && [delete emojiStickers[boardId][stickerId], saveEmojiStickers(boardId)];
 };
 
-const saveEmojiStickers = boardId => localStorage.setItem(`emojiStickers_board_${boardId}`, JSON.stringify(emojiStickers[boardId] || {}));
+const saveEmojiStickers = boardId => {
+    if (window.DebouncedStorage) {
+        window.DebouncedStorage.save(`emojiStickers_board_${boardId}`, emojiStickers[boardId] || {});
+    } else {
+        localStorage.setItem(`emojiStickers_board_${boardId}`, JSON.stringify(emojiStickers[boardId] || {}));
+    }
+};
 
 function loadEmojiStickers(boardId) {
     const saved = localStorage.getItem(`emojiStickers_board_${boardId}`);

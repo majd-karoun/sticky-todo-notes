@@ -212,44 +212,74 @@ const hexToRgb = (hex) => {
     : null;
 };
 
-const saveToLocalStorage = (key, data) => {
+const saveToLocalStorage = (key, data, immediate = false) => {
   try {
+    // Always save immediately for now to prevent data loss during optimization
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
     console.error(`Failed to save to localStorage (${key}):`, error);
   }
 };
 
-const saveActiveNotes = () => {
+const saveActiveNotes = (immediate = false) => {
+  const notesData = getNotesData();
+  if (window.DebouncedStorage) {
+    if (immediate) {
+      window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData);
+    } else {
+      window.DebouncedStorage.saveLow(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData);
+    }
+  } else {
+    saveToLocalStorage(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData, immediate);
+  }
+  if (typeof updateBoardIndicators === "function") updateBoardIndicators();
+};
+
+const getNotesData = () => {
   const boardElement = $(
     `.board[data-board-id="${currentBoardId}"]`
   );
-  if (!boardElement) return;
-  const notesData = Array.from(
-    boardElement.querySelectorAll(".sticky-note"),
-  ).map((note) => ({
-    text: note.querySelector(".sticky-content").innerHTML,
-    color: note.style.backgroundColor,
-    x: note.style.left,
-    y: note.style.top,
+  if (!boardElement) return [];
+  const notes = boardElement.querySelectorAll(".sticky-note");
+  return Array.from(notes).map((note) => ({
+    content: note.querySelector(".sticky-content").textContent,
+    x: parsePosition(note.style.left),
+    y: parsePosition(note.style.top),
+    color: note.style.backgroundColor || "#ffeb3b",
     width: note.style.width || "200px",
     height: note.style.height || "150px",
     isBold: note.querySelector(".sticky-content").classList.contains("bold"),
     noteId: note.dataset.noteId,
     zIndex: note.style.zIndex || 1,
   }));
-  saveToLocalStorage(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData);
-  if (typeof updateBoardIndicators === "function") updateBoardIndicators();
 };
-const saveDeletedNotes = () =>
-  saveToLocalStorage(DELETED_NOTES_KEY, deletedNotes);
-const saveBoardCount = () =>
-  localStorage.setItem(BOARDS_COUNT_KEY, boardCount.toString());
-const saveBoardStyles = () =>
-  saveToLocalStorage(`boardStyles_board_${currentBoardId}`, {
+
+const saveDeletedNotes = () => {
+  if (window.DebouncedStorage) {
+    window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
+  } else {
+    saveToLocalStorage(DELETED_NOTES_KEY, deletedNotes);
+  }
+};
+
+const saveBoardCount = () => {
+  if (window.DebouncedStorage) {
+    window.DebouncedStorage.save(BOARDS_COUNT_KEY, boardCount.toString());
+  } else {
+    localStorage.setItem(BOARDS_COUNT_KEY, boardCount.toString());
+  }
+};
+const saveBoardStyles = () => {
+  const boardStyleData = {
     color: boardStyles.colors.current,
     pattern: boardStyles.patterns.current,
-  });
+  };
+  if (window.DebouncedStorage) {
+    window.DebouncedStorage.saveLow(`boardStyles_board_${currentBoardId}`, boardStyleData);
+  } else {
+    saveToLocalStorage(`boardStyles_board_${currentBoardId}`, boardStyleData);
+  }
+};
 
 const updateShortcutIconDisplay = () => {
   const shortcutIconEl = $("#shortcutIcon");
@@ -311,7 +341,6 @@ const performOneTimeStorageCleanup = () => {
   }
 
   try {
-    console.log("Performing one-time localStorage cleanup...");
 
     // Get all localStorage keys
     const keysToRemove = [];
@@ -319,7 +348,8 @@ const performOneTimeStorageCleanup = () => {
       const key = localStorage.key(i);
       if (
         key &&
-        (key.startsWith("stickyNotes_") ||
+        (key.startsWith("stickyNotes_deleted") ||
+          key.startsWith("stickyNotes_zIndexes") ||
           key.startsWith("boardColor_") ||
           key.startsWith("boardPattern_") ||
           key.startsWith("boardStyles_") ||
@@ -336,8 +366,6 @@ const performOneTimeStorageCleanup = () => {
       localStorage.removeItem(key);
     });
 
-    console.log(`Cleaned up ${keysToRemove.length} localStorage items`);
-
     // Set the flag to indicate cleanup has been performed
     localStorage.setItem(CLEANUP_FLAG_KEY, "true");
   } catch (error) {
@@ -349,12 +377,24 @@ const performOneTimeStorageCleanup = () => {
 
 const loadSavedData = () => {
   try {
+    // Check if createNote function is available, if not, delay loading
+    if (typeof createNote !== "function") {
+      setTimeout(loadSavedData, 50);
+      return;
+    }
+    
+    // Flush any pending debounced saves before loading
+    if (window.DebouncedStorage) {
+      window.DebouncedStorage.flush();
+    }
+    
     // Perform one-time localStorage cleanup before loading any data
     performOneTimeStorageCleanup();
 
     if (typeof createSelectionBox === "function") createSelectionBox();
 
     const savedBoardCount = localStorage.getItem(BOARDS_COUNT_KEY);
+    
     if (savedBoardCount) {
       const parsedCount = parseInt(savedBoardCount);
       if (!isNaN(parsedCount) && parsedCount > 0) {
@@ -373,42 +413,43 @@ const loadSavedData = () => {
       const savedBoardNotes = localStorage.getItem(
         `${ACTIVE_NOTES_KEY}_board_${i}`,
       );
+      
       if (savedBoardNotes) {
         const notesData = safeParseJSON(savedBoardNotes, []);
+        
         if (Array.isArray(notesData)) {
           notesData.forEach((note) => {
-            if (note && typeof note === "object" && note.text) {
+            if (note && typeof note === "object" && (note.text || note.content)) {
               lastNotePositions[i] = {
                 x: parsePosition(note.x),
                 y: parsePosition(note.y),
               };
               lastNoteColors[i] = note.color || colors[0];
-              if (typeof createNote === "function") {
-                const createdNote = createNote(
-                  note.text,
-                  note.color || colors[0],
-                  parsePosition(note.x),
-                  parsePosition(note.y),
-                  true,
-                  note.width || "200px",
-                  note.height || "150px",
-                  note.isBold || false,
-                  i,
-                );
-                if (createdNote && note.noteId) {
-                  createdNote.dataset.noteId = note.noteId;
-                  // Apply saved z-index from the z-index management system
-                  if (noteZIndexes[note.noteId]) {
-                    createdNote.style.zIndex = noteZIndexes[note.noteId];
-                    if (noteZIndexes[note.noteId] > globalZIndex) {
-                      globalZIndex = noteZIndexes[note.noteId];
-                    }
-                  } else if (note.zIndex && !isNaN(parseInt(note.zIndex))) {
-                    createdNote.style.zIndex = note.zIndex;
-                    noteZIndexes[note.noteId] = parseInt(note.zIndex);
-                    if (parseInt(note.zIndex) > globalZIndex) {
-                      globalZIndex = parseInt(note.zIndex);
-                    }
+              const noteText = note.text || note.content;
+              const createdNote = createNote(
+                noteText,
+                note.color || colors[0],
+                parsePosition(note.x),
+                parsePosition(note.y),
+                true,
+                note.width || "200px",
+                note.height || "150px",
+                note.isBold || false,
+                i,
+              );
+              if (createdNote && note.noteId) {
+                createdNote.dataset.noteId = note.noteId;
+                // Apply saved z-index from the z-index management system
+                if (noteZIndexes[note.noteId]) {
+                  createdNote.style.zIndex = noteZIndexes[note.noteId];
+                  if (noteZIndexes[note.noteId] > globalZIndex) {
+                    globalZIndex = noteZIndexes[note.noteId];
+                  }
+                } else if (note.zIndex && !isNaN(parseInt(note.zIndex))) {
+                  createdNote.style.zIndex = note.zIndex;
+                  noteZIndexes[note.noteId] = parseInt(note.zIndex);
+                  if (parseInt(note.zIndex) > globalZIndex) {
+                    globalZIndex = parseInt(note.zIndex);
                   }
                 }
               }
@@ -441,11 +482,17 @@ const loadSavedData = () => {
 // Z-INDEX LAYERING SYSTEM
 
 /**
+ * Gets the next available z-index value
+ * @returns {number} Next z-index value
+ */
+const getNextZIndex = () => ++globalZIndex;
+
+/**
  * Brings a note to the front by assigning it the highest z-index
  * @param {Element} noteElement - The note element to bring to front
  */
 const bringNoteToFront = (noteElement) => {
-  noteElement.style.zIndex = ++globalZIndex;
+  noteElement.style.zIndex = getNextZIndex();
   const noteId = noteElement.dataset.noteId;
   if (noteId) ((noteZIndexes[noteId] = globalZIndex), saveNoteZIndexes());
 };
@@ -455,7 +502,11 @@ const bringNoteToFront = (noteElement) => {
  */
 const saveNoteZIndexes = () => {
   try {
-    localStorage.setItem(NOTE_ZINDEX_KEY, JSON.stringify(noteZIndexes));
+    if (window.DebouncedStorage) {
+      window.DebouncedStorage.saveLow(NOTE_ZINDEX_KEY, noteZIndexes);
+    } else {
+      localStorage.setItem(NOTE_ZINDEX_KEY, JSON.stringify(noteZIndexes));
+    }
   } catch (error) {
     console.error("Error saving note z-indexes:", error);
   }

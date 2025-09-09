@@ -220,7 +220,11 @@ function addNote() {
         delete note.dataset.transferred;
     });
     
-    saveActiveNotes();
+    if (window.DebouncedStorage) {
+        window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+    } else {
+        saveActiveNotes(true); // Immediate save for note creation
+    }
     updateBoardIndicators();
 }
 
@@ -262,10 +266,10 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     
     if (repositioned) {
         // Repositioned notes get higher z-index to appear on top
-        noteZIndex = ++globalZIndex;
+        noteZIndex = getNextZIndex();
     } else {
         // All new notes (pattern boards, regular boards, restored notes) use incremental z-index to appear on top
-        noteZIndex = ++globalZIndex;
+        noteZIndex = getNextZIndex();
     }
     
     // Apply styling and positioning
@@ -299,7 +303,13 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     
     targetBoard.appendChild(note);
     note.style.animation = 'paperPop 0.3s ease-out forwards'; // Entry animation
-    if (!isRestored) saveActiveNotes();
+    if (!isRestored) {
+        if (window.DebouncedStorage) {
+            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+        } else {
+            saveActiveNotes(true); // Immediate save for new notes
+        }
+    }
     return note;
 }
 
@@ -322,7 +332,11 @@ function changeNoteColor(option, color) {
         setTimeout(() => [n, colorButton].forEach(el => el.classList.remove('color-transition')), 300);
     });
     lastNoteColors[currentBoardId] = color;
-    saveActiveNotes();
+    if (window.DebouncedStorage) {
+        window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+    } else {
+        saveActiveNotes(true); // Immediate save for color changes
+    }
 }
 
 /**
@@ -332,7 +346,11 @@ function changeNoteColor(option, color) {
 const toggleBold = button => {
     const content = button.closest('.sticky-note').querySelector('.sticky-content');
     [content.classList.toggle('bold'), button.classList.toggle('active')];
-    saveActiveNotes();
+    if (window.DebouncedStorage) {
+        window.DebouncedStorage.saveLow(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+    } else {
+        saveActiveNotes();
+    }
 };
 
 /**

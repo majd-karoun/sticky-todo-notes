@@ -88,7 +88,9 @@ function checkBoardButtonHover(clientX, clientY) {
  */
 function startHoverAnimation() {
     if (!hoveredBoardButton) return;
-    const [buttonRect, notesToAnimate] = [hoveredBoardButton.getBoundingClientRect(), selectedNotes.length > 0 ? selectedNotes : (activeNote ? [activeNote] : [])];
+    // Get the active note from either EventManager or fallback global
+    const currentActiveNote = window.eventManager?.eventState?.activeNote || window.activeNote || activeNote;
+    const [buttonRect, notesToAnimate] = [hoveredBoardButton.getBoundingClientRect(), selectedNotes.length > 0 ? selectedNotes : (currentActiveNote ? [currentActiveNote] : [])];
 
     notesToAnimate.forEach(note => {
         if (note && !note.classList.contains('reverse-animating') && !note.classList.contains('hover-animating')) {
@@ -202,7 +204,9 @@ function clearBoardButtonHover() {
 function checkBoardButtonDrop() {
     if (!hoveredBoardButton) return { moved: false };
 
-    const [targetBoardId, notesToMove] = [parseInt(hoveredBoardButton.dataset.boardId), selectedNotes.length > 0 ? [...selectedNotes] : [activeNote]];
+    // Get the active note from either EventManager or fallback global
+    const currentActiveNote = window.eventManager?.eventState?.activeNote || window.activeNote || activeNote;
+    const [targetBoardId, notesToMove] = [parseInt(hoveredBoardButton.dataset.boardId), selectedNotes.length > 0 ? [...selectedNotes] : [currentActiveNote]];
 
     // Handle drop on same board - return notes to original positions
     if (targetBoardId === currentBoardId) {
@@ -348,9 +352,17 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
             // Save notes on both boards
             const originalBoardId = currentBoardId;
             [currentBoardId] = [targetBoardId];
-            saveActiveNotes();
+            if (window.DebouncedStorage) {
+                window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+            } else {
+                saveActiveNotes();
+            }
             [currentBoardId] = [originalBoardId];
-            saveActiveNotes();
+            if (window.DebouncedStorage) {
+                window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+            } else {
+                saveActiveNotes();
+            }
         }
     }, 600);
 }
