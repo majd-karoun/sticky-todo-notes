@@ -52,10 +52,12 @@ function setupNote(note) {
     clearTimeout(paletteTimeout),
   );
   colorPalette.addEventListener("mouseleave", () => {
-    paletteTimeout = setTimeout(
-      () => colorPalette.classList.remove("visible"),
-      100,
-    );
+    paletteTimeout = setTimeout(() => {
+      colorPalette.classList.add("closing");
+      setTimeout(() => {
+        colorPalette.classList.remove("visible", "closing");
+      }, 180); // Match animation duration
+    }, 100);
   });
 
   // Drag and resize - old system
@@ -176,7 +178,12 @@ function setupNote(note) {
 
 // Hide all color palettes
 function hideAllColorPalettes() {
-  $$(".color-palette").forEach((p) => p.classList.remove("visible"));
+  $$(".color-palette.visible").forEach((p) => {
+    p.classList.add("closing");
+    setTimeout(() => {
+      p.classList.remove("visible", "closing");
+    }, 180); // Match animation duration
+  });
 }
 
 // Hide palettes when clicking outside

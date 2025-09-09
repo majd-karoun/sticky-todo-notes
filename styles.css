@@ -431,13 +431,13 @@ body {
   display: none;
   grid-template-columns: repeat(5, 1fr);
   gap: 3px;
-  animation: colorPopup 0.18s ease-out forwards;
+  animation: colorPopup 0.2s ease-out forwards;
 }
 .color-palette.visible {
   display: grid;
 }
 .color-palette.closing {
-  animation: colorPopdown 0.18s ease-out forwards;
+  animation: colorPopdown 0.22s ease-out forwards;
 }
 .color-option {
   width: 20px;
