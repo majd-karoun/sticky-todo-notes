@@ -342,18 +342,13 @@ function setupNote(note) {
                 Math.min(Math.max(initialX + clientX - startX, -padding), window.innerWidth - (note.offsetWidth / 4)),
                 Math.min(Math.max(initialY + clientY - startY, -padding), window.innerHeight - (note.offsetHeight / 4))
             ];
-            if (window.AnimationBatcher) {
-                window.AnimationBatcher.batchStyleUpdate(note, {
-                    left: `${newX}px`,
-                    top: `${newY}px`
-                });
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updatePosition(note, newX, newY);
             } else {
-                note.style.left = `${newX}px`;
-                note.style.top = `${newY}px`;
+                [note.style.left, note.style.top] = [`${newX}px`, `${newY}px`];
             }
             
-            // Show transfer UI and check for board hover
-            showDragTransferMessage();
+            // Check for board button hover during single note drag
             checkBoardButtonHover(clientX, clientY);
         }
         
@@ -363,11 +358,8 @@ function setupNote(note) {
             const [maxW, maxH] = [window.innerWidth - parsePosition(note.style.left) + 50, window.innerHeight - parsePosition(note.style.top) + 50];
             const newWidth = Math.min(Math.max(initialW + clientX - startX, minW), maxW);
             const newHeight = Math.min(Math.max(initialH + clientY - startY, minH), maxH);
-            if (window.AnimationBatcher) {
-                window.AnimationBatcher.batchStyleUpdate(note, {
-                    width: `${newWidth}px`,
-                    height: `${newHeight}px`
-                });
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateSize(note, newWidth, newHeight);
             } else {
                 note.style.width = `${newWidth}px`;
                 note.style.height = `${newHeight}px`;

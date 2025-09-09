@@ -174,7 +174,11 @@ function renderEmojiStickers(boardId) {
             textContent: emoji
         });
         stickerElement.dataset.stickerId = id;
-        Object.assign(stickerElement.style, { left: x + 'px', top: y + 'px' });
+        if (window.AnimationUtils) {
+            window.AnimationUtils.updatePosition(stickerElement, x, y);
+        } else {
+            Object.assign(stickerElement.style, { left: x + 'px', top: y + 'px' });
+        }
         
         const deleteButton = Object.assign(document.createElement('button'), {
             className: 'delete-button',

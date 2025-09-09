@@ -115,14 +115,27 @@ const animateNoteToTrash = note => {
     const throwX = trashRect.left - noteRect.left + (trashRect.width / 2) - (noteRect.width / 2);
     const throwY = trashRect.top - noteRect.top;
 
-    note.style.setProperty('--throwX', `${throwX}px`);
-    note.style.setProperty('--throwY', `${throwY}px`);
-    note.style.animation = 'paperCrumble 0.6s ease-in forwards';
-    trashBin.style.animation = 'binShake 0.6s ease-in-out';
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(note, {
+            '--throwX': `${throwX}px`,
+            '--throwY': `${throwY}px`,
+            animation: 'paperCrumble 0.6s ease-in forwards'
+        }, 'high');
+        window.AnimationUtils.updateStyles(trashBin, { animation: 'binShake 0.6s ease-in-out' }, 'high');
+    } else {
+        note.style.setProperty('--throwX', `${throwX}px`);
+        note.style.setProperty('--throwY', `${throwY}px`);
+        note.style.animation = 'paperCrumble 0.6s ease-in forwards';
+        trashBin.style.animation = 'binShake 0.6s ease-in-out';
+    }
 
     setTimeout(() => {
         note.remove();
-        trashBin.style.animation = '';
+        if (window.AnimationUtils) {
+            window.AnimationUtils.updateStyles(trashBin, { animation: '' }, 'normal');
+        } else {
+            trashBin.style.animation = '';
+        }
         saveActiveNotes();
         updateBoardIndicators();
     }, 600);
@@ -161,7 +174,13 @@ const toggleTrashModal = () => {
         modal.style.display = 'block';
         requestAnimationFrame(() => renderDeletedNotes());
     } else {
-        setTimeout(() => modal.style.display = 'none', 300);
+        setTimeout(() => {
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateStyles(modal, { display: 'none' }, 'normal');
+            } else {
+                modal.style.display = 'none';
+            }
+        }, 300);
     }
 };
 
@@ -172,7 +191,11 @@ const toggleTrashModal = () => {
 const renderDeletedNotes = () => {
     const container = $('.deleted-notes-container');
     // Force container to calculate layout first
-    container.style.minHeight = '200px';
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(container, { minHeight: '200px' }, 'normal');
+    } else {
+        container.style.minHeight = '200px';
+    }
     container.innerHTML = deletedNotes.length ? 
         deletedNotes.map((note, i) => `
             <div class="deleted-note" style="background-color: ${note.color || DEFAULT_COLOR}">

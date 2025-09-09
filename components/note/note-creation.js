@@ -269,7 +269,18 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     }
     
     // Apply styling and positioning
-    note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${noteZIndex};`;
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(note, {
+            backgroundColor: color,
+            left: `${x}px`,
+            top: `${y}px`,
+            width: width,
+            height: height,
+            zIndex: noteZIndex.toString()
+        }, 'high');
+    } else {
+        note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${noteZIndex};`;
+    }
     note.dataset.noteId = noteId;
     if (repositioned) { note.dataset.repositioned = 'true'; repositionedNotes.add(noteId); }
     
@@ -298,7 +309,11 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     if (!targetBoard) { console.error(`Board element with ID ${boardId} not found.`); return null; }
     
     targetBoard.appendChild(note);
-    note.style.animation = 'paperPop 0.3s ease-out forwards'; // Entry animation
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(note, { animation: 'paperPop 0.3s ease-out forwards' }, 'high');
+    } else {
+        note.style.animation = 'paperPop 0.3s ease-out forwards'; // Entry animation
+    }
     if (!isRestored) {
         window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
     }

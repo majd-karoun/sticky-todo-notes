@@ -205,7 +205,11 @@ function deleteBoard(boardId) {
   if (notes.length || stickers.length) {
     const trashBin = $(".trash-bin");
     const trashRect = trashBin.getBoundingClientRect();
-    trashBin.style.animation = "binShake 0.5s ease-in-out";
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(trashBin, { animation: "binShake 0.5s ease-in-out" }, 'high');
+    } else {
+        trashBin.style.animation = "binShake 0.5s ease-in-out";
+    }
 
     notes.forEach((note) => {
       const content = $within(note, ".sticky-content");
@@ -228,9 +232,17 @@ function deleteBoard(boardId) {
           noteRect.width / 2,
         trashRect.top - noteRect.top,
       ];
-      note.style.setProperty("--throwX", `${throwX}px`);
-      note.style.setProperty("--throwY", `${throwY}px`);
-      note.style.animation = "paperCrumble 0.5s ease-in forwards";
+      if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(note, {
+          '--throwX': `${throwX}px`,
+          '--throwY': `${throwY}px`,
+          animation: "paperCrumble 0.5s ease-in forwards"
+        }, 'high');
+      } else {
+        note.style.setProperty("--throwX", `${throwX}px`);
+        note.style.setProperty("--throwY", `${throwY}px`);
+        note.style.animation = "paperCrumble 0.5s ease-in forwards";
+      }
     });
 
     stickers.forEach((sticker) => sticker.classList.add("deleting"));
@@ -373,7 +385,11 @@ function continueWithBoardDeletion(boardId) {
       currentBoardId--;
       switchToBoard(currentBoardId);
     }
-    $(".trash-bin").style.animation = "";
+    if (window.AnimationUtils) {
+      window.AnimationUtils.updateStyles($(".trash-bin"), { animation: "" }, 'normal');
+    } else {
+      $(".trash-bin").style.animation = "";
+    }
   }, 350);
 }
 
@@ -404,18 +420,18 @@ function switchToBoard(boardId) {
     const id = parseInt(board.dataset.boardId);
     [
       board.classList.remove("active", "prev", "next"),
-      (board.style.visibility = "hidden"),
+      window.AnimationUtils ? window.AnimationUtils.updateStyles(board, { visibility: "hidden" }, 'high') : (board.style.visibility = "hidden"),
     ];
 
     if (id === currentBoardId) {
-      [board.classList.add("active"), (board.style.visibility = "visible")];
+      [board.classList.add("active"), window.AnimationUtils ? window.AnimationUtils.updateStyles(board, { visibility: "visible" }, 'high') : (board.style.visibility = "visible")];
       Array.from(board.querySelectorAll(".sticky-note"))
         .forEach((note, index) =>
-          note.style.setProperty("--note-index", index),
+          window.AnimationUtils ? window.AnimationUtils.updateStyles(note, { '--note-index': index.toString() }, 'low') : note.style.setProperty("--note-index", index),
         );
       Array.from(board.querySelectorAll(".emoji-sticker"))
         .forEach((sticker, index) =>
-          sticker.style.setProperty("--sticker-index", index),
+          window.AnimationUtils ? window.AnimationUtils.updateStyles(sticker, { '--sticker-index': index.toString() }, 'low') : sticker.style.setProperty("--sticker-index", index),
         );
 
       if (!$within(board, ".board-title-circle")) {

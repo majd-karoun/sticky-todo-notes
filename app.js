@@ -90,7 +90,13 @@ function initializeBoardButtonAnimations() {
         $$('.board-button').forEach(button => {
             button.classList.add('transitions-ready');
             button.offsetHeight; // Trigger reflow
-            requestAnimationFrame(() => button.style.transform = 'scale(1)');
+            requestAnimationFrame(() => {
+                if (window.AnimationUtils) {
+                    window.AnimationUtils.updateStyles(button, { transform: 'scale(1)' }, 'normal');
+                } else {
+                    button.style.transform = 'scale(1)';
+                }
+            });
         });
     }, 100);
 }

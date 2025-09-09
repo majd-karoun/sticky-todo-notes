@@ -96,7 +96,14 @@ function startHoverAnimation() {
         if (note && !note.classList.contains('reverse-animating') && !note.classList.contains('hover-animating')) {
             // Disable text selection during animation
             note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
-                [textarea.style.userSelect, textarea.style.pointerEvents] = ['none', 'none'];
+                if (window.AnimationUtils) {
+                    window.AnimationUtils.updateStyles(textarea, {
+                        userSelect: 'none',
+                        pointerEvents: 'none'
+                    });
+                } else {
+                    [textarea.style.userSelect, textarea.style.pointerEvents] = ['none', 'none'];
+                }
             });
 
             // Calculate the target position relative to the board button
@@ -107,9 +114,17 @@ function startHoverAnimation() {
             ];
 
             // Apply CSS custom properties for animation and start the hover effect
-            note.style.setProperty('--suckX', `${targetX}px`);
-            note.style.setProperty('--suckY', `${targetY}px`);
-            note.style.animation = 'noteSuckHover 0.3s ease-out forwards';
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateStyles(note, {
+                    '--suckX': `${targetX}px`,
+                    '--suckY': `${targetY}px`,
+                    animation: 'noteSuckHover 0.3s ease-out forwards'
+                });
+            } else {
+                note.style.setProperty('--suckX', `${targetX}px`);
+                note.style.setProperty('--suckY', `${targetY}px`);
+                note.style.animation = 'noteSuckHover 0.3s ease-out forwards';
+            }
             note.classList.add('hover-animating');
         }
     });
@@ -123,21 +138,42 @@ function clearHoverAnimations() {
     $$('.hover-animating', true).forEach(note => {
         // Re-enable text selection
         note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
-            textarea.style.removeProperty('user-select');
-            textarea.style.removeProperty('pointer-events');
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateStyles(textarea, {
+                    userSelect: '',
+                    pointerEvents: ''
+                });
+            } else {
+                textarea.style.removeProperty('user-select');
+                textarea.style.removeProperty('pointer-events');
+            }
         });
         
         // Start reverse animation to return to original position
-        note.style.animation = 'noteSuckReverse 0.3s ease-out forwards';
+        if (window.AnimationUtils) {
+            window.AnimationUtils.updateStyles(note, {
+                animation: 'noteSuckReverse 0.3s ease-out forwards'
+            });
+        } else {
+            note.style.animation = 'noteSuckReverse 0.3s ease-out forwards';
+        }
         note.classList.remove('hover-animating');
         note.classList.add('reverse-animating');
         
         // Clean up after animation completes
         setTimeout(() => {
             if (note.classList.contains('reverse-animating')) {
-                [note.style.animation] = ['none'];
-                note.style.removeProperty('--suckX');
-                note.style.removeProperty('--suckY');
+                if (window.AnimationUtils) {
+                    window.AnimationUtils.updateStyles(note, {
+                        animation: 'none',
+                        '--suckX': '',
+                        '--suckY': ''
+                    });
+                } else {
+                    [note.style.animation] = ['none'];
+                    note.style.removeProperty('--suckX');
+                    note.style.removeProperty('--suckY');
+                }
                 note.classList.remove('reverse-animating');
             }
         }, 300);
@@ -216,11 +252,20 @@ function checkBoardButtonDrop() {
                 const originalPos = notesInitialPositions?.find(pos => pos.element === note);
                 if (originalPos) {
                     // Simple animation back to original position
-                    note.style.left = `${originalPos.x}px`;
-                    note.style.top = `${Math.max(60, originalPos.y)}px`;
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updatePosition(note, originalPos.x, Math.max(60, originalPos.y));
+                    } else {
+                        note.style.left = `${originalPos.x}px`;
+                        note.style.top = `${Math.max(60, originalPos.y)}px`;
+                    }
                 } else {
                     // Fallback to the current behavior if no original position is found
-                    note.style.top = `${parseInt(note.style.top || 0) - 250}px`;
+                    const currentTop = parseInt(note.style.top || 0) - 250;
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updateStyles(note, { top: `${currentTop}px` });
+                    } else {
+                        note.style.top = `${currentTop}px`;
+                    }
                 }
             }
         });
@@ -266,7 +311,13 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
 
     // Handle notes already in hover animation state
     if (note.classList.contains('hover-animating')) {
-        note.style.animation = 'noteSuckComplete 0.3s ease-in forwards';
+        if (window.AnimationUtils) {
+            window.AnimationUtils.updateStyles(note, {
+                animation: 'noteSuckComplete 0.3s ease-in forwards'
+            });
+        } else {
+            note.style.animation = 'noteSuckComplete 0.3s ease-in forwards';
+        }
         note.classList.remove('hover-animating');
     } else {
         // Start animation for notes not already animating
@@ -279,16 +330,30 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
             (buttonRect.top - boardRect.top + (buttonRect.height / 2)) - (noteRect.top - boardRect.top) - (noteRect.height / 2)
         ];
 
-        note.style.setProperty('--suckX', `${targetX}px`);
-        note.style.setProperty('--suckY', `${targetY}px`);
-        note.style.animation = 'noteSuckHover 0.3s ease-out forwards';
+        if (window.AnimationUtils) {
+            window.AnimationUtils.updateStyles(note, {
+                '--suckX': `${targetX}px`,
+                '--suckY': `${targetY}px`,
+                animation: 'noteSuckHover 0.3s ease-out forwards'
+            });
+        } else {
+            note.style.setProperty('--suckX', `${targetX}px`);
+            note.style.setProperty('--suckY', `${targetY}px`);
+            note.style.animation = 'noteSuckHover 0.3s ease-out forwards';
+        }
         note.classList.add('hover-animating');
     }
 
     // Complete the suction animation
     setTimeout(() => {
         if (note.classList.contains('hover-animating')) {
-            note.style.animation = 'noteSuckComplete 0.3s ease-in forwards';
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateStyles(note, {
+                    animation: 'noteSuckComplete 0.3s ease-in forwards'
+                });
+            } else {
+                note.style.animation = 'noteSuckComplete 0.3s ease-in forwards';
+            }
             note.classList.remove('hover-animating');
         }
     }, 300);
@@ -297,8 +362,15 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
     setTimeout(() => {
         // Re-enable text interaction
         note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
-            textarea.style.removeProperty('user-select');
-            textarea.style.removeProperty('pointer-events');
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateStyles(textarea, {
+                    userSelect: '',
+                    pointerEvents: ''
+                });
+            } else {
+                textarea.style.removeProperty('user-select');
+                textarea.style.removeProperty('pointer-events');
+            }
         });
 
         // Remove from current board
@@ -308,27 +380,54 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
         const targetBoard = $(`.board[data-board-id="${targetBoardId}"]`);
         if (targetBoard) {
             // Clean up animation properties
-            note.style.animation = '';
-            note.style.removeProperty('--suckX');
-            note.style.removeProperty('--suckY');
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateStyles(note, {
+                    animation: '',
+                    '--suckX': '',
+                    '--suckY': ''
+                });
+            } else {
+                note.style.animation = '';
+                note.style.removeProperty('--suckX');
+                note.style.removeProperty('--suckY');
+            }
 
             // Set position on target board
             if (relativePosition) {
                 // Multi-note transfer - use the actual original positions
                 if (relativePosition.originalX !== undefined && relativePosition.originalY !== undefined) {
-                    [note.style.left, note.style.top] = [`${relativePosition.originalX}px`, `${Math.max(60, relativePosition.originalY)}px`];
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updatePosition(note, relativePosition.originalX, Math.max(60, relativePosition.originalY));
+                    } else {
+                        [note.style.left, note.style.top] = [`${relativePosition.originalX}px`, `${Math.max(60, relativePosition.originalY)}px`];
+                    }
                 } else {
                     // Fallback for legacy offset-based positioning
                     const [baseLeft, baseTop] = [100, 80];
-                    [note.style.left, note.style.top] = [`${baseLeft + (relativePosition.offsetX || 0)}px`, `${Math.max(60, baseTop + (relativePosition.offsetY || 0))}px`];
+                    const newX = baseLeft + (relativePosition.offsetX || 0);
+                    const newY = Math.max(60, baseTop + (relativePosition.offsetY || 0));
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updatePosition(note, newX, newY);
+                    } else {
+                        [note.style.left, note.style.top] = [`${newX}px`, `${newY}px`];
+                    }
                 }
             } else {
                 // Single note transfer - use stored original position or fallback
                 const [originalX, originalY] = [parseFloat(note.dataset.originalX), parseFloat(note.dataset.originalY)];
                 if (!isNaN(originalX) && !isNaN(originalY)) {
-                    [note.style.left, note.style.top] = [`${originalX}px`, `${Math.max(60, originalY)}px`];
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updatePosition(note, originalX, Math.max(60, originalY));
+                    } else {
+                        [note.style.left, note.style.top] = [`${originalX}px`, `${Math.max(60, originalY)}px`];
+                    }
                 } else {
-                    [note.style.left, note.style.top] = [currentLeft, '80px'];
+                    const leftValue = parseFloat(currentLeft) || 100;
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updatePosition(note, leftValue, 80);
+                    } else {
+                        [note.style.left, note.style.top] = [currentLeft, '80px'];
+                    }
                 }
             }
 
@@ -339,7 +438,13 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
 
             // Add to target board with pop animation
             targetBoard.appendChild(note);
-            note.style.animation = 'paperPop 0.3s ease-out forwards';
+            if (window.AnimationUtils) {
+                window.AnimationUtils.updateStyles(note, {
+                    animation: 'paperPop 0.3s ease-out forwards'
+                });
+            } else {
+                note.style.animation = 'paperPop 0.3s ease-out forwards';
+            }
 
             // Update UI and save state
             updateBoardIndicators();

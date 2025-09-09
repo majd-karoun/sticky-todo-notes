@@ -223,7 +223,8 @@ const saveToLocalStorage = (key, data, immediate = false) => {
 
 const saveActiveNotes = (immediate = false) => {
   if (immediate) {
-    window.DebouncedStorage.saveImmediate(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+    window.DebouncedStorage.flush(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`);
+    window.DebouncedStorage.save(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
   } else {
     window.DebouncedStorage.save(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
   }
@@ -290,14 +291,28 @@ const setupTextareaEvents = () => {
 
   textarea.addEventListener("focus", () => {
     updateHint();
-    textarea.style.height = "50px";
-    requestAnimationFrame(() => (textarea.style.height = "200px"));
+    if (window.AnimationUtils) {
+      window.AnimationUtils.updateStyles(textarea, { height: "50px" });
+      requestAnimationFrame(() => {
+        window.AnimationUtils.updateStyles(textarea, { height: "200px" });
+      });
+    } else {
+      textarea.style.height = "50px";
+      requestAnimationFrame(() => (textarea.style.height = "200px"));
+    }
     textarea.addEventListener("input", updateHint);
   });
   textarea.addEventListener("blur", () => {
     updateShortcutIconDisplay();
-    textarea.style.height = "200px";
-    requestAnimationFrame(() => (textarea.style.height = "50px"));
+    if (window.AnimationUtils) {
+      window.AnimationUtils.updateStyles(textarea, { height: "200px" });
+      requestAnimationFrame(() => {
+        window.AnimationUtils.updateStyles(textarea, { height: "50px" });
+      });
+    } else {
+      textarea.style.height = "200px";
+      requestAnimationFrame(() => (textarea.style.height = "50px"));
+    }
     textarea.removeEventListener("input", updateHint);
   });
   document.addEventListener("mousedown", (e) => {
@@ -422,12 +437,20 @@ const loadSavedData = () => {
                 createdNote.dataset.noteId = note.noteId;
                 // Apply saved z-index from the z-index management system
                 if (noteZIndexes[note.noteId]) {
-                  createdNote.style.zIndex = noteZIndexes[note.noteId];
+                  if (window.AnimationUtils) {
+                    window.AnimationUtils.updateStyles(createdNote, { zIndex: noteZIndexes[note.noteId].toString() });
+                  } else {
+                    createdNote.style.zIndex = noteZIndexes[note.noteId];
+                  }
                   if (noteZIndexes[note.noteId] > globalZIndex) {
                     globalZIndex = noteZIndexes[note.noteId];
                   }
                 } else if (note.zIndex && !isNaN(parseInt(note.zIndex))) {
-                  createdNote.style.zIndex = note.zIndex;
+                  if (window.AnimationUtils) {
+                    window.AnimationUtils.updateStyles(createdNote, { zIndex: note.zIndex.toString() });
+                  } else {
+                    createdNote.style.zIndex = note.zIndex;
+                  }
                   noteZIndexes[note.noteId] = parseInt(note.zIndex);
                   if (parseInt(note.zIndex) > globalZIndex) {
                     globalZIndex = parseInt(note.zIndex);
@@ -473,7 +496,11 @@ const getNextZIndex = () => ++globalZIndex;
  * @param {Element} noteElement - The note element to bring to front
  */
 const bringNoteToFront = (noteElement) => {
-  noteElement.style.zIndex = getNextZIndex();
+  if (window.AnimationUtils) {
+    window.AnimationUtils.updateStyles(noteElement, { zIndex: getNextZIndex().toString() });
+  } else {
+    noteElement.style.zIndex = getNextZIndex();
+  }
   const noteId = noteElement.dataset.noteId;
   if (noteId) ((noteZIndexes[noteId] = globalZIndex), saveNoteZIndexes());
 };
@@ -510,5 +537,9 @@ const loadNoteZIndexes = () => {
 const applyNoteZIndex = (noteElement) => {
   const noteId = noteElement.dataset.noteId;
   if (noteId && noteZIndexes[noteId])
-    noteElement.style.zIndex = noteZIndexes[noteId];
+    if (window.AnimationUtils) {
+      window.AnimationUtils.updateStyles(noteElement, { zIndex: noteZIndexes[noteId].toString() });
+    } else {
+      noteElement.style.zIndex = noteZIndexes[noteId];
+    }
 };

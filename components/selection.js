@@ -63,7 +63,17 @@ function startSelection(e) {
     window.selectionStartX = e.clientX;
     window.selectionStartY = e.clientY;
     document.body.classList.add('selecting');
-    selectionBox.style.cssText = `left:${window.selectionStartX}px; top:${window.selectionStartY}px; width:0; height:0; display:block;`;
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(selectionBox, {
+            left: `${window.selectionStartX}px`,
+            top: `${window.selectionStartY}px`,
+            width: '0',
+            height: '0',
+            display: 'block'
+        });
+    } else {
+        selectionBox.style.cssText = `left:${window.selectionStartX}px; top:${window.selectionStartY}px; width:0; height:0; display:block;`;
+    }
 }
 
 /**
@@ -102,7 +112,11 @@ const endSelection = (e) => {
     if (!window.isSelecting) return;
     window.isSelecting = false;
     document.body.classList.remove('selecting');
-    selectionBox.style.display = 'none';
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(selectionBox, { display: 'none' });
+    } else {
+        selectionBox.style.display = 'none';
+    }
 };
 
 /**
