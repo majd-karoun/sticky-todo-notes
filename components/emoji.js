@@ -46,7 +46,7 @@ function createEmojiSticker(emoji) {
     if (!activeBoard) return;
     
     const boardId = activeBoard.dataset.boardId;
-    if (getEmojiCount(boardId) >= 1000) return showEmojiLimitMessage();
+    if (getEmojiCount(boardId) >= 10) return showEmojiLimitMessage();
     
     const stickerId = generateStickerId(), boardRect = activeBoard.getBoundingClientRect();
     const [maxX, maxY, minY] = [boardRect.width - 120, boardRect.height * 0.8 - 120, 20];
