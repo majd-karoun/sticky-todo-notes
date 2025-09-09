@@ -1,32 +1,20 @@
-/**
- * NOTE CREATION MODULE
- * Handles creation, positioning, and setup of sticky notes with intelligent positioning
- * for different board patterns (weekdays, days, regular free-form)
- */
+// Global state
+let repositionedNotes = new Set();
 
-// Global state for note management
-let noteColumns = {},
-  repositionedNotes = new Set();
-
-// Utility functions
+// Utils
 const generateNoteId = () =>
   `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-const getRandomOffset = () => Math.random() * 40 - 20; // Random offset for natural positioning
+const getRandomOffset = () => Math.random() * 40 - 20;
 const getDayColumnIndex = (date = getCurrentDate()) =>
-  date.getDay() === 0 ? 0 : date.getDay() - 1; // Convert Sunday=0 to weekday format
+  date.getDay() === 0 ? 0 : date.getDay() - 1;
 
-/**
- * Shows temporary message when note limits are reached
- * @param {string} message - Message to display to user
- */
 function showNoteLimitMessage(message) {
-  const limitMessage = document.getElementById("noteLimitMessage");
-  const textElement = limitMessage?.querySelector(".transfer-text");
-  if (textElement) textElement.textContent = message;
-  if (limitMessage) {
-    limitMessage.classList.add("visible");
-    setTimeout(() => limitMessage.classList.remove("visible"), 3000);
-  }
+  const el = document.getElementById("noteLimitMessage");
+  if (!el) return;
+  const text = el.querySelector(".transfer-text");
+  if (text) text.textContent = message;
+  el.classList.add("visible");
+  setTimeout(() => el.classList.remove("visible"), 3000);
 }
 
 /**
@@ -267,7 +255,7 @@ function addNote() {
     false,
     currentBoardId,
   );
-  
+
   // Update board state and clean up
   lastNotePositions[currentBoardId] = { x: positionX, y: positionY };
   lastNoteColors[currentBoardId] = lastColor;
@@ -288,20 +276,6 @@ function addNote() {
   updateBoardIndicators();
 }
 
-/**
- * Creates a new sticky note DOM element with all necessary components
- * @param {string} text - The note content (HTML allowed)
- * @param {string} color - Background color for the note
- * @param {number} x - X position in pixels
- * @param {number} y - Y position in pixels
- * @param {boolean} isRestored - Whether this is being restored from storage
- * @param {string} width - CSS width value
- * @param {string} height - CSS height value
- * @param {boolean} isBold - Whether text should be bold
- * @param {number} boardId - Target board ID
- * @param {boolean} repositioned - Whether note has been moved
- * @returns {Element} The created note element
- */
 function createNote(
   text,
   color,
@@ -316,99 +290,57 @@ function createNote(
 ) {
   const note = document.createElement("div");
   const noteId = generateNoteId();
+  const zIndex = getNextZIndex();
 
-  // Build note structure with content, controls, and resize handle
   note.className = "sticky-note";
-  note.innerHTML = `<div class="sticky-content ${isBold ? "bold" : ""}" contenteditable="true">${text}</div>
-        <div class="note-controls">
-            <div class="color-button" style="background-color: ${color}">
-                <div class="color-palette">${colors.map((c) => `<div class="color-option" style="background-color: ${c}" onclick="changeNoteColor(this, '${c}')"></div>`).join("")}</div>
-            </div>
-            <button class="bold-toggle ${isBold ? "active" : ""}" onclick="toggleBold(this)">B</button>
-            <button class="done-button" onclick="markAsDone(this.closest('.sticky-note'))">✓</button>
-        </div>
-        <div class="resize-handle"></div>`;
+  note.innerHTML = `<div class="sticky-content ${isBold ? "bold" : ""}" contenteditable="true">${text}</div><div class="note-controls"><div class="color-button" style="background-color: ${color}"><div class="color-palette">${colors.map((c) => `<div class="color-option" style="background-color: ${c}" onclick="changeNoteColor(this, '${c}')"></div>`).join("")}</div></div><button class="bold-toggle ${isBold ? "active" : ""}" onclick="toggleBold(this)">B</button><button class="done-button" onclick="markAsDone(this.closest('.sticky-note'))">✓</button></div><div class="resize-handle"></div>`;
 
-  const noteZIndex = getNextZIndex();
-
-  // Apply styles immediately to ensure they're available for saving
-  note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${noteZIndex};`;
-
-  // Set note metadata and track repositioning
+  note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${zIndex};`;
   note.dataset.noteId = noteId;
+
   if (repositioned) {
     note.dataset.repositioned = "true";
     repositionedNotes.add(noteId);
   }
 
-  // Store z-index for layering management
-  noteZIndexes[noteId] = noteZIndex;
+  noteZIndexes[noteId] = zIndex;
   saveNoteZIndexes();
 
-  // Add click handler to bring note to front (avoid triggering on controls)
-  const clickHandler = (e) => {
+  note.addEventListener("click", (e) => {
     if (
       !e.target.closest(
         '.note-controls, .sticky-content[contenteditable="true"]',
       )
-    ) {
+    )
       bringNoteToFront(note);
-    }
-  };
-  note.addEventListener("click", clickHandler);
-  note._eventCleanup = () => note.removeEventListener("click", clickHandler);
+  });
 
-  // Setup interaction handlers (drag, resize, edit)
   setupNote(note);
 
-  // Add to target board
-  const targetBoard = $(`.board[data-board-id="${boardId}"]`);
-  if (!targetBoard) {
-    console.error(`Board element with ID ${boardId} not found.`);
-    return null;
-  }
+  const board = $(`.board[data-board-id="${boardId}"]`);
+  if (!board) return null;
 
-  targetBoard.appendChild(note);
-  
-  // Apply entry animation
-  if (window.AnimationUtils) {
-    window.AnimationUtils.updateStyles(
-      note,
-      { animation: "paperPop 0.3s ease-out forwards" },
-      "high",
-    );
-  } else {
-    note.style.animation = "paperPop 0.3s ease-out forwards";
-  }
+  board.appendChild(note);
+  note.style.animation = "paperPop 0.3s ease-out forwards";
 
-  // Save to storage if this is a new note (not restored from storage)
-  if (!isRestored) {
+  if (!isRestored)
     window.DebouncedStorage.saveHigh(
       `${ACTIVE_NOTES_KEY}_board_${currentBoardId}`,
       getNotesData(),
     );
-  }
   return note;
 }
 
 function changeNoteColor(option, color) {
   event.stopPropagation();
-
   const note = option.closest(".sticky-note");
-  const notesToChange = note.classList.contains("selected")
+  const notes = note.classList.contains("selected")
     ? $$(".sticky-note.selected")
     : [note];
 
-  notesToChange.forEach((n) => {
-    const colorButton = n.querySelector(".color-button");
-    n.classList.add("color-transition");
-    colorButton.classList.add("color-transition");
+  notes.forEach((n) => {
     n.style.backgroundColor = color;
-    colorButton.style.backgroundColor = color;
-    setTimeout(() => {
-      n.classList.remove("color-transition");
-      colorButton.classList.remove("color-transition");
-    }, 300);
+    n.querySelector(".color-button").style.backgroundColor = color;
   });
 
   lastNoteColors[currentBoardId] = color;
@@ -430,8 +362,8 @@ const toggleBold = (button) => {
   );
 };
 
-// Keyboard shortcut handling
-const shortcutIcon =
+// Keyboard shortcut
+const icon =
   $("#shortcutIcon") ||
   $(".textarea-container").appendChild(
     Object.assign(document.createElement("div"), {
@@ -439,13 +371,8 @@ const shortcutIcon =
       id: "shortcutIcon",
     }),
   );
-
-const updateShortcutIcon = () => {
-  shortcutIcon.textContent =
-    navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "⌘" : "Ctrl";
-};
-
-updateShortcutIcon();
+icon.textContent =
+  navigator.platform.toUpperCase().indexOf("MAC") >= 0 ? "⌘" : "Ctrl";
 
 $(".note-input textarea").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && (e.shiftKey || e.metaKey || e.ctrlKey)) {

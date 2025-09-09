@@ -248,31 +248,25 @@ function checkBoardButtonDrop() {
     if (targetBoardId === currentBoardId) {
         notesToMove.forEach(note => {
             if (note) {
-                // Get target position first
+                // Use the original position if available in notesInitialPositions
                 const originalPos = notesInitialPositions?.find(pos => pos.element === note);
-                const targetX = originalPos ? originalPos.x : parseFloat(note.style.left) || 100;
-                const targetY = originalPos ? Math.max(60, originalPos.y) : parseInt(note.style.top || 0) - 250;
-                
-                // Clear any ongoing hover animations and create smooth single motion
-                if (note.classList.contains('hover-animating')) {
-                    note.classList.remove('hover-animating');
-                    // Clear existing animation properties
-                    note.style.removeProperty('--suckX');
-                    note.style.removeProperty('--suckY');
-                    note.style.animation = 'none';
+                if (originalPos) {
+                    // Simple animation back to original position
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updatePosition(note, originalPos.x, Math.max(60, originalPos.y));
+                    } else {
+                        note.style.left = `${originalPos.x}px`;
+                        note.style.top = `${Math.max(60, originalPos.y)}px`;
+                    }
+                } else {
+                    // Fallback to the current behavior if no original position is found
+                    const currentTop = parseInt(note.style.top || 0) - 250;
+                    if (window.AnimationUtils) {
+                        window.AnimationUtils.updateStyles(note, { top: `${currentTop}px` });
+                    } else {
+                        note.style.top = `${currentTop}px`;
+                    }
                 }
-                
-                // Apply single smooth transition to target position
-                note.style.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.2s ease-out';
-                note.style.left = `${targetX}px`;
-                note.style.top = `${targetY}px`;
-                note.style.transform = 'scale(1)'; // Ensure note stays visible
-                
-                // Clean up transition after completion
-                setTimeout(() => {
-                    note.style.transition = '';
-                    note.style.transform = '';
-                }, 200);
             }
         });
         return { moved: false };

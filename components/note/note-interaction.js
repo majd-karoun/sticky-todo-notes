@@ -1,500 +1,193 @@
 /**
- * NOTE INTERACTION MODULE
- * Handles all user interactions with sticky notes including:
- * - Drag and drop functionality
- * - Resizing notes
- * - Content editing (double-click to edit)
- * - Color palette management
- * - Z-index layering and hover effects
- * - Multi-note selection and movement
+ * NOTE INTERACTION MODULE - Simplified
+ * Core functionality: drag, resize, edit, color palette
  */
 
-// Global state variables for interaction management
-let hoveredBoardButton = null, dragTransferMessageVisible = false, hoverDetectionDisabled = false, isDragInProgress = false;
+// Global state
+let isDragInProgress = false;
+let hoveredBoardButton = null;
+let dragTransferMessageVisible = false;
+let hoverDetectionDisabled = false;
 
-// Global drag handlers (added once)
-let globalHandlersAdded = false;
-
-const globalMouseMove = (e) => {
-    if (window.activeNote && window.activeNote._moveHandler) {
-        window.activeNote._moveHandler(e);
-    }
-};
-
-const globalMouseUp = (e) => {
-    if (window.activeNote && window.activeNote._endHandler) {
-        window.activeNote._endHandler(e);
-        window.activeNote = null; // Clear active note
-    }
-};
-
-if (!globalHandlersAdded) {
-    document.addEventListener('mousemove', globalMouseMove);
-    document.addEventListener('mouseup', globalMouseUp);
-    globalHandlersAdded = true;
-}
-
-/**
- * Sets up all interaction handlers for a sticky note
- * @param {Element} note - The note element to setup interactions for
- */
 function setupNote(note) {
-    // Local state for this note's interactions
-    let isDragging = false, isResizing = false, isEditing = false, startX, startY, initialX, initialY, initialW, initialH, holdTimer;
-    const [colorButton, colorPalette, content] = ['.color-button', '.color-palette', '.sticky-content'].map(s => note.querySelector(s));
-    const saveContent = () => saveActiveNotes();
-    
-    // Store event handlers for cleanup
-    const eventHandlers = [];
-    
-    // Content event handlers
-    const contentBlurHandler = () => saveActiveNotes();
-    const contentInputHandler = () => saveActiveNotes();
-    content.addEventListener('blur', contentBlurHandler);
-    content.addEventListener('input', contentInputHandler);
-    eventHandlers.push(
-        { element: content, event: 'blur', handler: contentBlurHandler },
-        { element: content, event: 'input', handler: contentInputHandler }
-    );
+  const content = note.querySelector(".sticky-content");
+  const colorButton = note.querySelector(".color-button");
+  const colorPalette = note.querySelector(".color-palette");
 
-    /**
-     * Cancels editing mode when clicking outside the note content
-     * @param {Event} e - The click event
-     */
-    const cancelEditing = e => {
-        if (isEditing && !content.contains(e.target)) {
-            [isEditing, content.contentEditable] = [false, "false"];
-            content.blur();
-            document.removeEventListener('click', cancelEditing);
-        }
-    };
+  let isDragging = false;
+  let isResizing = false;
+  let startX, startY, initialX, initialY, initialW, initialH;
 
-    /**
-     * CONTENT EDITING SETUP
-     * Double-click to enter edit mode with proper cursor positioning
-     */
-    const contentDblClickHandler = e => {
-        [isEditing, content.contentEditable] = [true, "true"];
-        setTimeout(() => {
-            const [range, selection] = [document.createRange(), window.getSelection()];
-            
-            // Try modern browser API first
-            if (document.caretRangeFromPoint) {
-                const clickRange = document.caretRangeFromPoint(e.clientX, e.clientY);
-                if (clickRange) {
-                    selection.removeAllRanges();
-                    selection.addRange(clickRange);
-                }
-            } else if (document.caretPositionFromPoint) {
-                // Fallback for older browsers
-                const caretPos = document.caretPositionFromPoint(e.clientX, e.clientY);
-                if (caretPos) {
-                    range.setStart(caretPos.offsetNode, caretPos.offset);
-                    range.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                }
-            }
-            content.focus();
-        }, 0);
-        setTimeout(() => {
-            document.addEventListener('click', cancelEditing);
-        }, 0);
-        e.stopPropagation();
-    };
-    content.addEventListener('dblclick', contentDblClickHandler);
-    eventHandlers.push({ element: content, event: 'dblclick', handler: contentDblClickHandler });
+  // Content editing
+  content.addEventListener("input", saveActiveNotes);
+  content.addEventListener("blur", saveActiveNotes);
 
-    /**
-     * Z-INDEX HOVER MANAGEMENT
-     * Temporarily brings notes to front on hover for better visibility
-     */
-    let originalZIndex = null;
-    let isHovering = false;
-    
-    const mouseEnterHandler = () => {
-        if (!isDragging && !isResizing) {
-            isHovering = true;
-            originalZIndex = note.style.zIndex || '1';
-            AnimationUtils.updateZIndex(note, getNextZIndex()); // Bring to front temporarily
-        }
-    };
-    
-    const mouseLeaveHandler = () => {
-        if (!isDragging && !isResizing && originalZIndex !== null) {
-            isHovering = false;
-            AnimationUtils.updateZIndex(note, getNextZIndex()); // Restore original z-index
-            originalZIndex = null;
-        }
-    };
-    
-    note.addEventListener('mouseenter', mouseEnterHandler);
-    note.addEventListener('mouseleave', mouseLeaveHandler);
-    eventHandlers.push(
-        { element: note, event: 'mouseenter', handler: mouseEnterHandler },
-        { element: note, event: 'mouseleave', handler: mouseLeaveHandler }
-    );
+  content.addEventListener("dblclick", (e) => {
+    content.contentEditable = "true";
+    content.focus();
+    e.stopPropagation();
+  });
 
-    /**
-     * CONTENT EDITING KEYBOARD HANDLERS
-     */
-    const contentBlurHandler2 = () => content.contentEditable = "false";
-    const contentKeydownHandler = e => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (e.shiftKey) { 
-                // Shift+Enter exits edit mode
-                content.contentEditable = "false"; 
-                saveContent(); 
-            } else {
-                // Regular Enter adds line break
-                const [selection, range] = [window.getSelection(), window.getSelection().getRangeAt(0)];
-                const newLine = Object.assign(document.createElement('span'), { 
-                    innerHTML: '<br>', 
-                    style: { fontFamily: "'Comic Neue', cursive" }
-                });
-                range.deleteContents();
-                range.insertNode(newLine);
-                range.setStartAfter(newLine);
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
-    };
-    
-    content.addEventListener('blur', contentBlurHandler2);
-    content.addEventListener('keydown', contentKeydownHandler);
-    eventHandlers.push(
-        { element: content, event: 'blur', handler: contentBlurHandler2 },
-        { element: content, event: 'keydown', handler: contentKeydownHandler }
-    );
+  content.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.shiftKey) {
+      content.contentEditable = "false";
+      saveActiveNotes();
+    }
+  });
 
-    /**
-     * Updates the last known position for this note's board
-     */
-    const updateLastPosition = () => {
-        const rect = note.getBoundingClientRect();
-        lastNotePositions[currentBoardId] = { x: rect.left, y: rect.top };
-    };
+  // Color palette
+  let paletteTimeout;
 
-    /**
-     * COLOR PALETTE MANAGEMENT
-     * Handles showing/hiding color palettes with smart hover detection
-     */
-    let hoverTimeout = null;
-    
-    // Register palette hover detection with consolidated event system
-    const paletteHoverHandler = (e) => {
-        const [mouseX, mouseY] = [e.clientX, e.clientY];
-        
-        // Only check if this note's palette is visible
-        if (!colorPalette.classList.contains('visible')) return;
-        
-        const [rect, buttonRect] = [colorPalette.getBoundingClientRect(), colorButton.getBoundingClientRect()];
-        
-        // Check if mouse is near palette or over button (with 20px buffer)
-        const [isNearPalette, isOverButton] = [
-            mouseX >= rect.left - 20 && mouseX <= rect.right + 20 && mouseY >= rect.top - 20 && mouseY <= rect.bottom + 20,
-            mouseX >= buttonRect.left && mouseX <= buttonRect.right && mouseY >= buttonRect.top && mouseY <= buttonRect.bottom
-        ];
-        
-        if (isNearPalette || isOverButton) {
-            clearTimeout(hoverTimeout);
-        } else {
-            hidePalette();
-        }
-    };
-    
-    // Register palette hover handler
-    document.addEventListener('mousemove', paletteHoverHandler);
-
-    /**
-     * Shows the color palette for this note
-     * Hides other visible palettes to prevent overlap
-     */
-    const showPalette = () => {
-        clearTimeout(hoverTimeout);
-        colorPalette.classList.remove('closing');
-        colorPalette.classList.add('visible');
-        
-        // Hide other palettes
-        $$('.color-palette').forEach(p => {
-            if (p !== colorPalette) {
-                p.classList.add('closing');
-                setTimeout(() => p.classList.remove('visible', 'closing'), 180);
-            }
-        });
-    };
-
-    /**
-     * Hides the color palette with delay for better UX
-     * Only hides if mouse is truly outside the interactive area
-     */
-    const hidePalette = () => {
-        clearTimeout(hoverTimeout);
-        hoverTimeout = setTimeout(() => {
-            colorPalette.classList.add('closing');
-            setTimeout(() => colorPalette.classList.contains('closing') && colorPalette.classList.remove('visible', 'closing'), 180);
-        }, 50);
-    };
-
-    // Color button click handler
-    const colorButtonClickHandler = e => {
-        e.stopPropagation();
-        colorPalette.classList.contains('visible') ? hidePalette() : showPalette();
-    };
-    
-    // Prevent palette from closing when clicking on color options
-    const paletteClickHandler = e => {
-        if (e.target.classList.contains('color-option')) {
-            e.stopPropagation();
-        }
-    };
-    colorButton.addEventListener('click', colorButtonClickHandler);
-    colorPalette.addEventListener('click', paletteClickHandler);
-    eventHandlers.push(
-        { element: colorButton, event: 'click', handler: colorButtonClickHandler },
-        { element: colorPalette, event: 'click', handler: paletteClickHandler }
-    );
-    
-    // Palette hover handlers
-    const paletteMouseEnterHandler = () => clearTimeout(hoverTimeout);
-    const paletteMouseLeaveHandler = () => hidePalette();
-    colorPalette.addEventListener('mouseenter', paletteMouseEnterHandler);
-    colorPalette.addEventListener('mouseleave', paletteMouseLeaveHandler);
-    eventHandlers.push(
-        { element: colorPalette, event: 'mouseenter', handler: paletteMouseEnterHandler },
-        { element: colorPalette, event: 'mouseleave', handler: paletteMouseLeaveHandler }
-    );
-
-    /**
-     * DRAG AND DROP INTERACTION HANDLERS
-     * Handles the start of drag/resize interactions
-     * @param {Event} e - The mouse event
-     * @param {number} clientX - X coordinate of the interaction
-     * @param {number} clientY - Y coordinate of the interaction
-     */
-    const handleInteractionStart = (e, clientX, clientY) => {
-        // Ignore interactions on color palette and done button
-        if (e.target.closest('.color-palette, .done-button')) return;
-        
-        // Handle multi-note selection movement
-        if (selectedNotes.includes(note) && selectedNotes.length > 1) { handleSelectionMove(e); return; }
-        
-        // Selection management
-        if (!e.shiftKey) clearSelection();
-        else if (!selectedNotes.includes(note)) { selectedNotes.push(note); note.classList.add('selected'); }
-
-        e.preventDefault();
-        [document.body.style.userSelect, document.body.style.webkitUserSelect] = ['none', 'none'];
-        
-        // Z-index management - bring note to front
-        if (!isHovering) {
-            AnimationUtils.updateZIndex(note, getNextZIndex());
-        } else {
-            // Update the stored original z-index for when hover ends
-            originalZIndex = getNextZIndex();
-        }
-        
-        [startX, startY] = [clientX, clientY];
-        
-        // Determine interaction type: resize or drag
-        if (e.target.closest('.resize-handle')) {
-            [isResizing, initialW, initialH] = [true, note.offsetWidth, note.offsetHeight];
-        } else {
-            [initialX, initialY] = [parsePosition(note.style.left), parsePosition(note.style.top)];
-            [note.dataset.originalX, note.dataset.originalY] = [initialX, initialY];
-            holdTimer = setTimeout(() => isDragging = true, 150); // Delay before drag starts
-        }
-        
-        // Set active note for drag operations
-        window.activeNote = note;
-    };
-
-    /**
-     * Handles movement during drag/resize operations
-     * @param {Event} e - Mouse event
-     */
-    const handleInteractionMove = (e) => {
-        if (!window.activeNote || window.activeNote !== note) return;
-        
-        const [clientX, clientY] = [e.clientX, e.clientY];
-        
-        // Cancel hold timer if significant movement detected and start dragging immediately
-        if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) {
-            clearTimeout(holdTimer);
-            if (!isDragging && !isResizing) {
-                isDragging = true;
-            }
-        }
-
-        if (isDragging) {
-            // Set drag state for visual feedback
-            if (!window.isDragInProgress) {
-                window.isDragInProgress = true;
-                document.body.classList.add('drag-in-progress');
-            }
-            
-            // Calculate new position with boundary constraints
-            const padding = 5;
-            let [newX, newY] = [
-                Math.min(Math.max(initialX + clientX - startX, -padding), window.innerWidth - (note.offsetWidth / 4)),
-                Math.min(Math.max(initialY + clientY - startY, -padding), window.innerHeight - (note.offsetHeight / 4))
-            ];
-            if (window.AnimationUtils) {
-                window.AnimationUtils.updatePosition(note, newX, newY);
-            } else {
-                [note.style.left, note.style.top] = [`${newX}px`, `${newY}px`];
-            }
-            
-            // Check for board button hover during single note drag
-            checkBoardButtonHover(clientX, clientY);
-        }
-        
-        if (isResizing) {
-            // Handle note resizing with min/max constraints
-            const [minW, minH] = [150, 150];
-            const [maxW, maxH] = [window.innerWidth - parsePosition(note.style.left) + 50, window.innerHeight - parsePosition(note.style.top) + 50];
-            const newWidth = Math.min(Math.max(initialW + clientX - startX, minW), maxW);
-            const newHeight = Math.min(Math.max(initialH + clientY - startY, minH), maxH);
-            if (window.AnimationUtils) {
-                window.AnimationUtils.updateSize(note, newWidth, newHeight);
-            } else {
-                note.style.width = `${newWidth}px`;
-                note.style.height = `${newHeight}px`;
-            }
-        }
-    };
-
-    /**
-     * Handles the end of drag/resize interactions
-     * Processes drop targets, collision detection, and cleanup
-     */
-    const handleInteractionEnd = (e) => {
-        clearTimeout(holdTimer);
-        [document.body.style.userSelect, document.body.style.webkitUserSelect] = ['', ''];
-
-        if (isDragging || isResizing) {
-            if (isDragging) {
-                hideDragTransferMessage();
-                
-                // Check if note was dropped on a board button for transfer
-                const dropResult = checkBoardButtonDrop();
-                if (!dropResult.moved) {
-                    // Note stayed on current board - handle positioning and collisions
-                    updateLastPosition();
-                    checkTrashCollision(note);
-                    checkBottomCornerCollision(note);
-                    
-                    // Update note metadata
-                    const noteId = note.dataset.noteId || generateNoteId();
-                    [note.dataset.noteId, note.dataset.repositioned] = [noteId, 'true'];
-                    repositionedNotes.add(noteId);
-                    lastNotePositions[currentBoardId] = { x: parsePosition(note.style.left), y: parsePosition(note.style.top) };
-                    lastNoteColors[currentBoardId] = note.style.backgroundColor;
-                }
-            }
-            // Use debounced storage for better performance during frequent drag operations
-            window.DebouncedStorage.save(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-            window.isDragInProgress = false;
-            document.body.classList.remove('drag-in-progress');
-        }
-        
-        // Always reset drag state on mouse up
-        isDragging = false;
-        isResizing = false;
-    };
-
-    /**
-     * EVENT LISTENER SETUP
-     * Attach mouse event handlers for drag/resize functionality
-     */
-    const noteMouseDownHandler = e => handleInteractionStart(e, e.clientX, e.clientY);
-    
-    note.addEventListener('mousedown', noteMouseDownHandler);
-    
-    // Store handlers on note for global system
-    note._moveHandler = handleInteractionMove;
-    note._endHandler = handleInteractionEnd;
-    
-    eventHandlers.push(
-        { element: note, event: 'mousedown', handler: noteMouseDownHandler }
-    );
-    
-    // Store cleanup function on the note element for later removal
-    if (note._eventCleanup) {
-        // Merge with existing cleanup function
-        const existingCleanup = note._eventCleanup;
-        note._eventCleanup = () => {
-            existingCleanup();
-            eventHandlers.forEach(({ element, event, handler }) => {
-                element.removeEventListener(event, handler);
-            });
-            // Cleanup global handlers
-            document.removeEventListener('mousemove', handleInteractionMove);
-            document.removeEventListener('mouseup', handleInteractionEnd);
-            document.removeEventListener('mousemove', paletteHoverHandler);
-        };
+  colorButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (colorPalette.classList.contains("visible")) {
+      colorPalette.classList.remove("visible");
     } else {
-        note._eventCleanup = () => {
-            eventHandlers.forEach(({ element, event, handler }) => {
-                element.removeEventListener(event, handler);
-            });
-            // Cleanup global handlers
-            document.removeEventListener('mousemove', handleInteractionMove);
-            document.removeEventListener('mouseup', handleInteractionEnd);
-            document.removeEventListener('mousemove', paletteHoverHandler);
+      $$(".color-palette").forEach((p) => p.classList.remove("visible"));
+      colorPalette.classList.add("visible");
+    }
+  });
+
+  colorPalette.addEventListener("mouseenter", () =>
+    clearTimeout(paletteTimeout),
+  );
+  colorPalette.addEventListener("mouseleave", () => {
+    paletteTimeout = setTimeout(
+      () => colorPalette.classList.remove("visible"),
+      100,
+    );
+  });
+
+  // Drag and resize - old system
+  note.addEventListener("mousedown", (e) => {
+    if (e.target.closest(".color-palette")) return;
+
+    if (selectedNotes.includes(note) && selectedNotes.length > 1) {
+      return handleSelectionMove(e);
+    }
+
+    if (!e.shiftKey) {
+      clearSelection();
+    } else if (!selectedNotes.includes(note)) {
+      selectedNotes.push(note);
+      note.classList.add("selected");
+    }
+
+    e.preventDefault();
+    document.body.style.userSelect = "none";
+
+    startX = e.clientX;
+    startY = e.clientY;
+
+    if (e.target.closest(".resize-handle")) {
+      isResizing = true;
+      initialW = note.offsetWidth;
+      initialH = note.offsetHeight;
+    } else {
+      isDragging = true;
+      initialX = parsePosition(note.style.left);
+      initialY = parsePosition(note.style.top);
+      // Set active note for transfer system
+      window.activeNote = note;
+    }
+
+    // Add event listeners directly to document
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleEnd);
+  });
+
+  function handleMove(e) {
+    if (isDragging) {
+      if (!isDragInProgress) {
+        isDragInProgress = true;
+        document.body.classList.add("drag-in-progress");
+      }
+
+      const newX = Math.max(0, initialX + e.clientX - startX);
+      const newY = Math.max(0, initialY + e.clientY - startY);
+
+      note.style.left = newX + "px";
+      note.style.top = newY + "px";
+
+      checkBoardButtonHover(e.clientX, e.clientY);
+    }
+
+    if (isResizing) {
+      const newWidth = Math.max(150, initialW + e.clientX - startX);
+      const newHeight = Math.max(150, initialH + e.clientY - startY);
+
+      note.style.width = newWidth + "px";
+      note.style.height = newHeight + "px";
+    }
+  }
+
+  function handleEnd(e) {
+    // Remove event listeners
+    document.removeEventListener("mousemove", handleMove);
+    document.removeEventListener("mouseup", handleEnd);
+    
+    document.body.style.userSelect = "";
+
+    if (isDragging) {
+      hideDragTransferMessage();
+      const dropResult = checkBoardButtonDrop();
+
+      if (!dropResult.moved) {
+        checkTrashCollision(note);
+        checkBottomCornerCollision(note);
+
+        const noteId = note.dataset.noteId || generateNoteId();
+        note.dataset.noteId = noteId;
+        note.dataset.repositioned = "true";
+        repositionedNotes.add(noteId);
+
+        lastNotePositions[currentBoardId] = {
+          x: parsePosition(note.style.left),
+          y: parsePosition(note.style.top),
         };
+        lastNoteColors[currentBoardId] = note.style.backgroundColor;
+      }
+
+      isDragInProgress = false;
+      document.body.classList.remove("drag-in-progress");
     }
+
+    // Clear active note
+    window.activeNote = null;
+
+    // Save after both drag and resize operations
+    if (isDragging || isResizing) {
+      window.DebouncedStorage.save(
+        `${ACTIVE_NOTES_KEY}_board_${currentBoardId}`,
+        getNotesData(),
+      );
+    }
+
+    isDragging = false;
+    isResizing = false;
+  }
 }
 
-/**
- * GLOBAL COLOR PALETTE MANAGEMENT
- */
-
-/**
- * Hides all visible color palettes
- * Used when clicking outside or switching between notes
- */
+// Hide all color palettes
 function hideAllColorPalettes() {
-    $$('.color-palette').forEach(palette => {
-        if (palette.style.display !== 'none') {
-            palette.classList.add('closing');
-            setTimeout(() => { palette.style.display = 'none'; palette.classList.remove('closing'); }, 200);
-        }
-    });
-    activePalette = null;
+  $$(".color-palette").forEach((p) => p.classList.remove("visible"));
 }
 
-// Global click handler to hide palettes when clicking outside
-const globalPaletteClickHandler = e => {
-    if (activePalette && !e.target.closest('.color-button')) {
-        hideAllColorPalettes();
-    }
-};
+// Hide palettes when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".color-button, .color-palette")) {
+    hideAllColorPalettes();
+  }
+});
 
-document.addEventListener('click', globalPaletteClickHandler);
-
-/**
- * COLLISION DETECTION
- */
-
-/**
- * Checks if a note collides with the bottom-left corner UI area
- * Automatically moves notes up if they overlap with restricted areas
- * @param {Element} note - The note element to check
- */
+// Move note up if it overlaps bottom corner
 function checkBottomCornerCollision(note) {
-    if (!note) return;
-    const [noteRect, screenHeight, restrictedWidth, restrictedHeight] = [note.getBoundingClientRect(), window.innerHeight, 250, 150];
-    const restrictedTop = screenHeight - restrictedHeight;
-    const [overlapsVertically, overlapsBottomLeft] = [noteRect.bottom > restrictedTop, noteRect.left < restrictedWidth && noteRect.bottom > restrictedTop];
-
-    if (overlapsBottomLeft) {
-        const [moveUpDistance, currentTop, newTop] = [noteRect.bottom - restrictedTop + 20, parsePosition(note.style.top), Math.max(60, parsePosition(note.style.top) - (noteRect.bottom - restrictedTop + 20))];
-        note.style.transition = 'top 0.3s ease-out';
-        note.style.top = `${newTop}px`;
-        setTimeout(() => note.style.transition = '', 300);
-    }
+  if (!note) return;
+  const rect = note.getBoundingClientRect();
+  if (rect.left < 250 && rect.bottom > window.innerHeight - 150) {
+    const overlap = rect.bottom - (window.innerHeight - 150);
+    const newTop = Math.max(60, parsePosition(note.style.top) - overlap - 20);
+    note.style.top = newTop + "px";
+  }
 }
+
