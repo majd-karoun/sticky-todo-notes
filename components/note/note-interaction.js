@@ -89,6 +89,12 @@ function setupNote(note) {
       initialY = parsePosition(note.style.top);
       // Set active note for transfer system
       window.activeNote = note;
+      // Store initial position for transfer system (same as multi-note selection)
+      notesInitialPositions = [{ 
+        element: note, 
+        x: initialX, 
+        y: initialY 
+      }];
     }
 
     // Add event listeners directly to document

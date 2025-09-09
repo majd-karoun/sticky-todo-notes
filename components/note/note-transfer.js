@@ -419,20 +419,23 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
                     }
                 }
             } else {
-                // Single note transfer - use stored original position or fallback
-                const [originalX, originalY] = [parseFloat(note.dataset.originalX), parseFloat(note.dataset.originalY)];
-                if (!isNaN(originalX) && !isNaN(originalY)) {
+                // Single note transfer - use notesInitialPositions if available, otherwise use current position
+                const initialPos = notesInitialPositions?.find(pos => pos.element === note);
+                if (initialPos) {
+                    // Use the same reliable position tracking as multi-note transfers
                     if (window.AnimationUtils) {
-                        window.AnimationUtils.updatePosition(note, originalX, Math.max(60, originalY));
+                        window.AnimationUtils.updatePosition(note, initialPos.x, Math.max(60, initialPos.y));
                     } else {
-                        [note.style.left, note.style.top] = [`${originalX}px`, `${Math.max(60, originalY)}px`];
+                        [note.style.left, note.style.top] = [`${initialPos.x}px`, `${Math.max(60, initialPos.y)}px`];
                     }
                 } else {
-                    const leftValue = parseFloat(currentLeft) || 100;
+                    // Fallback to current position if no initial position is tracked
+                    const currentX = parseFloat(note.style.left) || 100;
+                    const currentY = parseFloat(note.style.top) || 80;
                     if (window.AnimationUtils) {
-                        window.AnimationUtils.updatePosition(note, leftValue, 80);
+                        window.AnimationUtils.updatePosition(note, currentX, Math.max(60, currentY));
                     } else {
-                        [note.style.left, note.style.top] = [currentLeft, '80px'];
+                        [note.style.left, note.style.top] = [`${currentX}px`, `${Math.max(60, currentY)}px`];
                     }
                 }
             }
@@ -460,12 +463,14 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
             hoverDetectionDisabled = true;
             setTimeout(() => hoverDetectionDisabled = false, 500);
 
-            // Save notes on both boards
-            const originalBoardId = currentBoardId;
-            [currentBoardId] = [targetBoardId];
-            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-            [currentBoardId] = [originalBoardId];
-            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+            // Save notes on both boards AFTER position is set
+            setTimeout(() => {
+                const originalBoardId = currentBoardId;
+                [currentBoardId] = [targetBoardId];
+                window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+                [currentBoardId] = [originalBoardId];
+                window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
+            }, 100);
         }
     }, 600);
 }

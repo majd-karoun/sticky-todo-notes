@@ -17,7 +17,7 @@ const domContentLoadedHandler = function() {
     setupBoardNavigation();
     setupStyleOptions();
     initBoardSelectionHandlers();
-    updateShortcutIcon();
+    updateShortcutIconDisplay();
     setupBoardTitleListeners();
     setupFirstLetterCapitalization();
     
