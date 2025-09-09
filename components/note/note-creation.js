@@ -1,14 +1,24 @@
-// Global state
+/**
+ * NOTE CREATION MODULE
+ * Handles creation, positioning, and setup of sticky notes with intelligent positioning
+ * for different board patterns (weekdays, days, regular free-form)
+ */
+
+// Global state for note management
 let noteColumns = {},
   repositionedNotes = new Set();
 
-// Utilities
+// Utility functions
 const generateNoteId = () =>
   `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-const getRandomOffset = () => Math.random() * 40 - 20;
+const getRandomOffset = () => Math.random() * 40 - 20; // Random offset for natural positioning
 const getDayColumnIndex = (date = getCurrentDate()) =>
-  date.getDay() === 0 ? 0 : date.getDay() - 1;
+  date.getDay() === 0 ? 0 : date.getDay() - 1; // Convert Sunday=0 to weekday format
 
+/**
+ * Shows temporary message when note limits are reached
+ * @param {string} message - Message to display to user
+ */
 function showNoteLimitMessage(message) {
   const limitMessage = document.getElementById("noteLimitMessage");
   const textElement = limitMessage?.querySelector(".transfer-text");
@@ -19,11 +29,16 @@ function showNoteLimitMessage(message) {
   }
 }
 
+/**
+ * Main function to add a new note to the current board
+ * Handles intelligent positioning based on board patterns and existing notes
+ */
 function addNote() {
   const textarea = $(".note-input textarea");
   const text = textarea.value.trim();
   if (!text) return;
 
+  // Get board context and analyze existing notes
   const boardElement = $(`.board[data-board-id="${currentBoardId}"]`);
   const notes = Array.from(boardElement.querySelectorAll(".sticky-note"));
   const hasWeekdaysPattern = boardElement.classList.contains(
@@ -33,11 +48,13 @@ function addNote() {
   const hasNoNotes =
     notes.filter((note) => !note.dataset.transferred).length === 0;
 
+  // Check note limits for regular boards (pattern boards have different limits)
   if (!hasWeekdaysPattern && !hasDaysPattern && notes.length >= 30) {
     showNoteLimitMessage(`Maximum notes space reached.`);
     return;
   }
 
+  // Get positioning context from last note and board state
   const nonTransferredNotes = notes.filter((note) => !note.dataset.transferred);
   const lastAddedNote = nonTransferredNotes[nonTransferredNotes.length - 1];
   let { x: lastX, y: lastY } = lastNotePositions[currentBoardId] || {
@@ -47,6 +64,13 @@ function addNote() {
   let lastColor = lastNoteColors[currentBoardId] || getRandomColor();
   let positionX, positionY;
 
+  /**
+   * Calculates column positioning data for pattern-based boards
+   * @param {number} columnIndex - Which column to analyze (0-based)
+   * @param {number} columnCount - Total number of columns
+   * @param {Element} excludeNote - Note to exclude from calculations
+   * @returns {Object} Column positioning data and existing notes
+   */
   const getColumnData = (columnIndex, columnCount, excludeNote = null) => {
     const columnWidth = boardElement.offsetWidth / columnCount;
     const baseX = columnIndex * columnWidth + 10;
@@ -56,6 +80,7 @@ function addNote() {
       Math.min(maxX, baseX + getRandomOffset()),
     );
 
+    // Find all notes that significantly overlap with this column (50% threshold)
     const allNotes = Array.from(
       boardElement.querySelectorAll(".sticky-note"),
     ).filter((note) => note.style.display !== "none" && note !== excludeNote);
@@ -72,9 +97,16 @@ function addNote() {
     return { positionX, columnNotes };
   };
 
+  /**
+   * Finds available position in columns for pattern-based boards
+   * @param {number} startColumn - Preferred starting column
+   * @param {number} columnCount - Total columns available
+   * @returns {boolean} True if position found, false if no space
+   */
   const findColumnPosition = (startColumn, columnCount) => {
     const bottomThreshold = window.innerHeight - 300;
 
+    // Try each column starting from preferred column
     for (let attempts = 0; attempts < columnCount; attempts++) {
       const columnIndex = (startColumn + attempts) % columnCount;
       const { positionX: colX, columnNotes } = getColumnData(
@@ -82,6 +114,7 @@ function addNote() {
         columnCount,
       );
 
+      // Find the lowest note in this column to stack below it
       let lastY = 0,
         lastNote = null;
       columnNotes.forEach((note) => {
@@ -92,11 +125,12 @@ function addNote() {
         }
       });
 
+      // Calculate new position below the last note
       const newY = lastNote ? lastY + 70 : 60;
       if (newY <= bottomThreshold) {
         positionX = colX;
         positionY = newY;
-        if (lastNote) lastColor = lastNote.style.backgroundColor;
+        if (lastNote) lastColor = lastNote.style.backgroundColor; // Inherit color from column
         return true;
       }
     }
@@ -104,10 +138,16 @@ function addNote() {
     return false;
   };
 
+  /**
+   * Handles positioning for pattern-based boards (weekdays/days)
+   * @param {boolean} isWeekday - True for weekdays pattern, false for days pattern
+   * @returns {boolean} True if position found successfully
+   */
   const handlePatternPositioning = (isWeekday) => {
     let columnIndex;
-    const columnCount = isWeekday ? 6 : 5;
+    const columnCount = isWeekday ? 6 : 5; // 6 weekdays (Mon-Sat) or 5 days
 
+    // Continue from last added note's position or use current day's column
     if (lastAddedNote) {
       const noteX = parsePosition(lastAddedNote.style.left);
       const columnWidth = boardElement.offsetWidth / columnCount;
@@ -122,11 +162,13 @@ function addNote() {
     return findColumnPosition(columnIndex, columnCount);
   };
 
-  // MAIN POSITIONING LOGIC
+  // MAIN POSITIONING LOGIC - Handle different board types and scenarios
   if (hasNoNotes) {
+    // First note on the board
     if (hasWeekdaysPattern || hasDaysPattern) {
       if (handlePatternPositioning(hasWeekdaysPattern) === false) return;
     } else {
+      // Regular board - place first note in good starting position
       const startX = Math.max(150, window.innerWidth / 4);
       const startY = 50;
       ({ x: positionX, y: positionY } = getNextNotePosition(
@@ -135,8 +177,10 @@ function addNote() {
       ));
     }
   } else if (hasWeekdaysPattern || hasDaysPattern) {
+    // Pattern boards - use column-based positioning
     if (handlePatternPositioning(hasWeekdaysPattern) === false) return;
   } else {
+    // Regular boards - use intelligent free-form positioning
     if (lastAddedNote) {
       lastX = parsePosition(lastAddedNote.style.left);
       lastY = parsePosition(lastAddedNote.style.top);
@@ -144,6 +188,7 @@ function addNote() {
     }
     ({ x: positionX, y: positionY } = getNextNotePosition(lastX, lastY));
 
+    // Handle vertical breaks when reaching top of screen (line wrapping)
     if (positionY <= 50) {
       const notesInColumn = notes.filter(
         (note) => Math.abs(parsePosition(note.style.left) - positionX) < 150,
@@ -159,11 +204,14 @@ function addNote() {
         const proposedY = lowestY + 200;
         const proposedUpwardY = highestY - 200;
 
+        // Try placing below existing notes
         if (proposedY <= bottomThreshold) {
           positionY = proposedY;
         } else if (proposedUpwardY >= 50) {
+          // Try placing above existing notes
           positionY = proposedUpwardY;
         } else {
+          // Column is full - find space in adjacent columns
           const findSpaceInColumns = (startX, direction) => {
             const maxX = window.innerWidth - 200;
             for (
@@ -191,6 +239,7 @@ function addNote() {
             return null;
           };
 
+          // Search right first, then left
           const space =
             findSpaceInColumns(positionX + 250, 1) ||
             findSpaceInColumns(positionX - 250, -1);
@@ -206,6 +255,7 @@ function addNote() {
     }
   }
 
+  // Create the note with calculated position and styling
   createNote(
     text.replace(/\n/g, "<br>"),
     lastColor,
@@ -217,16 +267,20 @@ function addNote() {
     false,
     currentBoardId,
   );
+  
+  // Update board state and clean up
   lastNotePositions[currentBoardId] = { x: positionX, y: positionY };
   lastNoteColors[currentBoardId] = lastColor;
   textarea.value = "";
 
+  // Clear transferred status from all notes now that positioning is complete
   boardElement
     .querySelectorAll('.sticky-note[data-transferred="true"]')
     .forEach((note) => {
       delete note.dataset.transferred;
     });
 
+  // Save to storage and update UI indicators
   window.DebouncedStorage.saveHigh(
     `${ACTIVE_NOTES_KEY}_board_${currentBoardId}`,
     getNotesData(),
@@ -234,6 +288,20 @@ function addNote() {
   updateBoardIndicators();
 }
 
+/**
+ * Creates a new sticky note DOM element with all necessary components
+ * @param {string} text - The note content (HTML allowed)
+ * @param {string} color - Background color for the note
+ * @param {number} x - X position in pixels
+ * @param {number} y - Y position in pixels
+ * @param {boolean} isRestored - Whether this is being restored from storage
+ * @param {string} width - CSS width value
+ * @param {string} height - CSS height value
+ * @param {boolean} isBold - Whether text should be bold
+ * @param {number} boardId - Target board ID
+ * @param {boolean} repositioned - Whether note has been moved
+ * @returns {Element} The created note element
+ */
 function createNote(
   text,
   color,
@@ -249,6 +317,7 @@ function createNote(
   const note = document.createElement("div");
   const noteId = generateNoteId();
 
+  // Build note structure with content, controls, and resize handle
   note.className = "sticky-note";
   note.innerHTML = `<div class="sticky-content ${isBold ? "bold" : ""}" contenteditable="true">${text}</div>
         <div class="note-controls">
@@ -265,15 +334,18 @@ function createNote(
   // Apply styles immediately to ensure they're available for saving
   note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${noteZIndex};`;
 
+  // Set note metadata and track repositioning
   note.dataset.noteId = noteId;
   if (repositioned) {
     note.dataset.repositioned = "true";
     repositionedNotes.add(noteId);
   }
 
+  // Store z-index for layering management
   noteZIndexes[noteId] = noteZIndex;
   saveNoteZIndexes();
 
+  // Add click handler to bring note to front (avoid triggering on controls)
   const clickHandler = (e) => {
     if (
       !e.target.closest(
@@ -286,8 +358,10 @@ function createNote(
   note.addEventListener("click", clickHandler);
   note._eventCleanup = () => note.removeEventListener("click", clickHandler);
 
+  // Setup interaction handlers (drag, resize, edit)
   setupNote(note);
 
+  // Add to target board
   const targetBoard = $(`.board[data-board-id="${boardId}"]`);
   if (!targetBoard) {
     console.error(`Board element with ID ${boardId} not found.`);
@@ -295,6 +369,8 @@ function createNote(
   }
 
   targetBoard.appendChild(note);
+  
+  // Apply entry animation
   if (window.AnimationUtils) {
     window.AnimationUtils.updateStyles(
       note,
@@ -305,6 +381,7 @@ function createNote(
     note.style.animation = "paperPop 0.3s ease-out forwards";
   }
 
+  // Save to storage if this is a new note (not restored from storage)
   if (!isRestored) {
     window.DebouncedStorage.saveHigh(
       `${ACTIVE_NOTES_KEY}_board_${currentBoardId}`,
