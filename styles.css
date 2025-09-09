@@ -304,12 +304,12 @@ body {
     400 24px/1.4 "Comic Neue",
     cursive;
   resize: none;
-  padding: 0;
+  padding: 0 0 0 5px;
   margin: 0;
   color: inherit;
   white-space: pre-wrap;
   letter-spacing: 0.01em;
-  transition: font-size 0.3s ease;
+  transition: font-size 0.3s ease, font-weight 0.3s ease;
   user-select: text;
 }
 .sticky-content *,
