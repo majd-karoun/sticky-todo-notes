@@ -88,8 +88,8 @@ function checkBoardButtonHover(clientX, clientY) {
  */
 function startHoverAnimation() {
     if (!hoveredBoardButton) return;
-    // Get the active note from either EventManager or fallback global
-    const currentActiveNote = window.eventManager?.eventState?.activeNote || window.activeNote || activeNote;
+    // Get the active note from global state
+    const currentActiveNote = window.activeNote || activeNote;
     const [buttonRect, notesToAnimate] = [hoveredBoardButton.getBoundingClientRect(), selectedNotes.length > 0 ? selectedNotes : (currentActiveNote ? [currentActiveNote] : [])];
 
     notesToAnimate.forEach(note => {
@@ -204,8 +204,8 @@ function clearBoardButtonHover() {
 function checkBoardButtonDrop() {
     if (!hoveredBoardButton) return { moved: false };
 
-    // Get the active note from either EventManager or fallback global
-    const currentActiveNote = window.eventManager?.eventState?.activeNote || window.activeNote || activeNote;
+    // Get the active note from global state
+    const currentActiveNote = window.activeNote || activeNote;
     const [targetBoardId, notesToMove] = [parseInt(hoveredBoardButton.dataset.boardId), selectedNotes.length > 0 ? [...selectedNotes] : [currentActiveNote]];
 
     // Handle drop on same board - return notes to original positions
@@ -352,17 +352,9 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
             // Save notes on both boards
             const originalBoardId = currentBoardId;
             [currentBoardId] = [targetBoardId];
-            if (window.DebouncedStorage) {
-                window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-            } else {
-                saveActiveNotes();
-            }
+            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
             [currentBoardId] = [originalBoardId];
-            if (window.DebouncedStorage) {
-                window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-            } else {
-                saveActiveNotes();
-            }
+            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
         }
     }, 600);
 }

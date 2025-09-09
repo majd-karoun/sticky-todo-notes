@@ -98,7 +98,7 @@ const wouldCoverNoteTopEdge = (x, y, noteHeight = 150) => {
   );
   if (!boardElement) return false;
 
-  const existingNotes = boardElement.querySelectorAll(".sticky-note");
+  const existingNotes = Array.from(boardElement.querySelectorAll(".sticky-note"));
   const tolerance = 20; // Pixels of tolerance for overlap detection
 
   for (const note of existingNotes) {
@@ -222,15 +222,10 @@ const saveToLocalStorage = (key, data, immediate = false) => {
 };
 
 const saveActiveNotes = (immediate = false) => {
-  const notesData = getNotesData();
-  if (window.DebouncedStorage) {
-    if (immediate) {
-      window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData);
-    } else {
-      window.DebouncedStorage.saveLow(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData);
-    }
+  if (immediate) {
+    window.DebouncedStorage.saveImmediate(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
   } else {
-    saveToLocalStorage(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, notesData, immediate);
+    window.DebouncedStorage.save(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
   }
   if (typeof updateBoardIndicators === "function") updateBoardIndicators();
 };
@@ -240,45 +235,33 @@ const getNotesData = () => {
     `.board[data-board-id="${currentBoardId}"]`
   );
   if (!boardElement) return [];
-  const notes = boardElement.querySelectorAll(".sticky-note");
+  const notes = Array.from(boardElement.querySelectorAll(".sticky-note"));
   return Array.from(notes).map((note) => ({
-    content: note.querySelector(".sticky-content").textContent,
+    content: $within(note, ".sticky-content").textContent,
     x: parsePosition(note.style.left),
     y: parsePosition(note.style.top),
     color: note.style.backgroundColor || "#ffeb3b",
     width: note.style.width || "200px",
     height: note.style.height || "150px",
-    isBold: note.querySelector(".sticky-content").classList.contains("bold"),
+    isBold: $within(note, ".sticky-content").classList.contains("bold"),
     noteId: note.dataset.noteId,
     zIndex: note.style.zIndex || 1,
   }));
 };
 
 const saveDeletedNotes = () => {
-  if (window.DebouncedStorage) {
-    window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
-  } else {
-    saveToLocalStorage(DELETED_NOTES_KEY, deletedNotes);
-  }
+  window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
 };
 
 const saveBoardCount = () => {
-  if (window.DebouncedStorage) {
-    window.DebouncedStorage.save(BOARDS_COUNT_KEY, boardCount.toString());
-  } else {
-    localStorage.setItem(BOARDS_COUNT_KEY, boardCount.toString());
-  }
+  window.DebouncedStorage.save(BOARDS_COUNT_KEY, boardCount.toString());
 };
 const saveBoardStyles = () => {
   const boardStyleData = {
     color: boardStyles.colors.current,
     pattern: boardStyles.patterns.current,
   };
-  if (window.DebouncedStorage) {
-    window.DebouncedStorage.saveLow(`boardStyles_board_${currentBoardId}`, boardStyleData);
-  } else {
-    saveToLocalStorage(`boardStyles_board_${currentBoardId}`, boardStyleData);
-  }
+  window.DebouncedStorage.saveLow(`boardStyles_board_${currentBoardId}`, boardStyleData);
 };
 
 const updateShortcutIconDisplay = () => {
@@ -384,9 +367,7 @@ const loadSavedData = () => {
     }
     
     // Flush any pending debounced saves before loading
-    if (window.DebouncedStorage) {
-      window.DebouncedStorage.flush();
-    }
+    window.DebouncedStorage.flush();
     
     // Perform one-time localStorage cleanup before loading any data
     performOneTimeStorageCleanup();
@@ -502,11 +483,7 @@ const bringNoteToFront = (noteElement) => {
  */
 const saveNoteZIndexes = () => {
   try {
-    if (window.DebouncedStorage) {
-      window.DebouncedStorage.saveLow(NOTE_ZINDEX_KEY, noteZIndexes);
-    } else {
-      localStorage.setItem(NOTE_ZINDEX_KEY, JSON.stringify(noteZIndexes));
-    }
+    window.DebouncedStorage.saveLow(NOTE_ZINDEX_KEY, noteZIndexes);
   } catch (error) {
     console.error("Error saving note z-indexes:", error);
   }

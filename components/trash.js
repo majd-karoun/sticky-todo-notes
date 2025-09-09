@@ -65,7 +65,7 @@ const markNoteAsDone = note => {
         note._eventCleanup();
     }
     
-    const content = note.querySelector('.sticky-content');
+    const content = $within(note, '.sticky-content');
     const noteData = {
         text: content.innerHTML,
         color: note.style.backgroundColor,
@@ -77,11 +77,7 @@ const markNoteAsDone = note => {
     
     updateNoteColumns(note);
     deletedNotes.unshift(noteData);
-    if (window.DebouncedStorage) {
-        window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
-    } else {
-        saveDeletedNotes();
-    }
+    window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
     updateTrashCount();
     animateNoteToTrash(note);
 };
@@ -199,18 +195,10 @@ const restoreNote = index => {
     setTimeout(() => {
         const [note] = deletedNotes.splice(index, 1);
         createNote(note.text, note.color, parsePosition(note.x), parsePosition(note.y), true, note.width, note.height, note.isBold);
-        if (window.DebouncedStorage) {
-            window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
-        } else {
-            saveDeletedNotes();
-        }
+        window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
         updateTrashCount();
         renderDeletedNotes();
-        if (window.DebouncedStorage) {
-            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-        } else {
-            saveActiveNotes();
-        }
+        window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
         updateBoardIndicators();
     }, 300);
 };
@@ -235,11 +223,7 @@ const clearTrash = () => {
     // Wait for all animations to complete before clearing data and closing modal
     setTimeout(() => {
         deletedNotes = [];
-        if (window.DebouncedStorage) {
-            window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
-        } else {
-            saveDeletedNotes();
-        }
+        window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
         updateTrashCount();
         renderDeletedNotes();
         

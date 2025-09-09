@@ -3,11 +3,7 @@ function addEventListeners(selectors) {
     selectors.forEach(({selector, event, handler}) => {
         const element = $(selector);
         if (element) {
-            if (window.EventManager) {
-                window.EventManager.registerHandler(event, handler, element);
-            } else {
-                element.addEventListener(event, handler);
-            }
+            element.addEventListener(event, handler);
         }
     });
 }
@@ -38,11 +34,7 @@ const domContentLoadedHandler = function() {
     ]);
 };
 
-if (window.EventManager) {
-    window.EventManager.registerHandler('DOMContentLoaded', domContentLoadedHandler);
-} else {
-    document.addEventListener('DOMContentLoaded', domContentLoadedHandler);
-}
+document.addEventListener('DOMContentLoaded', domContentLoadedHandler);
 
 // Function to capitalize only the first letter of text inputs
 function setupFirstLetterCapitalization() {
@@ -60,19 +52,11 @@ function setupFirstLetterCapitalization() {
 
     const setupInputCapitalization = (input) => {
         ['input', 'keyup'].forEach(event => {
-            if (window.EventManager) {
-                window.EventManager.registerHandler(event, e => capitalizeFirstLetter(e.target), input);
-            } else {
-                input.addEventListener(event, e => capitalizeFirstLetter(e.target));
-            }
+            input.addEventListener(event, e => capitalizeFirstLetter(e.target));
         });
         
         const pasteHandler = e => setTimeout(() => capitalizeFirstLetter(e.target), 0);
-        if (window.EventManager) {
-            window.EventManager.registerHandler('paste', pasteHandler, input);
-        } else {
-            input.addEventListener('paste', pasteHandler);
-        }
+        input.addEventListener('paste', pasteHandler);
     };
 
     // Setup existing inputs
@@ -84,7 +68,7 @@ function setupFirstLetterCapitalization() {
         mutations.forEach(mutation => {
             mutation.addedNodes.forEach(node => {
                 if (node.nodeType === 1) {
-                    const inputs = node.querySelectorAll ? node.querySelectorAll('.board-title-input') : [];
+                    const inputs = node.querySelectorAll ? Array.from(node.querySelectorAll('.board-title-input')) : [];
                     inputs.forEach(setupInputCapitalization);
                     if (node.classList?.contains('board-title-input')) {
                         setupInputCapitalization(node);

@@ -101,7 +101,7 @@ function createBoardUI(boardId) {
   const boardEventHandlers = [];
   
   const titleCircleClickHandler = () => {
-    titleCircle.querySelector('.board-title-input')?.focus();
+    $within(titleCircle, '.board-title-input')?.focus();
   };
   titleCircle.addEventListener('click', titleCircleClickHandler);
   boardEventHandlers.push({ element: titleCircle, event: 'click', handler: titleCircleClickHandler });
@@ -198,8 +198,8 @@ function deleteBoard(boardId) {
   }
 
   const [notes, stickers] = [
-    boardElement.querySelectorAll(".sticky-note"),
-    boardElement.querySelectorAll(".emoji-sticker"),
+    Array.from(boardElement.querySelectorAll(".sticky-note")),
+    Array.from(boardElement.querySelectorAll(".emoji-sticker")),
   ];
 
   if (notes.length || stickers.length) {
@@ -208,7 +208,7 @@ function deleteBoard(boardId) {
     trashBin.style.animation = "binShake 0.5s ease-in-out";
 
     notes.forEach((note) => {
-      const content = note.querySelector(".sticky-content");
+      const content = $within(note, ".sticky-content");
       deletedNotes.unshift({
         text: content.innerHTML,
         color: note.style.backgroundColor,
@@ -234,11 +234,7 @@ function deleteBoard(boardId) {
     });
 
     stickers.forEach((sticker) => sticker.classList.add("deleting"));
-    if (window.DebouncedStorage) {
-        window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
-    } else {
-        saveDeletedNotes();
-    }
+    window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
     updateTrashCount();
     console.log('Setting timeout for continueWithBoardDeletion, boardId:', boardId);
     setTimeout(() => {
@@ -362,8 +358,7 @@ function continueWithBoardDeletion(boardId) {
 
     setTimeout(
       () =>
-        document
-          .querySelectorAll(".board-button.new-button")
+        $$(".board-button.new-button")
           .forEach((button) => [
             button.classList.remove("new-button"),
             button.classList.add("transitions-ready"),
@@ -414,24 +409,22 @@ function switchToBoard(boardId) {
 
     if (id === currentBoardId) {
       [board.classList.add("active"), (board.style.visibility = "visible")];
-      board
-        .querySelectorAll(".sticky-note")
+      Array.from(board.querySelectorAll(".sticky-note"))
         .forEach((note, index) =>
           note.style.setProperty("--note-index", index),
         );
-      board
-        .querySelectorAll(".emoji-sticker")
+      Array.from(board.querySelectorAll(".emoji-sticker"))
         .forEach((sticker, index) =>
           sticker.style.setProperty("--sticker-index", index),
         );
 
-      if (!board.querySelector(".board-title-circle")) {
+      if (!$within(board, ".board-title-circle")) {
         const titleCircle = Object.assign(document.createElement("div"), {
           className: "board-title-circle",
         });
         titleCircle.setAttribute(
           "onclick",
-          "this.querySelector('.board-title-input').focus()",
+          "$within(this, '.board-title-input').focus()",
         );
         const titleInput = Object.assign(document.createElement("input"), {
           type: "text",
@@ -452,8 +445,7 @@ function switchToBoard(boardId) {
     } else board.classList.add(id < currentBoardId ? "prev" : "next");
   });
 
-  document
-    .querySelectorAll(".board-button")
+  $$(".board-button")
     .forEach((button) =>
       button.classList.toggle(
         "active",
@@ -461,8 +453,7 @@ function switchToBoard(boardId) {
       ),
     );
   [loadBoardStyles(currentBoardId), setActiveStyle()];
-  document
-    .querySelectorAll(".board-pattern-option, .pattern-preview")
+  $$(".board-pattern-option, .pattern-preview")
     .forEach((el) => (el.style.backgroundColor = boardStyles.colors.current));
   updateBoardIndicators();
   if (window.emojiStickers)
@@ -497,7 +488,7 @@ function setupBoardNavigation() {
     const buttonClickHandler = () => switchToBoard(boardId);
     newButton.addEventListener("click", buttonClickHandler);
     
-    const deleteButton = newButton.querySelector(".delete-board");
+    const deleteButton = $within(newButton, ".delete-board");
     if (deleteButton) {
       const deleteClickHandler = (e) => {
         e.stopPropagation();
@@ -508,7 +499,7 @@ function setupBoardNavigation() {
     button.parentNode.replaceChild(newButton, button);
   });
 
-  const documentKeydownHandler = (e, eventState) => {
+  const documentKeydownHandler = (e) => {
     const [targetTagName, isEditable] = [
       e.target.tagName,
       e.target.getAttribute("contenteditable") === "true",
@@ -548,10 +539,8 @@ function setupBoardNavigation() {
       switchToBoard(keyNum);
   };
   
-  // Register with consolidated event system
-  if (window.eventManager) {
-    window.eventManager.registerHandler('keydown', documentKeydownHandler, 'board-navigation');
-  }
+  // Register keyboard navigation
+  document.addEventListener('keydown', documentKeydownHandler);
   globalNavigationHandlers.push({ 
     element: document, 
     event: "keydown", 
@@ -959,9 +948,7 @@ function loadAllBoardTitles() {
  */
 function saveBoardTitle(boardId, title) {
   localStorage.setItem(`stickyNotes_boardTitle_${boardId}`, title);
-  const buttonElement = document.querySelector(
-    `.board-button[data-board-id="${boardId}"]`,
-  );
+  const buttonElement = $(`.board-button[data-board-id="${boardId}"]`);
   if (buttonElement && !buttonElement.dataset.originalNumber) {
     buttonElement.dataset.originalNumber = buttonElement.textContent;
   }
@@ -984,16 +971,12 @@ function updateCharCounter(input) {
  */
 function loadBoardTitle(boardId) {
   const title = localStorage.getItem(`stickyNotes_boardTitle_${boardId}`);
-  const boardElement = document.querySelector(
-    `.board[data-board-id="${boardId}"]`,
-  );
+  const boardElement = $(`.board[data-board-id="${boardId}"]`);
   if (boardElement) {
     const titleInput = boardElement.querySelector(".board-title-input");
     if (titleInput && title) titleInput.value = title;
   }
-  const buttonElement = document.querySelector(
-    `.board-button[data-board-id="${boardId}"]`,
-  );
+  const buttonElement = $(`.board-button[data-board-id="${boardId}"]`);
   if (buttonElement && !buttonElement.dataset.originalNumber) {
     buttonElement.dataset.originalNumber = buttonElement.textContent;
   }

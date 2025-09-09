@@ -220,11 +220,7 @@ function addNote() {
         delete note.dataset.transferred;
     });
     
-    if (window.DebouncedStorage) {
-        window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-    } else {
-        saveActiveNotes(true); // Immediate save for note creation
-    }
+    window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
     updateBoardIndicators();
 }
 
@@ -304,11 +300,7 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
     targetBoard.appendChild(note);
     note.style.animation = 'paperPop 0.3s ease-out forwards'; // Entry animation
     if (!isRestored) {
-        if (window.DebouncedStorage) {
-            window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-        } else {
-            saveActiveNotes(true); // Immediate save for new notes
-        }
+        window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
     }
     return note;
 }
@@ -335,11 +327,7 @@ function changeNoteColor(option, color) {
         setTimeout(() => [n, colorButton].forEach(el => el.classList.remove('color-transition')), 300);
     });
     lastNoteColors[currentBoardId] = color;
-    if (window.DebouncedStorage) {
-        window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-    } else {
-        saveActiveNotes(true); // Immediate save for color changes
-    }
+    window.DebouncedStorage.saveHigh(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
 }
 
 /**
@@ -349,11 +337,7 @@ function changeNoteColor(option, color) {
 const toggleBold = button => {
     const content = button.closest('.sticky-note').querySelector('.sticky-content');
     [content.classList.toggle('bold'), button.classList.toggle('active')];
-    if (window.DebouncedStorage) {
-        window.DebouncedStorage.saveLow(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
-    } else {
-        saveActiveNotes();
-    }
+    window.DebouncedStorage.saveLow(`${ACTIVE_NOTES_KEY}_board_${currentBoardId}`, getNotesData());
 };
 
 /**

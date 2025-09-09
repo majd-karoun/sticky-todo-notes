@@ -32,23 +32,13 @@ function initBoardSelectionHandlers() {
         e.target.closest('.board') && !e.target.closest('.sticky-note, .note-input, .boards-navigation, .trash-bin, .board-style-button') && e.preventDefault();
     };
     
-    if (window.EventManager) {
-        window.EventManager.registerHandler('mousedown', preventDefaultHandler);
-    } else {
-        document.addEventListener('mousedown', preventDefaultHandler);
-    }
-    // Setup selection event handlers with appropriate scope
-    if (window.EventManager) {
-        window.EventManager.registerHandler('mousedown', startSelection, boardsContainer);
-    } else {
-        boardsContainer.addEventListener('mousedown', startSelection);
-    }
+    document.addEventListener('mousedown', preventDefaultHandler);
+    // Setup selection event handlers
+    boardsContainer.addEventListener('mousedown', startSelection);
     
-    // Register global handlers with consolidated event system
-    if (window.eventManager) {
-        window.eventManager.registerHandler('mousemove', updateSelection, 'selection');
-        window.eventManager.registerHandler('mouseup', endSelection, 'selection');
-    }
+    // Register global selection handlers
+    document.addEventListener('mousemove', updateSelection);
+    document.addEventListener('mouseup', endSelection);
 }
 
 /**
@@ -69,9 +59,11 @@ function startSelection(e) {
     !e.shiftKey && clearSelection();
 
     // Initialize selection state and create selection box
-    const eventState = window.eventManager ? window.eventManager.eventState : {};
-    [eventState.isSelecting, eventState.selectionStartX, eventState.selectionStartY] = [true, e.clientX, e.clientY];
-    [document.body.classList.add('selecting'), selectionBox.style.cssText = `left:${eventState.selectionStartX}px; top:${eventState.selectionStartY}px; width:0; height:0; display:block;`];
+    window.isSelecting = true;
+    window.selectionStartX = e.clientX;
+    window.selectionStartY = e.clientY;
+    document.body.classList.add('selecting');
+    selectionBox.style.cssText = `left:${window.selectionStartX}px; top:${window.selectionStartY}px; width:0; height:0; display:block;`;
 }
 
 /**
@@ -80,12 +72,12 @@ function startSelection(e) {
  * @param {Event} e - The mousemove event
  * @param {Object} eventState - Global event state
  */
-function updateSelection(e, eventState) {
-    if (!eventState.isSelecting) return;
+function updateSelection(e) {
+    if (!window.isSelecting) return;
     e.preventDefault();
     
-    const startX = eventState.selectionStartX;
-    const startY = eventState.selectionStartY;
+    const startX = window.selectionStartX;
+    const startY = window.selectionStartY;
     const currentX = e.clientX;
     const currentY = e.clientY;
     
@@ -106,9 +98,9 @@ function updateSelection(e, eventState) {
  * @param {Event} e - The mouseup event
  * @param {Object} eventState - Global event state
  */
-const endSelection = (e, eventState) => {
-    if (!eventState.isSelecting) return;
-    eventState.isSelecting = false;
+const endSelection = (e) => {
+    if (!window.isSelecting) return;
+    window.isSelecting = false;
     document.body.classList.remove('selecting');
     selectionBox.style.display = 'none';
 };
@@ -141,7 +133,7 @@ function checkNotesInSelection() {
     };
 
     // Check all notes on current board for intersection
-    currentBoardElement.querySelectorAll('.sticky-note').forEach(note => checkIntersection(note, selectedNotes, 'selected'));
+    Array.from(currentBoardElement.querySelectorAll('.sticky-note')).forEach(note => checkIntersection(note, selectedNotes, 'selected'));
 }
 
 /**
@@ -160,8 +152,9 @@ const clearSelection = () => {
  * @param {Event} e - The mousedown event that started the move
  */
 function handleSelectionMove(e) {
-    const eventState = window.eventManager ? window.eventManager.eventState : {};
-    [eventState.isMovingSelection, eventState.selectionMoveStartX, eventState.selectionMoveStartY] = [true, e.clientX, e.clientY];
+    window.isMovingSelection = true;
+    window.selectionMoveStartX = e.clientX;
+    window.selectionMoveStartY = e.clientY;
     document.body.classList.add('selecting');
     
     // Store initial positions of all selected notes for relative movement
@@ -172,11 +165,9 @@ function handleSelectionMove(e) {
         type: 'note' 
     }));
     
-    // Register with consolidated event system
-    if (window.eventManager) {
-        window.eventManager.registerHandler('mousemove', moveSelectionHandler, 'selection-move');
-        window.eventManager.registerHandler('mouseup', endSelectionMoveHandler, 'selection-move');
-    }
+    // Register movement handlers
+    document.addEventListener('mousemove', moveSelectionHandler);
+    document.addEventListener('mouseup', endSelectionMoveHandler);
 }
 
 /**
@@ -185,11 +176,11 @@ function handleSelectionMove(e) {
  * @param {Event} e - The mousemove event
  * @param {Object} eventState - Global event state
  */
-function moveSelectionHandler(e, eventState) {
-    if (!eventState.isMovingSelection) return;
+function moveSelectionHandler(e) {
+    if (!window.isMovingSelection) return;
     
     // Calculate movement delta from start position
-    const [dx, dy] = [e.clientX - eventState.selectionMoveStartX, e.clientY - eventState.selectionMoveStartY];
+    const [dx, dy] = [e.clientX - window.selectionMoveStartX, e.clientY - window.selectionMoveStartY];
     const [padding, minX, minY] = [5, -5, -5];
     const [maxX, maxY] = [window.innerWidth - padding, window.innerHeight - padding];
 
@@ -219,15 +210,14 @@ function moveSelectionHandler(e, eventState) {
  * @param {Event} e - The mouseup event
  * @param {Object} eventState - Global event state
  */
-function endSelectionMoveHandler(e, eventState) {
-    if (!eventState.isMovingSelection) return;
-    eventState.isMovingSelection = false;
+function endSelectionMoveHandler(e) {
+    if (!window.isMovingSelection) return;
+    window.isMovingSelection = false;
     document.body.classList.remove('selecting');
     
     // Unregister movement handlers
-    if (window.eventManager) {
-        window.eventManager.unregisterModule('selection-move');
-    }
+    document.removeEventListener('mousemove', moveSelectionHandler);
+    document.removeEventListener('mouseup', endSelectionMoveHandler);
     
     hideDragTransferMessage();
     

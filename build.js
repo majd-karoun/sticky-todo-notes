@@ -26,7 +26,6 @@ async function build() {
     // Order matches HTML script loading sequence to maintain functionality
     const componentFiles = [
       'components/optimization/dom-cache.js',
-      'components/optimization/event-manager.js',
       'components/optimization/animation-batcher.js',
       'components/optimization/storage-debouncer.js',
       'components/utils.js',

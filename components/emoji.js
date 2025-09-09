@@ -18,11 +18,7 @@ let emojiStickers = {}, draggedEmoji = null, dragOffset = { x: 0, y: 0 }, emojiU
 function initializeEmojiPicker() {
     [loadEmojiUsageOrder(), reorderEmojiPicker(), loadAllEmojiStickers()];
     $$('.emoji-item').forEach(item => {
-        if (window.EventManager) {
-            window.EventManager.registerHandler('click', handleEmojiClick, item);
-        } else {
-            item.addEventListener('click', handleEmojiClick);
-        }
+        item.addEventListener('click', handleEmojiClick);
     });
 }
 
@@ -95,14 +91,9 @@ function setupEmojiDrag(stickerElement) {
         [dragOffset.x, dragOffset.y] = [clientX - rect.left, clientY - rect.top];
         
         stickerElement.classList.add('dragging');
-        // Register with consolidated event system
-        if (window.eventManager) {
-            window.eventManager.registerHandler('mousemove', drag, 'emoji-drag');
-            window.eventManager.registerHandler('mouseup', stopDrag, 'emoji-drag');
-        } else {
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('mouseup', stopDrag);
-        }
+        // Register global drag handlers
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDrag);
     }
     
     function drag(e) {
@@ -143,14 +134,9 @@ function setupEmojiDrag(stickerElement) {
         }
         
         draggedEmoji = null;
-        // Unregister from consolidated event system
-        if (window.eventManager) {
-            window.eventManager.unregisterHandler('mousemove', 'emoji-drag');
-            window.eventManager.unregisterHandler('mouseup', 'emoji-drag');
-        } else {
-            document.removeEventListener('mousemove', drag);
-            document.removeEventListener('mouseup', stopDrag);
-        }
+        // Unregister global drag handlers
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', stopDrag);
     }
 }
 
@@ -161,11 +147,7 @@ const deleteEmojiSticker = (stickerId, boardId) => {
 };
 
 const saveEmojiStickers = boardId => {
-    if (window.DebouncedStorage) {
-        window.DebouncedStorage.save(`emojiStickers_board_${boardId}`, emojiStickers[boardId] || {});
-    } else {
-        localStorage.setItem(`emojiStickers_board_${boardId}`, JSON.stringify(emojiStickers[boardId] || {}));
-    }
+    window.DebouncedStorage.save(`emojiStickers_board_${boardId}`, emojiStickers[boardId] || {});
 };
 
 function loadEmojiStickers(boardId) {
@@ -184,7 +166,7 @@ function renderEmojiStickers(boardId) {
     const board = $(`.board[data-board-id="${boardId}"]`);
     if (!board || !emojiStickers[boardId]) return;
     
-    board.querySelectorAll('.emoji-sticker').forEach(sticker => sticker.remove());
+    Array.from(board.querySelectorAll('.emoji-sticker')).forEach(sticker => sticker.remove());
     
     Object.values(emojiStickers[boardId]).forEach(({id, emoji, x, y}) => {
         const stickerElement = Object.assign(document.createElement('div'), {
@@ -229,7 +211,7 @@ function reorderEmojiPicker() {
     const emojiPicker = $('.emoji-picker');
     if (!emojiPicker) return;
     
-    emojiPicker.querySelectorAll('.recent-emoji').forEach(item => item.remove());
+    Array.from(emojiPicker.querySelectorAll('.recent-emoji')).forEach(item => item.remove());
     
     emojiUsageOrder.length > 0 && emojiUsageOrder.slice(0, 12).reverse().forEach(emoji => {
         const emojiElement = Object.assign(document.createElement('div'), {

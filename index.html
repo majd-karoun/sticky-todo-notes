@@ -29,10 +29,10 @@
         <link rel="canonical" href="https://sticky-todo-notes.netlify.app">
         
         <link rel="stylesheet" href="styles.min.css">
-        <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
-        <link rel="manifest" href="/favicon_io/site.webmanifest">
+        <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
+        <link rel="manifest" href="favicon_io/site.webmanifest">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     </head>
 <body>
@@ -46,7 +46,7 @@
 
     <div class="boards-container">
         <div class="board active" data-board-id="1">
-            <div class="board-title-circle" onclick="this.querySelector('.board-title-input').focus()">
+            <div class="board-title-circle" onclick="$within(this, '.board-title-input').focus()">
                 <input type="text" class="board-title-input" placeholder="Title..." maxlength="50">
             </div>
         </div>
@@ -1169,7 +1169,7 @@
             
             function updateDebugModal() {
                 const debugContent = document.getElementById('debugContent');
-                const boardElement = document.querySelector('.board.active');
+                const boardElement = window.$ ? $('.board.active') : document.querySelector('.board.active');
                 
                 if (!boardElement) {
                     debugContent.innerHTML = 'No active board found';
@@ -1182,7 +1182,7 @@
                 let selectorUsed = '';
                 
                 for (const selector of noteSelectors) {
-                    const found = Array.from(boardElement.querySelectorAll(selector));
+                    const found = window.$$ ? $$(selector) : Array.from(boardElement.querySelectorAll(selector));
                     if (found.length > 0) {
                         allNotes = found;
                         selectorUsed = selector;
@@ -1262,20 +1262,21 @@
         // Open-Meteo configuration - free weather API
         const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
 
-        // Load weather toggle state from localStorage
-        let isWeatherEnabled = localStorage.getItem('weatherEnabled') === 'true';
-        const weatherToggle = document.querySelector('.weather-toggle');
-        const weatherIconElement = document.querySelector('.weather-icon');
-        const weatherTempElement = document.querySelector('.weather-temp');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load weather toggle state from localStorage
+            let isWeatherEnabled = localStorage.getItem('weatherEnabled') === 'true';
+            const weatherToggle = $('.weather-toggle');
+            const weatherIconElement = $('.weather-icon');
+            const weatherTempElement = $('.weather-temp');
         
-        // Prevent multiple simultaneous API calls
-        let isUpdatingWeather = false;
+            // Prevent multiple simultaneous API calls
+            let isUpdatingWeather = false;
 
-        // Initialize weather toggle state
-        if (isWeatherEnabled) {
-            weatherToggle.classList.add('on');
-            updateWeather();
-        }
+            // Initialize weather toggle state
+            if (isWeatherEnabled) {
+                weatherToggle.classList.add('on');
+                updateWeather();
+            }
 
         function toggleWeather() {
             isWeatherEnabled = !isWeatherEnabled;
@@ -1410,8 +1411,8 @@
         }
 
         function updateStatusBar() {
-            const timeElement = document.querySelector('.status-time');
-            const dateElement = document.querySelector('.status-date');
+            const timeElement = $('.status-time');
+            const dateElement = $('.status-date');
             
             const now = new Date();
             
@@ -1425,11 +1426,7 @@
             const formattedDate = now.toLocaleDateString('en-US', options);
             dateElement.textContent = formattedDate.replace(/, /g, ', ').replace(/\./g, '. ');
 
-            // Add click event listener to toggle button if not already added
-            if (!weatherToggle.hasAttribute('data-setup')) {
-                weatherToggle.addEventListener('click', toggleWeather);
-                weatherToggle.setAttribute('data-setup', 'true');
-            }
+            // Event listener is set up once below
         }
 
         function updateWeatherIfEnabled() {
@@ -1439,16 +1436,17 @@
         }
         
 
-        // Update immediately and then every second
-        updateStatusBar();
-        setInterval(updateStatusBar, 1000);
+            // Update immediately and then every second
+            updateStatusBar();
+            setInterval(updateStatusBar, 1000);
         
-        // Update weather every 30 minutes (only once)
-        updateWeatherIfEnabled();
-        setInterval(updateWeatherIfEnabled, 30 * 60 * 1000);
+            // Update weather every 30 minutes (only once)
+            updateWeatherIfEnabled();
+            setInterval(updateWeatherIfEnabled, 30 * 60 * 1000);
 
-        // Add click event listener to toggle button
-        weatherToggle.addEventListener('click', toggleWeather);
+            // Add click event listener to toggle button
+            weatherToggle.addEventListener('click', toggleWeather);
+        }); // Close DOMContentLoaded event listener
     </script>
         </div>
     </div>
