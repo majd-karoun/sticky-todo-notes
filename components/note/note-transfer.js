@@ -1,73 +1,60 @@
 /**
  * NOTE TRANSFER MODULE
  * Handles drag-and-drop functionality for transferring notes between boards
- * Features:
- * - Board button hover detection with proximity thresholds
- * - Visual feedback during drag operations
- * - Smooth animations for note transfers
- * - Multi-note selection support
- * - Position preservation during transfers
+ * Optimized for minimal code duplication and clear separation of concerns
  */
 
-/**
- * Checks if the mouse is hovering over board buttons during drag operations
- * Uses proximity detection with hysteresis to prevent flickering
- * @param {number} clientX - Mouse X coordinate
- * @param {number} clientY - Mouse Y coordinate
- */
+// Utility functions for common operations
+const getDistance = (x1, y1, x2, y2) => Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+const getButtonCenter = rect => [rect.left + rect.width / 2, rect.top + rect.height / 2];
+const findClosestButton = (clientX, clientY) => {
+    let closest = { button: null, distance: Infinity };
+    $$('.board-button:not(.disabled)', true).forEach(button => {
+        const [centerX, centerY] = getButtonCenter(button.getBoundingClientRect());
+        const distance = getDistance(clientX, clientY, centerX, centerY);
+        if (distance < closest.distance) closest = { button, distance };
+    });
+    return closest.button;
+};
+
+const toggleBoardButtons = (isEntering, closestButton = null) => {
+    const buttons = $$('.board-button', true);
+    if (isEntering) {
+        buttons.forEach(btn => btn.classList.add('drag-active', 'drag-proximity'));
+        if (closestButton) closestButton.classList.add('drag-hover');
+        startHoverAnimation();
+    } else {
+        buttons.forEach(btn => {
+            btn.classList.remove('drag-hover', 'drag-proximity');
+            setTimeout(() => btn.classList.remove('drag-active'), 200);
+        });
+        clearHoverAnimations();
+    }
+};
+
 function checkBoardButtonHover(clientX, clientY) {
     if (hoverDetectionDisabled) return;
     const statusBar = $('.status-bar');
     if (!statusBar) return;
     
-    // Calculate distance from mouse to status bar (board buttons area)
-    const statusBarRect = statusBar.getBoundingClientRect();
-    const [distanceX, distanceY] = [Math.max(0, Math.max(statusBarRect.left - clientX, clientX - statusBarRect.right)), Math.max(0, Math.max(statusBarRect.top - clientY, clientY - statusBarRect.bottom))];
-    const [distance, enterThreshold, exitThreshold, wasNearMenu] = [Math.sqrt(distanceX * distanceX + distanceY * distanceY), 120, 80, hoveredBoardButton !== null];
+    const rect = statusBar.getBoundingClientRect();
+    const distanceX = Math.max(0, rect.left - clientX, clientX - rect.right);
+    const distanceY = Math.max(0, rect.top - clientY, clientY - rect.bottom);
+    const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
     
-    // Use hysteresis to prevent flickering between near/far states
-    const isNearMenu = wasNearMenu ? (distance <= enterThreshold) : (distance <= exitThreshold);
-
-    /**
-     * Finds the board button closest to the current mouse position
-     * @returns {Element|null} The closest board button or null
-     */
-    const findClosestButton = () => {
-        let [closestButton, closestDistance] = [null, Infinity];
-        $$('.board-button:not(.disabled)', true).forEach(button => {
-            const rect = button.getBoundingClientRect();
-            const buttonDistance = Math.sqrt(Math.pow(clientX - (rect.left + rect.width / 2), 2) + Math.pow(clientY - (rect.top + rect.height / 2), 2));
-            if (buttonDistance < closestDistance) [closestButton, closestDistance] = [button, buttonDistance];
-        });
-        return closestButton;
-    };
-
-    // Handle proximity state changes
-    if (isNearMenu !== wasNearMenu) {
-        if (isNearMenu) {
-            // Entering proximity - activate all buttons and start hover effects
-            const boardButtons = $$('.board-button:not(.disabled)');
-            hoveredBoardButton = findClosestButton();
-            boardButtons.forEach(button => button.classList.add('drag-active', 'drag-proximity'));
-            if (hoveredBoardButton) hoveredBoardButton.classList.add('drag-hover');
-            startHoverAnimation();
-        } else {
-            // Leaving proximity - deactivate buttons and clear animations
-            $$('.board-button', true).forEach(button => {
-                button.classList.remove('drag-hover', 'drag-proximity');
-                setTimeout(() => button.classList.remove('drag-active'), 200);
-            });
-            hoveredBoardButton = null;
-            clearHoverAnimations();
-        }
-    } else if (isNearMenu && hoveredBoardButton) {
-        // Within proximity - check if closest button changed
-        const closestButton = findClosestButton();
-        if (closestButton !== hoveredBoardButton) {
+    const wasNear = hoveredBoardButton !== null;
+    const isNear = wasNear ? distance <= 120 : distance <= 80; // Hysteresis
+    
+    if (isNear !== wasNear) {
+        hoveredBoardButton = isNear ? findClosestButton(clientX, clientY) : null;
+        toggleBoardButtons(isNear, hoveredBoardButton);
+    } else if (isNear) {
+        const closest = findClosestButton(clientX, clientY);
+        if (closest !== hoveredBoardButton) {
             hoveredBoardButton?.classList.remove('drag-hover');
-            hoveredBoardButton = closestButton;
-            if (closestButton) {
-                closestButton.classList.add('drag-hover');
+            hoveredBoardButton = closest;
+            if (closest) {
+                closest.classList.add('drag-hover');
                 hideDragTransferMessage();
                 $('.shortcut-hint')?.classList.add('hidden-during-drag');
             } else {
@@ -78,152 +65,88 @@ function checkBoardButtonHover(clientX, clientY) {
     }
 }
 
-/**
- * HOVER ANIMATION SYSTEM
- */
+// Animation utility functions
+const applyStyles = (element, styles) => {
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updateStyles(element, styles);
+    } else {
+        Object.entries(styles).forEach(([prop, value]) => {
+            if (prop.startsWith('--')) {
+                element.style.setProperty(prop, value);
+            } else if (value === '') {
+                element.style.removeProperty(prop.replace(/([A-Z])/g, '-$1').toLowerCase());
+            } else {
+                element.style[prop] = value;
+            }
+        });
+    }
+};
 
-/**
- * Starts the "magnetic" hover animation when notes are near a board button
- * Creates a visual effect where notes are pulled toward the target board button
- */
+const toggleTextInteraction = (note, disabled) => {
+    const styles = disabled ? { userSelect: 'none', pointerEvents: 'none' } : { userSelect: '', pointerEvents: '' };
+    note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => applyStyles(textarea, styles));
+};
+
+const calculateSuckPosition = (buttonRect, noteRect, boardRect) => [
+    (buttonRect.left - boardRect.left + buttonRect.width / 2) - (noteRect.left - boardRect.left) - noteRect.width / 2,
+    (buttonRect.top - boardRect.top + buttonRect.height / 2) - (noteRect.top - boardRect.top) - noteRect.height / 2
+];
+
 function startHoverAnimation() {
     if (!hoveredBoardButton) return;
-    // Get the active note from global state
     const currentActiveNote = window.activeNote || activeNote;
-    const [buttonRect, notesToAnimate] = [hoveredBoardButton.getBoundingClientRect(), selectedNotes.length > 0 ? selectedNotes : (currentActiveNote ? [currentActiveNote] : [])];
+    const notesToAnimate = selectedNotes.length > 0 ? selectedNotes : (currentActiveNote ? [currentActiveNote] : []);
+    const buttonRect = hoveredBoardButton.getBoundingClientRect();
 
     notesToAnimate.forEach(note => {
         if (note && !note.classList.contains('reverse-animating') && !note.classList.contains('hover-animating')) {
-            // Disable text selection during animation
-            note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
-                if (window.AnimationUtils) {
-                    window.AnimationUtils.updateStyles(textarea, {
-                        userSelect: 'none',
-                        pointerEvents: 'none'
-                    });
-                } else {
-                    [textarea.style.userSelect, textarea.style.pointerEvents] = ['none', 'none'];
-                }
+            toggleTextInteraction(note, true);
+            const [targetX, targetY] = calculateSuckPosition(buttonRect, note.getBoundingClientRect(), note.closest('.board').getBoundingClientRect());
+            applyStyles(note, {
+                '--suckX': `${targetX}px`,
+                '--suckY': `${targetY}px`,
+                animation: 'noteSuckHover 0.3s ease-out forwards'
             });
-
-            // Calculate the target position relative to the board button
-            const [noteRect, boardRect] = [note.getBoundingClientRect(), note.closest('.board').getBoundingClientRect()];
-            const [targetX, targetY] = [
-                (buttonRect.left - boardRect.left + (buttonRect.width / 2)) - (noteRect.left - boardRect.left) - (noteRect.width / 2),
-                (buttonRect.top - boardRect.top + (buttonRect.height / 2)) - (noteRect.top - boardRect.top) - (noteRect.height / 2)
-            ];
-
-            // Apply CSS custom properties for animation and start the hover effect
-            if (window.AnimationUtils) {
-                window.AnimationUtils.updateStyles(note, {
-                    '--suckX': `${targetX}px`,
-                    '--suckY': `${targetY}px`,
-                    animation: 'noteSuckHover 0.3s ease-out forwards'
-                });
-            } else {
-                note.style.setProperty('--suckX', `${targetX}px`);
-                note.style.setProperty('--suckY', `${targetY}px`);
-                note.style.animation = 'noteSuckHover 0.3s ease-out forwards';
-            }
             note.classList.add('hover-animating');
         }
     });
 }
 
-/**
- * Clears all hover animations and returns notes to their original positions
- * Uses reverse animation to smoothly transition back
- */
 function clearHoverAnimations() {
     $$('.hover-animating', true).forEach(note => {
-        // Re-enable text selection
-        note.querySelectorAll('textarea, [contenteditable]').forEach(textarea => {
-            if (window.AnimationUtils) {
-                window.AnimationUtils.updateStyles(textarea, {
-                    userSelect: '',
-                    pointerEvents: ''
-                });
-            } else {
-                textarea.style.removeProperty('user-select');
-                textarea.style.removeProperty('pointer-events');
-            }
-        });
-        
-        // Start reverse animation to return to original position
-        if (window.AnimationUtils) {
-            window.AnimationUtils.updateStyles(note, {
-                animation: 'noteSuckReverse 0.3s ease-out forwards'
-            });
-        } else {
-            note.style.animation = 'noteSuckReverse 0.3s ease-out forwards';
-        }
+        toggleTextInteraction(note, false);
+        applyStyles(note, { animation: 'noteSuckReverse 0.3s ease-out forwards' });
         note.classList.remove('hover-animating');
         note.classList.add('reverse-animating');
         
-        // Clean up after animation completes
         setTimeout(() => {
             if (note.classList.contains('reverse-animating')) {
-                if (window.AnimationUtils) {
-                    window.AnimationUtils.updateStyles(note, {
-                        animation: 'none',
-                        '--suckX': '',
-                        '--suckY': ''
-                    });
-                } else {
-                    [note.style.animation] = ['none'];
-                    note.style.removeProperty('--suckX');
-                    note.style.removeProperty('--suckY');
-                }
+                applyStyles(note, { animation: 'none', '--suckX': '', '--suckY': '' });
                 note.classList.remove('reverse-animating');
             }
         }, 300);
     });
 }
 
-/**
- * DRAG TRANSFER MESSAGING
- */
-
-/**
- * Shows the drag transfer message when dragging near board area
- * Only displays when multiple boards exist and no specific button is hovered
- */
-function showDragTransferMessage() {
-    if (boardCount > 1 && !dragTransferMessageVisible && !hoveredBoardButton) {
-        const transferMessage = document.getElementById('dragTransferMessage');
-        if (transferMessage) {
-            transferMessage.classList.add('visible');
-            dragTransferMessageVisible = true;
-        }
+// Drag transfer messaging
+const toggleDragTransferMessage = (show) => {
+    if (show && boardCount > 1 && !dragTransferMessageVisible && !hoveredBoardButton) {
+        document.getElementById('dragTransferMessage')?.classList.add('visible');
+        dragTransferMessageVisible = true;
         $('.shortcut-hint')?.classList.add('hidden-during-drag');
-    }
-}
-
-/**
- * Hides the drag transfer message and restores normal UI state
- */
-function hideDragTransferMessage() {
-    if (dragTransferMessageVisible) {
-        const transferMessage = document.getElementById('dragTransferMessage');
-        if (transferMessage) {
-            transferMessage.classList.remove('visible');
-            dragTransferMessageVisible = false;
-        }
+    } else if (!show && dragTransferMessageVisible) {
+        document.getElementById('dragTransferMessage')?.classList.remove('visible');
+        dragTransferMessageVisible = false;
         $('.shortcut-hint')?.classList.remove('hidden-during-drag');
     }
-}
+};
 
-/**
- * CLEANUP FUNCTIONS
- */
+const showDragTransferMessage = () => toggleDragTransferMessage(true);
+const hideDragTransferMessage = () => toggleDragTransferMessage(false);
 
-/**
- * Clears all board button hover states and related animations
- * Used when drag operation ends or is cancelled
- */
 function clearBoardButtonHover() {
     $$('.board-button', true).forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
-    [hoveredBoardButton] = [null];
+    hoveredBoardButton = null;
     clearHoverAnimations();
     hideDragTransferMessage();
 }
@@ -232,69 +155,56 @@ function clearBoardButtonHover() {
  * DROP HANDLING
  */
 
-/**
- * Handles the drop operation when a note is released over a board button
- * Manages both single note and multi-note transfers with position preservation
- * @returns {Object} Object with 'moved' property indicating if transfer occurred
- */
+const returnNoteToOriginalPosition = (note) => {
+    const originalPos = notesInitialPositions?.find(pos => pos.element === note);
+    const targetX = originalPos ? originalPos.x : parseFloat(note.style.left) || 100;
+    const targetY = originalPos ? Math.max(60, originalPos.y) : parseInt(note.style.top || 0) - 250;
+    
+    if (note.classList.contains('hover-animating')) {
+        note.classList.remove('hover-animating');
+        applyStyles(note, { '--suckX': '', '--suckY': '', animation: 'none' });
+    }
+    
+    note.style.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.2s ease-out';
+    note.style.left = `${targetX}px`;
+    note.style.top = `${targetY}px`;
+    note.style.transform = 'scale(1)';
+    
+    setTimeout(() => {
+        note.style.transition = '';
+        note.style.transform = '';
+    }, 200);
+};
+
+const getRelativePositions = (notesToMove) => {
+    const positions = new Map();
+    if (notesToMove.length > 1 && notesInitialPositions?.length > 0) {
+        notesInitialPositions.forEach(notePos => {
+            if (notePos && notesToMove.includes(notePos.element)) {
+                positions.set(notePos.element, { originalX: notePos.x, originalY: notePos.y });
+            }
+        });
+    }
+    return positions;
+};
+
 function checkBoardButtonDrop() {
     if (!hoveredBoardButton) return { moved: false };
 
-    // Get the active note from global state
     const currentActiveNote = window.activeNote || activeNote;
-    const [targetBoardId, notesToMove] = [parseInt(hoveredBoardButton.dataset.boardId), selectedNotes.length > 0 ? [...selectedNotes] : [currentActiveNote]];
+    const targetBoardId = parseInt(hoveredBoardButton.dataset.boardId);
+    const notesToMove = selectedNotes.length > 0 ? [...selectedNotes] : [currentActiveNote];
 
-    // Handle drop on same board - return notes to original positions
     if (targetBoardId === currentBoardId) {
-        notesToMove.forEach(note => {
-            if (note) {
-                // Get target position first
-                const originalPos = notesInitialPositions?.find(pos => pos.element === note);
-                const targetX = originalPos ? originalPos.x : parseFloat(note.style.left) || 100;
-                const targetY = originalPos ? Math.max(60, originalPos.y) : parseInt(note.style.top || 0) - 250;
-                
-                // Clear any ongoing hover animations and create smooth single motion
-                if (note.classList.contains('hover-animating')) {
-                    note.classList.remove('hover-animating');
-                    // Clear existing animation properties
-                    note.style.removeProperty('--suckX');
-                    note.style.removeProperty('--suckY');
-                    note.style.animation = 'none';
-                }
-                
-                // Apply single smooth transition to target position
-                note.style.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.2s ease-out';
-                note.style.left = `${targetX}px`;
-                note.style.top = `${targetY}px`;
-                note.style.transform = 'scale(1)'; // Ensure note stays visible
-                
-                // Clean up transition after completion
-                setTimeout(() => {
-                    note.style.transition = '';
-                    note.style.transform = '';
-                }, 200);
-            }
-        });
+        notesToMove.forEach(note => note && returnNoteToOriginalPosition(note));
+        clearBoardButtonHover();
+        toggleBoardButtons(false);
         return { moved: false };
     }
 
-    // Calculate relative positions for multi-note transfers
-    let relativePositions = new Map();
-    if (notesToMove.length > 1 && typeof notesInitialPositions !== 'undefined' && notesInitialPositions.length > 0) {
-        // Store the actual original positions instead of calculating offsets from minimum
-        notesInitialPositions.forEach(notePos => {
-            if (notePos && notesToMove.includes(notePos.element)) {
-                relativePositions.set(notePos.element, { 
-                    originalX: notePos.x, 
-                    originalY: notePos.y 
-                });
-            }
-        });
-    }
-
-    // Execute the transfer for each note
+    const relativePositions = getRelativePositions(notesToMove);
     notesToMove.forEach(note => {
-        if (note) moveNoteToBoard(note, targetBoardId, relativePositions.size > 0 ? relativePositions.get(note) : null);
+        if (note) moveNoteToBoard(note, targetBoardId, relativePositions.get(note) || null);
     });
 
     if (selectedNotes.length > 0) clearSelection();
