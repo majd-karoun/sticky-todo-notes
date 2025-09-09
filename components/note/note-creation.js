@@ -339,8 +339,20 @@ function changeNoteColor(option, color) {
     : [note];
 
   notes.forEach((n) => {
+    // Add transition class for smooth color fade
+    n.classList.add("color-transition");
+    const colorButton = n.querySelector(".color-button");
+    colorButton.classList.add("color-transition");
+    
+    // Apply the new color
     n.style.backgroundColor = color;
-    n.querySelector(".color-button").style.backgroundColor = color;
+    colorButton.style.backgroundColor = color;
+    
+    // Remove transition class after animation completes
+    setTimeout(() => {
+      n.classList.remove("color-transition");
+      colorButton.classList.remove("color-transition");
+    }, 300);
   });
 
   lastNoteColors[currentBoardId] = color;
