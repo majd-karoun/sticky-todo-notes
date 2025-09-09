@@ -192,24 +192,28 @@ function setupNote(note) {
     // Register palette hover detection with consolidated event system
     const paletteHoverHandler = (e, eventState) => {
         const [mouseX, mouseY] = [eventState.mouseX, eventState.mouseY];
-        $$('.color-palette.visible').forEach(palette => {
-            const [rect, button] = [palette.getBoundingClientRect(), palette.closest('.note-controls')?.querySelector('.color-button')];
-            if (!button) return;
-            const buttonRect = button.getBoundingClientRect();
-            
-            // Check if mouse is near palette or over button
-            const [isNearPalette, isOverButton] = [
-                mouseX >= rect.left - 10 && mouseX <= rect.right + 10 && mouseY >= rect.top - 10 && mouseY <= rect.bottom + 10,
-                mouseX >= buttonRect.left && mouseX <= buttonRect.right && mouseY >= buttonRect.top && mouseY <= buttonRect.bottom
-            ];
-            if (isNearPalette || isOverButton) clearTimeout(hoverTimeout);
-            else if (palette.classList.contains('visible')) hidePalette();
-        });
+        
+        // Only check if this note's palette is visible
+        if (!colorPalette.classList.contains('visible')) return;
+        
+        const [rect, buttonRect] = [colorPalette.getBoundingClientRect(), colorButton.getBoundingClientRect()];
+        
+        // Check if mouse is near palette or over button (with 20px buffer)
+        const [isNearPalette, isOverButton] = [
+            mouseX >= rect.left - 20 && mouseX <= rect.right + 20 && mouseY >= rect.top - 20 && mouseY <= rect.bottom + 20,
+            mouseX >= buttonRect.left && mouseX <= buttonRect.right && mouseY >= buttonRect.top && mouseY <= buttonRect.bottom
+        ];
+        
+        if (isNearPalette || isOverButton) {
+            clearTimeout(hoverTimeout);
+        } else {
+            hidePalette();
+        }
     };
     
     // Register with event manager
     if (window.eventManager) {
-        window.eventManager.registerHandler('mousemove', paletteHoverHandler, 'note-interaction');
+        window.eventManager.registerHandler('mousemove', paletteHoverHandler, `palette-${note.dataset.noteId || Date.now()}`);
     }
 
     /**
@@ -237,15 +241,8 @@ function setupNote(note) {
     const hidePalette = () => {
         clearTimeout(hoverTimeout);
         hoverTimeout = setTimeout(() => {
-            const [rect, buttonRect] = [colorPalette.getBoundingClientRect(), colorButton.getBoundingClientRect()];
-            const [isMouseOutside, isMouseOverButton] = [
-                mouseX < rect.left - 10 || mouseX > rect.right + 10 || mouseY < rect.top - 10 || mouseY > rect.bottom + 10,
-                mouseX >= buttonRect.left && mouseX <= buttonRect.right && mouseY >= buttonRect.top && mouseY <= buttonRect.bottom
-            ];
-            if (isMouseOutside && !isMouseOverButton) {
-                colorPalette.classList.add('closing');
-                setTimeout(() => colorPalette.classList.contains('closing') && colorPalette.classList.remove('visible', 'closing'), 180);
-            }
+            colorPalette.classList.add('closing');
+            setTimeout(() => colorPalette.classList.contains('closing') && colorPalette.classList.remove('visible', 'closing'), 180);
         }, 50);
     };
 
@@ -254,12 +251,24 @@ function setupNote(note) {
         e.stopPropagation();
         colorPalette.classList.contains('visible') ? hidePalette() : showPalette();
     };
+    
+    // Prevent palette from closing when clicking on color options
+    const paletteClickHandler = e => {
+        if (e.target.classList.contains('color-option')) {
+            e.stopPropagation();
+        }
+    };
     if (window.EventManager) {
         window.EventManager.registerHandler('click', colorButtonClickHandler, colorButton);
+        window.EventManager.registerHandler('click', paletteClickHandler, colorPalette);
     } else {
         colorButton.addEventListener('click', colorButtonClickHandler);
+        colorPalette.addEventListener('click', paletteClickHandler);
     }
-    eventHandlers.push({ element: colorButton, event: 'click', handler: colorButtonClickHandler });
+    eventHandlers.push(
+        { element: colorButton, event: 'click', handler: colorButtonClickHandler },
+        { element: colorPalette, event: 'click', handler: paletteClickHandler }
+    );
     
     // Palette hover handlers
     const paletteMouseEnterHandler = () => clearTimeout(hoverTimeout);
@@ -460,6 +469,7 @@ function setupNote(note) {
     
     // Store cleanup function on the note element for later removal
     const noteModuleId = `note-${note.dataset.noteId || Date.now()}`;
+    const paletteModuleId = `palette-${note.dataset.noteId || Date.now()}`;
     
     if (note._eventCleanup) {
         // Merge with existing cleanup function
@@ -472,6 +482,7 @@ function setupNote(note) {
             // Cleanup consolidated event handlers
             if (window.eventManager) {
                 window.eventManager.unregisterModule(noteModuleId);
+                window.eventManager.unregisterModule(paletteModuleId);
             }
         };
     } else {
@@ -482,6 +493,7 @@ function setupNote(note) {
             // Cleanup consolidated event handlers
             if (window.eventManager) {
                 window.eventManager.unregisterModule(noteModuleId);
+                window.eventManager.unregisterModule(paletteModuleId);
             }
         };
     }

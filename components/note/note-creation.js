@@ -323,6 +323,9 @@ function createNote(text, color, x, y, isRestored = false, width = '200px', heig
  * @param {string} color - The new color to apply
  */
 function changeNoteColor(option, color) {
+    // Prevent event bubbling to avoid closing the palette
+    event.stopPropagation();
+    
     const note = option.closest('.sticky-note');
     const notesToChange = note.classList.contains('selected') ? $$('.sticky-note.selected') : [note];
     notesToChange.forEach(n => {
