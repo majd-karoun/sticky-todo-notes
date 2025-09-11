@@ -35,6 +35,56 @@ function setupNote(note) {
     }
   });
 
+  /**
+   * Z-INDEX HOVER MANAGEMENT
+   * Temporarily brings notes to front on hover for better visibility
+   */
+  let originalZIndex = null;
+  let isHovering = false;
+  
+  const mouseEnterHandler = () => {
+    if (!isDragging && !isResizing) {
+      isHovering = true;
+      originalZIndex = note.style.zIndex || '1';
+      note.style.zIndex = '9999'; // Bring to front temporarily
+    }
+  };
+  
+  const mouseLeaveHandler = () => {
+    if (!isDragging && !isResizing && originalZIndex !== null) {
+      isHovering = false;
+      note.style.zIndex = originalZIndex; // Restore original z-index
+      originalZIndex = null;
+    }
+  };
+  
+  note.addEventListener('mouseenter', mouseEnterHandler);
+  note.addEventListener('mouseleave', mouseLeaveHandler);
+
+  // Click to bring to front permanently with proper z-index management
+  note.addEventListener('click', (e) => {
+    if (!e.target.closest('.color-palette, .resize-handle')) {
+      e.stopPropagation();
+      
+      // Z-index management - bring note to front permanently
+      if (!isHovering) {
+        note.style.zIndex = ++globalZIndex;
+      } else {
+        // Update the stored original z-index for when hover ends
+        originalZIndex = ++globalZIndex;
+        note.style.zIndex = '9999'; // Keep temporary hover state
+      }
+      
+      // Update tracking
+      const noteId = note.dataset.noteId || generateNoteId();
+      note.dataset.noteId = noteId;
+      noteZIndexes[noteId] = globalZIndex;
+      saveNoteZIndexes();
+      
+      console.log(`Click: Note ${noteId} brought to front with z-index: ${globalZIndex}`);
+    }
+  });
+
   // Color palette
   let paletteTimeout;
 
