@@ -165,7 +165,7 @@ const returnNoteToOriginalPosition = (note) => {
         applyStyles(note, { '--suckX': '', '--suckY': '', animation: 'none' });
     }
     
-    note.style.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.2s ease-out';
+    note.style.transition = 'left 0.4s ease-out, top 0.4s ease-out, transform 0.4s ease-out';
     note.style.left = `${targetX}px`;
     note.style.top = `${targetY}px`;
     note.style.transform = 'scale(1)';
@@ -173,7 +173,7 @@ const returnNoteToOriginalPosition = (note) => {
     setTimeout(() => {
         note.style.transition = '';
         note.style.transform = '';
-    }, 200);
+    }, 400);
 };
 
 const getRelativePositions = (notesToMove) => {
