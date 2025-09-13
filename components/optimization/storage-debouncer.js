@@ -14,7 +14,7 @@ const flush = (key) => {
     pending.delete(key);
     timers.delete(key);
   } catch (error) {
-    console.warn('Storage save failed:', error);
+    // Silent fail
   }
 };
 

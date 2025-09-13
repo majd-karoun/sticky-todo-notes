@@ -248,9 +248,7 @@ function deleteBoard(boardId) {
     stickers.forEach((sticker) => sticker.classList.add("deleting"));
     window.DebouncedStorage.saveLow(DELETED_NOTES_KEY, deletedNotes);
     updateTrashCount();
-    console.log('Setting timeout for continueWithBoardDeletion, boardId:', boardId);
     setTimeout(() => {
-      console.log('Timeout fired, calling continueWithBoardDeletion');
       continueWithBoardDeletion(boardId);
     }, 600);
   } else {
@@ -264,12 +262,10 @@ function deleteBoard(boardId) {
  * @param {number} boardId - The ID of the board being deleted
  */
 function continueWithBoardDeletion(boardId) {
-  console.log('continueWithBoardDeletion called with boardId:', boardId);
   const [boardElement, buttonElement] = [
     $(`.board[data-board-id="${boardId}"]`),
     $(`.board-button[data-board-id="${boardId}"]`),
   ];
-  console.log('Found elements:', { boardElement, buttonElement });
   
   // Clean up event listeners before removing elements
   if (boardElement?._eventCleanup) {

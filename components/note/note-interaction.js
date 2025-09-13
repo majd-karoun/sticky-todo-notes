@@ -80,8 +80,6 @@ function setupNote(note) {
       note.dataset.noteId = noteId;
       noteZIndexes[noteId] = globalZIndex;
       saveNoteZIndexes();
-      
-      console.log(`Click: Note ${noteId} brought to front with z-index: ${globalZIndex}`);
     }
   });
 

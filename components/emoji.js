@@ -156,7 +156,7 @@ function loadEmojiStickers(boardId) {
         emojiStickers[boardId] = saved ? JSON.parse(saved) : {};
         saved && renderEmojiStickers(boardId);
     } catch (e) {
-        [console.error('Error loading emoji stickers:', e), emojiStickers[boardId] = {}];
+        emojiStickers[boardId] = {};
     }
 }
 
@@ -205,7 +205,7 @@ function loadEmojiUsageOrder() {
     try {
         emojiUsageOrder = saved ? JSON.parse(saved) : [];
     } catch (e) {
-        [console.error('Error loading emoji usage order:', e), emojiUsageOrder = []];
+        emojiUsageOrder = [];
     }
 }
 

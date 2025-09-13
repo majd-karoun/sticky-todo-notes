@@ -217,7 +217,7 @@ const saveToLocalStorage = (key, data, immediate = false) => {
     // Always save immediately for now to prevent data loss during optimization
     localStorage.setItem(key, JSON.stringify(data));
   } catch (error) {
-    console.error(`Failed to save to localStorage (${key}):`, error);
+    // Silent fail
   }
 };
 
@@ -325,7 +325,6 @@ const safeParseJSON = (data, fallback = null) => {
   try {
     return JSON.parse(data);
   } catch (error) {
-    console.error("Failed to parse JSON data:", error);
     return fallback;
   }
 };
@@ -367,7 +366,6 @@ const performOneTimeStorageCleanup = () => {
     // Set the flag to indicate cleanup has been performed
     localStorage.setItem(CLEANUP_FLAG_KEY, "true");
   } catch (error) {
-    console.error("Error during localStorage cleanup:", error);
     // Still set the flag to prevent repeated attempts if there's an error
     localStorage.setItem(CLEANUP_FLAG_KEY, "true");
   }
@@ -479,7 +477,7 @@ const loadSavedData = () => {
     updateShortcutIconDisplay();
     setupTextareaEvents();
   } catch (error) {
-    console.error("Critical error loading saved data:", error);
+    // Silent fail
   }
 };
 
@@ -512,7 +510,7 @@ const saveNoteZIndexes = () => {
   try {
     window.DebouncedStorage.saveLow(NOTE_ZINDEX_KEY, noteZIndexes);
   } catch (error) {
-    console.error("Error saving note z-indexes:", error);
+    // Silent fail
   }
 };
 
@@ -526,7 +524,7 @@ const loadNoteZIndexes = () => {
       (Object.assign(noteZIndexes, JSON.parse(saved)),
         (globalZIndex = Math.max(1000, ...Object.values(noteZIndexes))));
   } catch (error) {
-    console.error("Error loading note z-indexes:", error);
+    // Silent fail
   }
 };
 

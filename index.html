@@ -1324,20 +1324,17 @@
                             const weatherCode = current.weather_code;
                             const isDay = current.is_day === 1;
                             
-                            console.log('Open-Meteo Response:', data);
                             weatherTempElement.textContent = `${temp}°C`;
                             weatherIconElement.textContent = getWeatherIcon(weatherCode, isDay);
                             isUpdatingWeather = false; // Reset flag
                         })
                         .catch(error => {
-                            console.error('Weather API error:', error);
                             weatherIconElement.textContent = '❌';
                             weatherTempElement.textContent = 'API error';
                             isUpdatingWeather = false; // Reset flag on error
                         });
                 },
                 error => {
-                    console.error('Geolocation error:', error);
                     weatherIconElement.textContent = '❌';
                     weatherTempElement.textContent = 'Location error';
                     isUpdatingWeather = false; // Reset flag on geolocation error
