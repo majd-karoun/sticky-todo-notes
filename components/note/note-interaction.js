@@ -162,8 +162,7 @@ function setupNote(note) {
       const newX = Math.max(0, initialX + e.clientX - startX);
       const newY = Math.max(0, initialY + e.clientY - startY);
 
-      note.style.left = newX + "px";
-      note.style.top = newY + "px";
+      window.AnimationUtils.updatePosition(note, newX, newY);
 
       checkBoardButtonHover(e.clientX, e.clientY);
     }
@@ -172,8 +171,7 @@ function setupNote(note) {
       const newWidth = Math.max(150, initialW + e.clientX - startX);
       const newHeight = Math.max(150, initialH + e.clientY - startY);
 
-      note.style.width = newWidth + "px";
-      note.style.height = newHeight + "px";
+      window.AnimationUtils.updateSize(note, newWidth, newHeight);
     }
   }
 
@@ -248,7 +246,7 @@ function checkBottomCornerCollision(note) {
   if (rect.left < 250 && rect.bottom > window.innerHeight - 150) {
     const overlap = rect.bottom - (window.innerHeight - 150);
     const newTop = Math.max(60, parsePosition(note.style.top) - overlap - 20);
-    note.style.top = newTop + "px";
+    window.AnimationUtils.updateStyles(note, { top: `${newTop}px` });
   }
 }
 

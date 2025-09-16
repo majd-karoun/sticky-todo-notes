@@ -299,7 +299,8 @@ function createNote(
   note.className = "sticky-note";
   note.innerHTML = `<div class="sticky-content ${isBold ? "bold" : ""}" contenteditable="true">${text}</div><div class="note-controls"><div class="color-button" style="background-color: ${color}"><div class="color-palette">${colors.map((c) => `<div class="color-option" style="background-color: ${c}" onclick="changeNoteColor(this, '${c}')"></div>`).join("")}</div></div><button class="bold-toggle ${isBold ? "active" : ""}" onclick="toggleBold(this)">B</button><button class="done-button" onclick="markAsDone(this.closest('.sticky-note'))">✓</button></div><div class="resize-handle"></div>`;
 
-  note.style.cssText = `background-color:${color}; left:${x}px; top:${y}px; width:${width}; height:${height}; z-index:${zIndex};`;
+  note.style.cssText = `background-color:${color}; width:${width}; height:${height}; z-index:${zIndex};`;
+  window.AnimationUtils.updatePosition(note, x, y);
   note.dataset.noteId = noteId;
 
   if (repositioned) {
@@ -349,8 +350,8 @@ function changeNoteColor(option, color) {
     colorButton.classList.add("color-transition");
     
     // Apply the new color
-    n.style.backgroundColor = color;
-    colorButton.style.backgroundColor = color;
+    window.AnimationUtils.updateStyles(n, { backgroundColor: color });
+    window.AnimationUtils.updateStyles(colorButton, { backgroundColor: color });
     
     // Remove transition class after animation completes
     setTimeout(() => {

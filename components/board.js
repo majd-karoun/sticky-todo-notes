@@ -40,7 +40,7 @@ const isCurrentDay = (weekdayIndex) => {
 const saveDaysPatternStartDate = (boardId) => {
   const key = `daysPatternStartDate_${boardId}`;
   if (!localStorage.getItem(key))
-    localStorage.setItem(key, getCurrentDate().toISOString().split("T")[0]);
+    window.DebouncedStorage.saveHigh(key, getCurrentDate().toISOString().split("T")[0]);
 };
 
 /**
@@ -61,8 +61,9 @@ const getCurrentDayNumber = (boardId) => {
  * Removes days pattern data for a board
  * @param {number} boardId - The board ID to clean up
  */
-const cleanupDaysPatternData = (boardId) =>
+const cleanupDaysPatternData = (boardId) => {
   localStorage.removeItem(`daysPatternStartDate_${boardId}`);
+};
 
 // BOARD CREATION AND MANAGEMENT
 
@@ -305,7 +306,7 @@ function continueWithBoardDeletion(boardId) {
         `${keyPrefix}_${i - 1}`,
         localStorage.getItem(`${keyPrefix}_${i}`),
       ];
-      if (data) localStorage.setItem(newKey, data);
+      if (data) window.DebouncedStorage.saveHigh(newKey, data);
       localStorage.removeItem(oldKey);
     });
   }
@@ -357,7 +358,7 @@ function continueWithBoardDeletion(boardId) {
         ];
         const data = localStorage.getItem(oldStorageKey);
         if (data) {
-          localStorage.setItem(newStorageKey, data);
+          window.DebouncedStorage.saveHigh(newStorageKey, data);
           localStorage.removeItem(oldStorageKey);
         }
       });
@@ -959,7 +960,7 @@ function loadAllBoardTitles() {
  * @param {string} title - The title to save
  */
 function saveBoardTitle(boardId, title) {
-  localStorage.setItem(`stickyNotes_boardTitle_${boardId}`, title);
+  window.DebouncedStorage.save(`stickyNotes_boardTitle_${boardId}`, title);
   const buttonElement = $(`.board-button[data-board-id="${boardId}"]`);
   if (buttonElement && !buttonElement.dataset.originalNumber) {
     buttonElement.dataset.originalNumber = buttonElement.textContent;

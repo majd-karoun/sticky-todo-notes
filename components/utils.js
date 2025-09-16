@@ -214,8 +214,11 @@ const hexToRgb = (hex) => {
 
 const saveToLocalStorage = (key, data, immediate = false) => {
   try {
-    // Always save immediately for now to prevent data loss during optimization
-    localStorage.setItem(key, JSON.stringify(data));
+    if (immediate) {
+      localStorage.setItem(key, JSON.stringify(data));
+    } else {
+      window.DebouncedStorage.save(key, data);
+    }
   } catch (error) {
     // Silent fail
   }
@@ -297,8 +300,8 @@ const setupTextareaEvents = () => {
         window.AnimationUtils.updateStyles(textarea, { height: "200px" });
       });
     } else {
-      textarea.style.height = "50px";
-      requestAnimationFrame(() => (textarea.style.height = "200px"));
+      window.AnimationUtils.updateStyles(textarea, { height: "50px" });
+      requestAnimationFrame(() => window.AnimationUtils.updateStyles(textarea, { height: "200px" }));
     }
     textarea.addEventListener("input", updateHint);
   });
@@ -310,8 +313,8 @@ const setupTextareaEvents = () => {
         window.AnimationUtils.updateStyles(textarea, { height: "50px" });
       });
     } else {
-      textarea.style.height = "200px";
-      requestAnimationFrame(() => (textarea.style.height = "50px"));
+      window.AnimationUtils.updateStyles(textarea, { height: "200px" });
+      requestAnimationFrame(() => window.AnimationUtils.updateStyles(textarea, { height: "50px" }));
     }
     textarea.removeEventListener("input", updateHint);
   });
@@ -364,10 +367,10 @@ const performOneTimeStorageCleanup = () => {
     });
 
     // Set the flag to indicate cleanup has been performed
-    localStorage.setItem(CLEANUP_FLAG_KEY, "true");
+    window.DebouncedStorage.saveHigh(CLEANUP_FLAG_KEY, "true");
   } catch (error) {
     // Still set the flag to prevent repeated attempts if there's an error
-    localStorage.setItem(CLEANUP_FLAG_KEY, "true");
+    window.DebouncedStorage.saveHigh(CLEANUP_FLAG_KEY, "true");
   }
 };
 

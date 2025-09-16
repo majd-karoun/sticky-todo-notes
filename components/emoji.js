@@ -209,7 +209,7 @@ function loadEmojiUsageOrder() {
     }
 }
 
-const saveEmojiUsageOrder = () => localStorage.setItem('emojiUsageOrder', JSON.stringify(emojiUsageOrder));
+const saveEmojiUsageOrder = () => window.DebouncedStorage.saveLow('emojiUsageOrder', emojiUsageOrder);
 
 function reorderEmojiPicker() {
     const emojiPicker = $('.emoji-picker');
@@ -243,13 +243,16 @@ function checkEmojiBottomCornerCollision(emoji) {
     const overlapsBottomLeft = emojiRect.left < restrictedWidth && emojiRect.bottom > restrictedTop;
     if (overlapsBottomLeft) {
         const newTop = Math.max(60, parseInt(emoji.style.top) - (emojiRect.bottom - restrictedTop + 20));
-        emoji.style.top = `${newTop}px`;
+        window.AnimationUtils.updateStyles(emoji, { top: `${newTop}px` });
     }
 }
 
 const generateStickerId = () => 'emoji_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-const cleanupEmojiStickers = boardId => [localStorage.removeItem(`emojiStickers_board_${boardId}`), delete emojiStickers[boardId]];
+const cleanupEmojiStickers = boardId => {
+  localStorage.removeItem(`emojiStickers_board_${boardId}`);
+  delete emojiStickers[boardId];
+};
 
 document.addEventListener('DOMContentLoaded', () => setTimeout(initializeEmojiPicker, 100));
 
