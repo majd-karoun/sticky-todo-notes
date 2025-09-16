@@ -1,5 +1,6 @@
 // Global state
 let repositionedNotes = new Set();
+let hasAddedNoteThisSession = false;
 
 // Utils
 const generateNoteId = () =>
@@ -135,13 +136,15 @@ function addNote() {
     let columnIndex;
     const columnCount = isWeekday ? 6 : 5; // 6 weekdays (Mon-Sat) or 5 days
 
-    // Continue from last added note's position or use current day's column
-    if (lastAddedNote) {
+    // Use current day column only after refresh, otherwise continue from last position
+    if (hasAddedNoteThisSession && lastAddedNote) {
+      // Continue from last added note's position within session
       const noteX = parsePosition(lastAddedNote.style.left);
       const columnWidth = boardElement.offsetWidth / columnCount;
       columnIndex = Math.floor(noteX / columnWidth);
       columnIndex = Math.max(0, Math.min(columnIndex, columnCount - 1));
     } else {
+      // First note after refresh or no notes exist - use current day column
       columnIndex = isWeekday
         ? getDayColumnIndex()
         : getCurrentDayNumber(currentBoardId) || 0;
@@ -259,6 +262,7 @@ function addNote() {
   // Update board state and clean up
   lastNotePositions[currentBoardId] = { x: positionX, y: positionY };
   lastNoteColors[currentBoardId] = lastColor;
+  hasAddedNoteThisSession = true; // Mark that we've added a note this session
   textarea.value = "";
 
   // Clear transferred status from all notes now that positioning is complete
