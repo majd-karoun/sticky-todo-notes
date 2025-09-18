@@ -25,6 +25,15 @@ function setupNote(note) {
   content.addEventListener("dblclick", (e) => {
     content.contentEditable = "true";
     content.focus();
+    
+    // Move cursor to end of text
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.selectNodeContents(content);
+    range.collapse(false); // false = collapse to end
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
     e.stopPropagation();
   });
 
@@ -232,10 +241,20 @@ function hideAllColorPalettes() {
   });
 }
 
-// Hide palettes when clicking outside
+// Hide palettes when clicking outside and unfocus note editing
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".color-button, .color-palette")) {
     hideAllColorPalettes();
+  }
+  
+  // Unfocus note editing when clicking outside
+  if (!e.target.closest(".sticky-note")) {
+    const editableContent = document.querySelector('.sticky-content[contenteditable="true"]');
+    if (editableContent) {
+      editableContent.contentEditable = "false";
+      editableContent.blur();
+      saveActiveNotes();
+    }
   }
 });
 
