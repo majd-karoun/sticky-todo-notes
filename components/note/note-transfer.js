@@ -165,7 +165,6 @@ const returnNoteToOriginalPosition = (note) => {
         // Use tracked initial position from notesInitialPositions (most reliable)
         targetX = originalPos.x;
         targetY = Math.max(60, originalPos.y);
-        console.log(`[DEBUG] Using notesInitialPositions: (${currentX}, ${currentY}) -> (${targetX}, ${targetY})`);
     } else {
         // Fallback: use pre-drag data attributes
         const savedX = note.dataset.preDragX;
@@ -174,9 +173,7 @@ const returnNoteToOriginalPosition = (note) => {
         if (savedX && savedY) {
             targetX = parseFloat(savedX);
             targetY = Math.max(60, parseFloat(savedY));
-            console.log(`[DEBUG] Using preDrag attributes: (${currentX}, ${currentY}) -> (${targetX}, ${targetY})`);
         } else {
-            console.error(`[DEBUG] No position data found! Current: (${currentX}, ${currentY}), notesInitialPositions length: ${notesInitialPositions?.length || 0}`);
             return;
         }
     }
@@ -184,7 +181,6 @@ const returnNoteToOriginalPosition = (note) => {
     // Check if we actually need to move the note
     const distance = Math.sqrt((targetX - currentX) ** 2 + (targetY - currentY) ** 2);
     if (distance < 5) {
-        console.log(`[DEBUG] Note already at target position, distance: ${distance}`);
         delete note.dataset.preDragX;
         delete note.dataset.preDragY;
         return;
@@ -212,7 +208,6 @@ const returnNoteToOriginalPosition = (note) => {
     setTimeout(() => {
         const finalX = parseFloat(note.style.left) || 0;
         const finalY = parseFloat(note.style.top) || 0;
-        console.log(`[DEBUG] Position after restore: (${finalX}, ${finalY}), expected: (${targetX}, ${targetY})`);
     }, 50);
     
     setTimeout(() => {
@@ -276,7 +271,6 @@ function checkBoardButtonDrop() {
                     const currentX = parseFloat(note.style.left) || 0;
                     const currentY = parseFloat(note.style.top) || 0;
                     
-                    console.log(`[DEBUG] Same-board transfer: (${currentX}, ${currentY}) -> (${targetX}, ${targetY})`);
                     
                     // Only animate if there's a meaningful distance
                     const distance = Math.sqrt((targetX - currentX) ** 2 + (targetY - currentY) ** 2);
@@ -474,7 +468,7 @@ function moveNoteToBoard(note, targetBoardId, relativePosition = null) {
             [note.dataset.noteId, note.dataset.repositioned, note.dataset.transferred] = [noteId, 'true', 'true'];
             repositionedNotes.add(noteId);
 
-            // Add to target board with pop animation
+            // Add to target board with pop animation.
             targetBoard.appendChild(note);
             if (window.AnimationUtils) {
                 window.AnimationUtils.updateStyles(note, {
