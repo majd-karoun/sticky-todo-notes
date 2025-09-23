@@ -827,6 +827,18 @@ function changeBoardPattern(pattern) {
       if (linesOverlay) {
         linesOverlay.classList.add("pattern-overlay");
       }
+      
+      // Update current day highlighting in the header
+      const headerSpans = patternOverlay.querySelectorAll('span');
+      headerSpans.forEach((span, index) => {
+        span.classList.remove('current-day');
+        if (
+          (pattern === "weekdays" && isCurrentDay(index)) ||
+          (pattern === "days" && getCurrentDayNumber(boardId) === index)
+        ) {
+          span.classList.add("current-day");
+        }
+      });
     } else {
       if (pattern !== "none")
         activeBoard.classList.add(`board-pattern-${pattern}`);
