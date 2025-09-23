@@ -172,12 +172,19 @@ function handleSelectionMove(e) {
     document.body.classList.add('selecting');
     
     // Store initial positions of all selected notes for relative movement
-    notesInitialPositions = selectedNotes.map(note => ({ 
-        element: note, 
-        x: parsePosition(note.style.left), 
-        y: parsePosition(note.style.top), 
-        type: 'note' 
-    }));
+    notesInitialPositions = selectedNotes.map(note => {
+        const x = parsePosition(note.style.left);
+        const y = parsePosition(note.style.top);
+        // Also store position in data attributes for same-board transfer fallback
+        note.dataset.preDragX = x.toString();
+        note.dataset.preDragY = y.toString();
+        return { 
+            element: note, 
+            x: x, 
+            y: y, 
+            type: 'note' 
+        };
+    });
     
     // Register movement handlers
     document.addEventListener('mousemove', moveSelectionHandler);

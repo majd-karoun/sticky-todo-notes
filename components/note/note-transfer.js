@@ -157,22 +157,70 @@ function clearBoardButtonHover() {
 
 const returnNoteToOriginalPosition = (note) => {
     const originalPos = notesInitialPositions?.find(pos => pos.element === note);
-    const targetX = originalPos ? originalPos.x : parseFloat(note.style.left) || 100;
-    const targetY = originalPos ? Math.max(60, originalPos.y) : parseInt(note.style.top || 0) - 250;
+    const currentX = parseFloat(note.style.left) || 0;
+    const currentY = parseFloat(note.style.top) || 0;
+    let targetX, targetY;
     
+    if (originalPos) {
+        // Use tracked initial position from notesInitialPositions (most reliable)
+        targetX = originalPos.x;
+        targetY = Math.max(60, originalPos.y);
+        console.log(`[DEBUG] Using notesInitialPositions: (${currentX}, ${currentY}) -> (${targetX}, ${targetY})`);
+    } else {
+        // Fallback: use pre-drag data attributes
+        const savedX = note.dataset.preDragX;
+        const savedY = note.dataset.preDragY;
+        
+        if (savedX && savedY) {
+            targetX = parseFloat(savedX);
+            targetY = Math.max(60, parseFloat(savedY));
+            console.log(`[DEBUG] Using preDrag attributes: (${currentX}, ${currentY}) -> (${targetX}, ${targetY})`);
+        } else {
+            console.error(`[DEBUG] No position data found! Current: (${currentX}, ${currentY}), notesInitialPositions length: ${notesInitialPositions?.length || 0}`);
+            return;
+        }
+    }
+    
+    // Check if we actually need to move the note
+    const distance = Math.sqrt((targetX - currentX) ** 2 + (targetY - currentY) ** 2);
+    if (distance < 5) {
+        console.log(`[DEBUG] Note already at target position, distance: ${distance}`);
+        delete note.dataset.preDragX;
+        delete note.dataset.preDragY;
+        return;
+    }
+    
+    // Stop any hover animations immediately
     if (note.classList.contains('hover-animating')) {
         note.classList.remove('hover-animating');
         applyStyles(note, { '--suckX': '', '--suckY': '', animation: 'none' });
     }
     
+    // Apply smooth transition back to original position
     note.style.transition = 'left 0.4s ease-out, top 0.4s ease-out, transform 0.4s ease-out';
-    note.style.left = `${targetX}px`;
-    note.style.top = `${targetY}px`;
+    
+    // Use AnimationUtils if available for consistency
+    if (window.AnimationUtils) {
+        window.AnimationUtils.updatePosition(note, targetX, targetY);
+    } else {
+        note.style.left = `${targetX}px`;
+        note.style.top = `${targetY}px`;
+    }
     note.style.transform = 'scale(1)';
+    
+    // Verify position was set correctly
+    setTimeout(() => {
+        const finalX = parseFloat(note.style.left) || 0;
+        const finalY = parseFloat(note.style.top) || 0;
+        console.log(`[DEBUG] Position after restore: (${finalX}, ${finalY}), expected: (${targetX}, ${targetY})`);
+    }, 50);
     
     setTimeout(() => {
         note.style.transition = '';
         note.style.transform = '';
+        // Clean up temporary data attributes after animation completes
+        delete note.dataset.preDragX;
+        delete note.dataset.preDragY;
     }, 400);
 };
 
@@ -196,9 +244,80 @@ function checkBoardButtonDrop() {
     const notesToMove = selectedNotes.length > 0 ? [...selectedNotes] : [currentActiveNote];
 
     if (targetBoardId === currentBoardId) {
-        notesToMove.forEach(note => note && returnNoteToOriginalPosition(note));
-        clearBoardButtonHover();
+        // Clear hover states first to prevent animation conflicts
+        $$('.board-button', true).forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
+        hoveredBoardButton = null;
+        hideDragTransferMessage();
         toggleBoardButtons(false);
+        
+        // Then restore positions without conflicting animations
+        notesToMove.forEach(note => {
+            if (note) {
+                // Aggressively stop all animations and clear CSS variables
+                note.classList.remove('hover-animating', 'reverse-animating');
+                
+                // Force clear all animation-related CSS immediately
+                note.style.animation = 'none';
+                note.style.removeProperty('--suckX');
+                note.style.removeProperty('--suckY');
+                note.style.transform = '';
+                note.style.transition = '';
+                
+                // Force a reflow to ensure CSS changes take effect
+                note.offsetHeight;
+                
+                // Force use of data attributes for same-board transfers to avoid race conditions
+                const savedX = note.dataset.preDragX;
+                const savedY = note.dataset.preDragY;
+                
+                if (savedX && savedY) {
+                    const targetX = parseFloat(savedX);
+                    const targetY = Math.max(60, parseFloat(savedY));
+                    const currentX = parseFloat(note.style.left) || 0;
+                    const currentY = parseFloat(note.style.top) || 0;
+                    
+                    console.log(`[DEBUG] Same-board transfer: (${currentX}, ${currentY}) -> (${targetX}, ${targetY})`);
+                    
+                    // Only animate if there's a meaningful distance
+                    const distance = Math.sqrt((targetX - currentX) ** 2 + (targetY - currentY) ** 2);
+                    if (distance > 5) {
+                        // Apply smooth transition back to original position (keeping original animation)
+                        note.style.transition = 'left 0.4s ease-out, top 0.4s ease-out, transform 0.4s ease-out';
+                        
+                        if (window.AnimationUtils) {
+                            window.AnimationUtils.updatePosition(note, targetX, targetY);
+                        } else {
+                            note.style.left = `${targetX}px`;
+                            note.style.top = `${targetY}px`;
+                        }
+                        note.style.transform = 'scale(1)';
+                        
+                        setTimeout(() => {
+                            note.style.transition = '';
+                            note.style.transform = '';
+                        }, 400);
+                    } else {
+                        // If already close to target, just set position directly
+                        if (window.AnimationUtils) {
+                            window.AnimationUtils.updatePosition(note, targetX, targetY);
+                        } else {
+                            note.style.left = `${targetX}px`;
+                            note.style.top = `${targetY}px`;
+                        }
+                    }
+                    
+                    // Clean up data attributes
+                    setTimeout(() => {
+                        delete note.dataset.preDragX;
+                        delete note.dataset.preDragY;
+                    }, 350);
+                } else {
+                    console.error(`[DEBUG] No preDrag data for same-board transfer!`);
+                    // Fallback to returnNoteToOriginalPosition
+                    returnNoteToOriginalPosition(note);
+                }
+            }
+        });
         return { moved: false };
     }
 

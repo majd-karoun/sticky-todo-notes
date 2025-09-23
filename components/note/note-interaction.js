@@ -154,6 +154,9 @@ function setupNote(note) {
         x: initialX, 
         y: initialY 
       }];
+      // Also store position in data attributes for same-board transfer fallback
+      note.dataset.preDragX = initialX.toString();
+      note.dataset.preDragY = initialY.toString();
     }
 
     // Add event listeners directly to document
@@ -204,10 +207,14 @@ function setupNote(note) {
         note.dataset.repositioned = "true";
         repositionedNotes.add(noteId);
 
-        lastNotePositions[currentBoardId] = {
-          x: parsePosition(note.style.left),
-          y: parsePosition(note.style.top),
-        };
+        // Only update lastNotePositions if this wasn't a same-board transfer
+        // Same-board transfers should restore to original position, not current position
+        if (!note.dataset.preDragX || !note.dataset.preDragY) {
+          lastNotePositions[currentBoardId] = {
+            x: parsePosition(note.style.left),
+            y: parsePosition(note.style.top),
+          };
+        }
         lastNoteColors[currentBoardId] = note.style.backgroundColor;
       }
 
