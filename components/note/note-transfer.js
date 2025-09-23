@@ -306,7 +306,6 @@ function checkBoardButtonDrop() {
                         delete note.dataset.preDragY;
                     }, 350);
                 } else {
-                    console.error(`[DEBUG] No preDrag data for same-board transfer!`);
                     // Fallback to returnNoteToOriginalPosition
                     returnNoteToOriginalPosition(note);
                 }
