@@ -5,9 +5,6 @@
 
 // Global state
 let isDragInProgress = false;
-let hoveredBoardButton = null;
-let dragTransferMessageVisible = false;
-let hoverDetectionDisabled = false;
 
 function setupNote(note) {
   const content = note.querySelector(".sticky-content");
@@ -169,6 +166,10 @@ function setupNote(note) {
       if (!isDragInProgress) {
         isDragInProgress = true;
         document.body.classList.add("drag-in-progress");
+        // Show drag message when drag starts
+        if (typeof showDragTransferMessage === 'function') {
+          showDragTransferMessage();
+        }
       }
 
       const newX = Math.max(0, initialX + e.clientX - startX);

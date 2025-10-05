@@ -4,6 +4,12 @@
  * Optimized for minimal code duplication and clear separation of concerns
  */
 
+// Module state
+let hoveredBoardButton = null;
+let dragTransferMessageVisible = false;
+let hoverDetectionDisabled = false;
+let isNearBoardArea = false;
+
 // Utility functions for common operations
 const getDistance = (x1, y1, x2, y2) => Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
 const getButtonCenter = rect => [rect.left + rect.width / 2, rect.top + rect.height / 2];
@@ -17,12 +23,30 @@ const findClosestButton = (clientX, clientY) => {
     return closest.button;
 };
 
+// Drag transfer messaging - defined early so other functions can use it
+const toggleDragTransferMessage = (show) => {
+    if (show && boardCount > 1 && !dragTransferMessageVisible && !hoveredBoardButton) {
+        document.getElementById('dragTransferMessage')?.classList.add('visible');
+        dragTransferMessageVisible = true;
+        $('.shortcut-hint')?.classList.add('hidden-during-drag');
+    } else if (!show && dragTransferMessageVisible) {
+        document.getElementById('dragTransferMessage')?.classList.remove('visible');
+        dragTransferMessageVisible = false;
+        $('.shortcut-hint')?.classList.remove('hidden-during-drag');
+    }
+};
+
+const showDragTransferMessage = () => toggleDragTransferMessage(true);
+const hideDragTransferMessage = () => toggleDragTransferMessage(false);
+
 const toggleBoardButtons = (isEntering, closestButton = null) => {
     const buttons = $$('.board-button', true);
     if (isEntering) {
         buttons.forEach(btn => btn.classList.add('drag-active', 'drag-proximity'));
-        if (closestButton) closestButton.classList.add('drag-hover');
-        startHoverAnimation();
+        if (closestButton) {
+            closestButton.classList.add('drag-hover');
+            startHoverAnimation();
+        }
     } else {
         buttons.forEach(btn => {
             btn.classList.remove('drag-hover', 'drag-proximity');
@@ -42,12 +66,19 @@ function checkBoardButtonHover(clientX, clientY) {
     const distanceY = Math.max(0, rect.top - clientY, clientY - rect.bottom);
     const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
     
-    const wasNear = hoveredBoardButton !== null;
+    const wasNear = isNearBoardArea;
     const isNear = wasNear ? distance <= 120 : distance <= 80; // Hysteresis
     
     if (isNear !== wasNear) {
-        hoveredBoardButton = isNear ? findClosestButton(clientX, clientY) : null;
-        toggleBoardButtons(isNear, hoveredBoardButton);
+        isNearBoardArea = isNear;
+        if (isNear) {
+            // Entering board area - don't set hoveredBoardButton yet, just activate buttons
+            toggleBoardButtons(true, null);
+        } else {
+            // Leaving board area
+            hoveredBoardButton = null;
+            toggleBoardButtons(false, null);
+        }
     } else if (isNear) {
         const closest = findClosestButton(clientX, clientY);
         if (closest !== hoveredBoardButton) {
@@ -55,9 +86,11 @@ function checkBoardButtonHover(clientX, clientY) {
             hoveredBoardButton = closest;
             if (closest) {
                 closest.classList.add('drag-hover');
+                startHoverAnimation();
                 hideDragTransferMessage();
                 $('.shortcut-hint')?.classList.add('hidden-during-drag');
             } else {
+                clearHoverAnimations();
                 showDragTransferMessage();
                 if (!dragTransferMessageVisible) $('.shortcut-hint')?.classList.remove('hidden-during-drag');
             }
@@ -127,22 +160,6 @@ function clearHoverAnimations() {
         }, 300);
     });
 }
-
-// Drag transfer messaging
-const toggleDragTransferMessage = (show) => {
-    if (show && boardCount > 1 && !dragTransferMessageVisible && !hoveredBoardButton) {
-        document.getElementById('dragTransferMessage')?.classList.add('visible');
-        dragTransferMessageVisible = true;
-        $('.shortcut-hint')?.classList.add('hidden-during-drag');
-    } else if (!show && dragTransferMessageVisible) {
-        document.getElementById('dragTransferMessage')?.classList.remove('visible');
-        dragTransferMessageVisible = false;
-        $('.shortcut-hint')?.classList.remove('hidden-during-drag');
-    }
-};
-
-const showDragTransferMessage = () => toggleDragTransferMessage(true);
-const hideDragTransferMessage = () => toggleDragTransferMessage(false);
 
 function clearBoardButtonHover() {
     $$('.board-button', true).forEach(button => button.classList.remove('drag-hover', 'drag-proximity'));
