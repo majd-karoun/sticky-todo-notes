@@ -4,7 +4,7 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 
 [Live Demo](https://sticky-todo-notes.netlify.app) 🚀
 
-
+![Sticky Todo Notes Interface](./screenshot.png)
 
 ### Note Management.
 - ➕ Enter text to create notes
