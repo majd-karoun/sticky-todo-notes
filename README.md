@@ -2,7 +2,7 @@
 
 An intuitive sticky notes application built with vanilla JavaScript. Create, customize, and manage your notes with easy management system.
 
-[Live Demo](https://stickytodonotes.netlify.app) 🚀
+[Live Demo](https://sticky-todo-notes.netlify.app) 🚀
 
 
 
