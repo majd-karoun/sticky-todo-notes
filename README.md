@@ -2,9 +2,7 @@
 
 An intuitive sticky notes application built with vanilla JavaScript. Create, customize, and manage your notes with easy management system.
 
- **Note:** The domain has been changed. If you have saved data on the previous domain, you can still access it at [https://sticky-todo-notes.netlify.app](https://astral-quiz.netlify.app)
-
-[Live Demo](https://sticky-todo-notes.app) 🚀
+[Live Demo](https://sticky-todo-notes.netlify.app) 🚀
 
 
 
