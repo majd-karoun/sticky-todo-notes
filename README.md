@@ -4,7 +4,7 @@ An intuitive sticky notes application built with vanilla JavaScript. Create, cus
 
 [Live Demo](https://stickytodonotes.app) 🚀
 
-> **Note:** The domain has been changed. If you have saved data on the previous domain, you can still access it at [https://astral-quiz.netlify.app](https://sticky-todo-notes.netlify.app)
+> **Note:** The domain has been changed. If you have saved data on the previous domain, you can still access it at [https://sticky-todo-notes.netlify.app](https://sticky-todo-notes.netlify.app)
 
 
 ### Note Management.
