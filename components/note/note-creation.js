@@ -1,3 +1,10 @@
+/**
+ * Main function to add a new note to the current board.
+ * Handles note creation, positioning, and board state management.
+ * Implements different positioning strategies based on board type (regular/weekdays/days).
+ * Enforces note limits and manages visual feedback.
+ * */
+
 // Global state
 let repositionedNotes = new Set();
 let hasAddedNoteThisSession = false;
