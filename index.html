@@ -98,7 +98,7 @@
             <div class="style-option-label">Board Emojis</div>
             <div class="emoji-picker-container">
                 <div class="emoji-picker">
-              <!-- Smileys & Emotion -->
+         <!-- Smileys & Emotion -->
 
 <div class="emoji-item" data-emoji="😁">😁</div>
 <div class="emoji-item" data-emoji="😆">😆</div>
@@ -1051,108 +1051,7 @@
         </div>
     </div>
 
-    <div class="debug-modal" id="debugModal" style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 1000; max-width: 200px;">
-        <div style="font-weight: bold; margin-bottom: 5px;">Column Detection Debug</div>
-        <div id="debugContent">No data</div>
-        <button onclick="toggleDebugModal()" style="margin-top: 5px; padding: 2px 5px; font-size: 10px;">Toggle</button>
-        <script>
-            let lastWeatherUpdate;
-            
-            function toggleDebugModal() {
-                const modal = document.getElementById('debugModal');
-                modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
-            }
-            
-            function updateDebugModal() {
-                const debugContent = document.getElementById('debugContent');
-                const boardElement = window.$ ? $('.board.active') : document.querySelector('.board.active');
-                
-                if (!boardElement) {
-                    debugContent.innerHTML = 'No active board found';
-                    return;
-                }
-                
-                // Find notes only within the active board
-                const noteSelectors = ['.note', '.sticky-note', '[class*="note"]', 'div[draggable="true"]'];
-                let allNotes = [];
-                let selectorUsed = '';
-                
-                for (const selector of noteSelectors) {
-                    const found = window.$$ ? $$(selector) : Array.from(boardElement.querySelectorAll(selector));
-                    if (found.length > 0) {
-                        allNotes = found;
-                        selectorUsed = selector;
-                        break;
-                    }
-                }
-                
-                const visibleNotes = allNotes.filter(note => note.style.display !== 'none');
-                const notes = visibleNotes;
-                
-                if (!boardElement) {
-                    debugContent.innerHTML = 'No active board found';
-                    return;
-                }
-                
-                // Debug: show all classes on the board
-                const allClasses = Array.from(boardElement.classList);
-                const boardId = boardElement.dataset.boardId || 'unknown';
-                let debugHTML = `<div>Board ID: ${boardId}</div>`;
-                debugHTML += `<div>Selector: ${selectorUsed}</div>`;
-                debugHTML += `<div>All notes: ${allNotes.length}</div>`;
-                debugHTML += `<div>Visible notes: ${visibleNotes.length}</div>`;
-                debugHTML += `<div>Board classes: ${allClasses.join(', ')}</div><br>`;
-                
-                // Check if we're in a pattern mode
-                const hasWeekdaysPattern = boardElement.classList.contains('board-pattern-weekdays');
-                const hasDaysPattern = boardElement.classList.contains('board-pattern-days');
-                
-                debugHTML += `<div>Weekdays: ${hasWeekdaysPattern}</div>`;
-                debugHTML += `<div>Days: ${hasDaysPattern}</div><br>`;
-                
-                if (!hasWeekdaysPattern && !hasDaysPattern) {
-                    debugContent.innerHTML = debugHTML + 'Not in pattern mode';
-                    return;
-                }
-                
-                const columnCount = hasWeekdaysPattern ? 6 : 5;
-                const columnWidth = boardElement.offsetWidth / columnCount;
-                
-                debugHTML += `<div>Total notes: ${notes.length}</div>`;
-                debugHTML += `<div>Columns: ${columnCount}</div>`;
-                debugHTML += `<div>Column width: ${Math.round(columnWidth)}px</div><br>`;
-                
-                for (let i = 0; i < columnCount; i++) {
-                    const columnStartX = i * columnWidth;
-                    const columnEndX = (i + 1) * columnWidth;
-                    
-                    const columnNotes = notes.filter(note => {
-                        const noteLeft = parseFloat(note.style.left) || 0;
-                        const noteWidth = 200;
-                        const noteRight = noteLeft + noteWidth;
-                        
-                        const overlapStart = Math.max(noteLeft, columnStartX);
-                        const overlapEnd = Math.min(noteRight, columnEndX);
-                        const overlapWidth = Math.max(0, overlapEnd - overlapStart);
-                        const overlapPercent = (overlapWidth / noteWidth);
-                        
-                        return overlapPercent > 0.5;
-                    });
-                    
-                    const columnName = hasWeekdaysPattern ? 
-                        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i] : 
-                        `Day ${i + 1}`;
-                    
-                    debugHTML += `<div>${columnName}: ${columnNotes.length} notes</div>`;
-                }
-                
-                debugContent.innerHTML = debugHTML;
-            }
-            
-            // Update debug modal every 500ms
-            setInterval(updateDebugModal, 500);
-        </script>
-    </div>
+    
 
     <script>
         // Open-Meteo configuration - free weather API
