@@ -1,5 +1,11 @@
 #  Sticky Todo Notes 📝
 
+> **NOTE:** 
+> 
+> *[Check our last funding chance at inara-fundraise.com]*
+
+---
+
 An intuitive sticky notes application built with vanilla JavaScript. Create, customize, and manage your notes with easy management system.
 
 [Live Demo](https://stickytodonotes.app) 🚀
